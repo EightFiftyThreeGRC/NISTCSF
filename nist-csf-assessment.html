@@ -6,6 +6,8 @@
 <title>NIST CSF 2.0 Guided Assessment</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
@@ -184,6 +186,37 @@ textarea{resize:vertical;min-height:80px}
   .top-bar .badge,.progress-bar,.btn,.step-pill,.finding-actions,.dispute-box{display:none!important}
   .card{box-shadow:none;border:1px solid #ddd}
 }
+/* ── Email verification ── */
+.verify-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.verify-row input{flex:1;min-width:160px}
+.verify-row .btn{flex-shrink:0;white-space:nowrap;margin-bottom:0!important}
+/* ── Size button selectors ── */
+.size-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.size-btn{padding:7px 14px;border:1.5px solid #d0dce8;border-radius:8px;background:#fff;font-size:.8rem;cursor:pointer;transition:.15s;color:#2c4a6a;font-weight:600}
+.size-btn:hover{border-color:#1e88e5;background:#f0f7ff}
+.size-btn.selected{border-color:#1e88e5;background:#1e88e5;color:#fff}
+/* ── Consent card ── */
+.consent-card{background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:20px;margin-bottom:24px}
+/* ── Scope tree ── */
+.scope-fn{border:1.5px solid #d0dce8;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.scope-fn-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:default;background:#f8fafc}
+.scope-fn-body{padding:4px 16px 12px}
+.scope-cat{border-radius:8px;background:#f8fafc;margin-bottom:6px;overflow:hidden;border:1px solid #e8eef4}
+.scope-cat-head{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#f0f4f8;cursor:default}
+.scope-cat-body{padding:4px 10px 8px}
+.scope-sc{display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:6px;transition:.15s}
+.scope-sc:hover{background:#f0f7ff}
+.scope-sc input{margin-top:2px;flex-shrink:0;cursor:pointer}
+.scope-sc-id{font-weight:700;font-size:.71rem;color:#0d2137;flex-shrink:0;min-width:74px;margin-top:1px}
+.scope-sc-text{font-size:.73rem;color:#3d5a78;line-height:1.4;flex:1}
+.scope-sc-rec{flex-shrink:0;font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:10px;cursor:help;margin-top:1px;white-space:nowrap}
+.scope-rec-core{background:#e8f5e9;color:#2e7d32}
+.scope-rec-optional{background:#fff8e1;color:#e65100}
+.scope-rec-low{background:#fff3e0;color:#bf360c}
+.scope-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.scope-stat{background:#f0f4f8;border-radius:8px;padding:10px 18px;text-align:center}
+.scope-stat-num{font-size:1.4rem;font-weight:800;color:#1e88e5}
+.scope-stat-lbl{font-size:.72rem;color:#5a7a96;font-weight:600}
 </style>
 </head>
 <body>
@@ -349,6 +382,43 @@ SC_RAW.forEach(([id,text,cat])=>{
   (SC_BY_FN[fn]=SC_BY_FN[fn]||[]).push(id);
 });
 
+// ════════════════════════════════════════════════════════════
+// INDUSTRY BENCHMARKS
+// Approximate CMMI-equivalent function maturity averages by sector.
+// Derived from: IBM X-Force Threat Intelligence Index, Ponemon/IBM Cost of a Data
+// Breach Report, ISACA State of Cybersecurity Survey, SecurityScorecard Industry
+// Scorecards, Verizon DBIR, and CISA Cross-Sector Performance Goals adoption data.
+// Individual orgs vary significantly; use as directional context only.
+// ════════════════════════════════════════════════════════════
+const INDUSTRY_BENCHMARKS={
+  'Technology':             {GV:2.3,ID:2.6,PR:2.8,DE:2.5,RS:2.4,RC:2.2,overall:2.5},
+  'Financial Services':     {GV:2.8,ID:3.0,PR:3.2,DE:2.9,RS:2.8,RC:2.6,overall:2.9},
+  'Healthcare':             {GV:1.9,ID:2.2,PR:2.4,DE:1.8,RS:2.0,RC:1.9,overall:2.0},
+  'Government / Public Sector':{GV:2.2,ID:2.5,PR:2.6,DE:2.1,RS:2.2,RC:2.1,overall:2.3},
+  'Energy / Utilities':     {GV:2.1,ID:2.3,PR:2.5,DE:2.0,RS:2.1,RC:2.0,overall:2.2},
+  'Manufacturing':          {GV:1.8,ID:2.0,PR:2.3,DE:1.8,RS:1.9,RC:1.8,overall:2.0},
+  'Retail / E-commerce':    {GV:2.0,ID:2.2,PR:2.5,DE:2.1,RS:2.1,RC:1.9,overall:2.1},
+  'Education':              {GV:1.7,ID:1.9,PR:2.2,DE:1.7,RS:1.9,RC:1.8,overall:1.9},
+  'Nonprofit':              {GV:1.7,ID:1.9,PR:2.1,DE:1.6,RS:1.8,RC:1.7,overall:1.8},
+  'Professional Services':  {GV:2.2,ID:2.4,PR:2.6,DE:2.2,RS:2.3,RC:2.1,overall:2.3},
+  'Other':                  {GV:2.0,ID:2.2,PR:2.4,DE:2.0,RS:2.1,RC:2.0,overall:2.1},
+};
+// Most frequently underdeveloped CSF categories by sector — from CISA CPG adoption
+// data, Verizon DBIR root-cause analysis, and Big 4 assessment trend reports.
+const INDUSTRY_COMMON_GAPS={
+  'Technology':             ['GV.SC','DE.AE','ID.RA'],
+  'Financial Services':     ['GV.SC','ID.IM','RS.CO'],
+  'Healthcare':             ['GV.RM','DE.CM','PR.DS'],
+  'Government / Public Sector':['GV.SC','ID.AM','DE.AE'],
+  'Energy / Utilities':     ['GV.SC','PR.PS','DE.CM'],
+  'Manufacturing':          ['GV.SC','DE.AE','PR.AA'],
+  'Retail / E-commerce':    ['PR.DS','DE.AE','GV.SC'],
+  'Education':              ['GV.RM','PR.AT','DE.CM'],
+  'Nonprofit':              ['GV.RM','ID.AM','PR.DS'],
+  'Professional Services':  ['GV.SC','DE.AE','RS.CO'],
+  'Other':                  ['GV.SC','DE.AE','ID.RA'],
+};
+
 const DRL_CATS=[
   {id:'governance',name:'Governance & Policy',fn:['GV'],desc:'Board and executive governance documents and cybersecurity policies',requests:[
     {id:'gov_policy',title:'Cybersecurity / Information Security Policy',hint:'Approved version, owner, review cadence.'},
@@ -435,9 +505,12 @@ let S={
   provider:_initialProvider,   // 'gemini' | 'anthropic' | 'openai'
   apiKey:localStorage.getItem('csf_apiKey')||'',
   model:_initialModel,
-  org:{name:'',industry:'',scope:'',date:'',assessorName:''},
+  org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},
   scoringMethod:'both',
   includedFns:['GV','ID','PR','DE','RS','RC'],
+  excludedSubcategories:[],
+  aiScopeRec:{},
+  benchmarkSent:false,
   drlViewFns:null,
   demoEvidence:false,
   demoFindings:false,
@@ -449,8 +522,11 @@ let S={
   answers:{},
   activeRole:0,
   findings:{},
+  functionNarratives:{},
   activeReviewFn:'GV',
   reportPage:0,
+  targetFnScores:{},    // desired CMMI per function for current-vs-target gap analysis
+  execSummary:'',       // reserved for future use / cached overall narrative
 };
 
 function saveState(){try{localStorage.setItem('csf_state',JSON.stringify(S));}catch(e){}}
@@ -461,6 +537,18 @@ function loadState(){
       Object.assign(S,JSON.parse(r));
       if(S.provider!=='gemini'&&S.provider!=='anthropic'&&S.provider!=='openai')S.provider='gemini';
       if(S.reportPage==null||typeof S.reportPage!=='number')S.reportPage=0;
+      // Migrate missing new fields
+      if(!S.org.email)S.org.email='';
+      if(S.org.emailVerified==null)S.org.emailVerified=false;
+      if(!S.org.verificationCode)S.org.verificationCode='';
+      if(S.org.verificationSent==null)S.org.verificationSent=false;
+      if(!S.org.orgSize)S.org.orgSize='';
+      if(!S.org.itOrgSize)S.org.itOrgSize='';
+      if(!S.org.cyberOrgSize)S.org.cyberOrgSize='';
+      if(S.org.dataConsentAcknowledged==null)S.org.dataConsentAcknowledged=false;
+      if(!S.excludedSubcategories)S.excludedSubcategories=[];
+      if(!S.aiScopeRec)S.aiScopeRec={};
+      if(S.benchmarkSent==null)S.benchmarkSent=false;
       persistAIPrefs();
     }catch(e){}
   }
@@ -499,8 +587,10 @@ function scoreColor(s){
   return          {bg:'#e8f5e9',fg:'#1b5e20'};
 }
 function scoreChip(v,label=''){const c=scoreColor(v);return`<span class="score-badge" style="background:${c.bg};color:${c.fg}">${label}${v!=null?v:'-'}</span>`;}
-function tierFromCmmi(c){if(!c||c<1)return'-';if(c<2)return'Tier 1';if(c<2.5)return'Tier 1–2';if(c<4)return'Tier 3';if(c<4.5)return'Tier 3–4';return'Tier 4';}
-function avg(arr){const v=arr.filter(x=>x!=null&&x>0);if(!v.length)return null;return Math.round((v.reduce((a,b)=>a+b,0)/v.length)*10)/10;}
+function tierFromCmmi(c){if(!c||c<1)return'-';if(c<1.75)return'Tier 1';if(c<2.75)return'Tier 2';if(c<3.75)return'Tier 3';return'Tier 4';}
+function tierLabel(c){if(!c||c<1)return'-';if(c<1.75)return'Tier 1 — Partial';if(c<2.75)return'Tier 2 — Risk Informed';if(c<3.75)return'Tier 3 — Repeatable';return'Tier 4 — Adaptive';}
+function avg(arr){const v=arr.filter(x=>x!=null&&x>0);if(!v.length)return null;return Math.round((v.reduce((a,b)=>a+b,0)/v.length)*4)/4;}
+function fmtScore(v){if(v==null)return'N/A';const s=v.toFixed(2);return s.endsWith('.00')?s.slice(0,-3):s.endsWith('0')?s.slice(0,-1):s;}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function parseJSON(str){
   let s=String(str||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'');
@@ -558,7 +648,17 @@ function allRequestsForView(){
 }
 /** CSF 2.0 subcategory outcomes in current assessment scope (used for evidence map / analysis tables). */
 function subcategoriesInScopeCount(){
-  return SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).length;
+  const excl=new Set(S.excludedSubcategories||[]);
+  return SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&!excl.has(id)).length;
+}
+/** Returns all in-scope [id,text,cat] triples respecting both includedFns and excludedSubcategories. */
+function inScopeSubs(){
+  const excl=new Set(S.excludedSubcategories||[]);
+  return SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&!excl.has(id));
+}
+function isInScope(id){
+  const excl=new Set(S.excludedSubcategories||[]);
+  return S.includedFns.includes(id.split('.')[0])&&!excl.has(id);
 }
 function drlViewCoversAllIncluded(){
   ensureDrlViewFns();
@@ -852,25 +952,66 @@ function renderWelcome(){
 }
 
 // ════════════════════════════════════════════════════════════
-// STEP 2: SETUP
+// STEP 1: SETUP — Organization info, email verification, sizes, consent
 // ════════════════════════════════════════════════════════════
 function renderSetup(){
   const industries=['Technology','Financial Services','Healthcare','Government / Public Sector','Energy / Utilities','Manufacturing','Retail / E-commerce','Education','Nonprofit','Professional Services','Other'];
+  const orgSizes=['1–50','51–200','201–1,000','1,001–5,000','5,001–20,000','20,001+'];
+  const itSizes=['0–5','6–25','26–100','101–500','501–2,000','2,001+'];
+  const cyberSizes=['0–2','3–10','11–30','31–100','101–500','500+'];
+  const o=S.org;
+  const provName=S.provider==='gemini'?'Google Gemini (Generative Language API)':S.provider==='anthropic'?'Anthropic (Claude API)':'OpenAI API';
   return`
 ${topBar(1)}
 <div class="container">
   <div class="card">
-    <h2>Organization Setup</h2>
-    <p class="sub">Tell us about your organization and how you'd like to run this assessment.</p>
+    <h2>Organization Information</h2>
+    <p class="sub">Tell us about your organization. This shapes the AI scope recommendations on the next page.</p>
     <div class="row">
-      <div class="col"><label>Organization Name <span style="color:#e53935">*</span></label><input type="text" id="inp-org-name" value="${escHtml(S.org.name)}" placeholder="Acme Corp"></div>
-      <div class="col"><label>Industry</label><select id="inp-org-industry">${industries.map(i=>`<option ${S.org.industry===i?'selected':''}>${i}</option>`).join('')}</select></div>
+      <div class="col"><label>Organization Name <span style="color:#e53935">*</span></label><input type="text" id="inp-org-name" value="${escHtml(o.name)}" placeholder="Acme Corp"></div>
+      <div class="col"><label>Industry <span style="color:#e53935">*</span></label><select id="inp-org-industry">${industries.map(i=>`<option ${o.industry===i?'selected':''}>${i}</option>`).join('')}</select></div>
     </div>
     <div class="row">
-      <div class="col"><label>Assessor Name</label><input type="text" id="inp-org-assessor" value="${escHtml(S.org.assessorName)}" placeholder="Your name"></div>
+      <div class="col"><label>Assessor Name</label><input type="text" id="inp-org-assessor" value="${escHtml(o.assessorName)}" placeholder="Your name or firm"></div>
+      <div class="col"><label>Assessment Date</label><input type="date" id="inp-org-date" value="${escHtml(o.date||new Date().toISOString().slice(0,10))}"></div>
     </div>
-    <label>Assessment Scope</label>
-    <textarea id="inp-org-scope" placeholder="Describe what is in scope: entire enterprise, specific division, asset types (IT, OT, cloud, third-party), exclusions, etc.">${escHtml(S.org.scope)}</textarea>
+    <label>Assessment Scope Description <span style="color:#e53935">*</span></label>
+    <textarea id="inp-org-scope" placeholder="Describe what is in scope: entire enterprise, specific division, asset types (IT, OT, cloud, third-party), regulatory context, exclusions, etc. The more detail here, the better the AI's scope recommendations.">${escHtml(o.scope)}</textarea>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Organization Size</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:14px">Used for benchmarking and AI scope calibration. Select the band that best fits.</p>
+    <label>Total Organization Headcount <span style="color:#e53935">*</span></label>
+    <div class="size-options">${orgSizes.map(s=>`<button type="button" class="size-btn${o.orgSize===s?' selected':''}" data-action="set-size" data-field="orgSize" data-val="${s}">${s}</button>`).join('')}</div>
+    <label style="margin-top:16px">IT Organization Headcount <span style="color:#e53935">*</span></label>
+    <div class="size-options">${itSizes.map(s=>`<button type="button" class="size-btn${o.itOrgSize===s?' selected':''}" data-action="set-size" data-field="itOrgSize" data-val="${s}">${s}</button>`).join('')}</div>
+    <label style="margin-top:16px">Cybersecurity Team Headcount <span style="color:#e53935">*</span></label>
+    <div class="size-options">${cyberSizes.map(s=>`<button type="button" class="size-btn${o.cyberOrgSize===s?' selected':''}" data-action="set-size" data-field="cyberOrgSize" data-val="${s}">${s}</button>`).join('')}</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Contact Email & Verification</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">Enter the email address associated with your organization. We'll send a verification code to confirm it's valid. A copy of your scored report will also be sent here.</p>
+    <label>Email Address <span style="color:#e53935">*</span></label>
+    <div class="verify-row">
+      <input type="text" id="inp-org-email" value="${escHtml(o.email)}" placeholder="you@yourorg.com"${o.emailVerified?' disabled style="background:#f0fff4;border-color:#66bb6a"':''}>
+      ${o.emailVerified
+        ?`<span class="chip chip-green" style="padding:9px 14px;font-size:.8rem;white-space:nowrap">✓ Verified</span>`
+        :`<button type="button" class="btn btn-secondary" data-action="send-verify-email"${o.verificationSent?' disabled':''}>${o.verificationSent?'Code sent — resend':'Send verification code'}</button>`
+      }
+    </div>
+    ${o.emailVerified?`<p style="font-size:.75rem;color:#2e7d32;margin-top:6px">✓ Email verified — you're good to go.</p>`:
+      o.verificationSent?`
+    <div style="margin-top:12px">
+      <label>Enter Verification Code</label>
+      <div class="verify-row">
+        <input type="text" id="inp-verify-code" placeholder="6-digit code" maxlength="6" style="max-width:180px">
+        <button type="button" class="btn btn-primary" data-action="check-verify-code">Verify →</button>
+      </div>
+      <p style="font-size:.75rem;color:#5a7a96;margin-top:6px">Check your inbox (and spam folder). The code expires in 30 minutes. <span style="color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="send-verify-email">Resend code</span></p>
+    </div>`:`<p style="font-size:.75rem;color:#5a7a96;margin-top:6px">Click "Send verification code" after entering your email.</p>`
+    }
   </div>
 
   <div class="card">
@@ -888,47 +1029,130 @@ ${topBar(1)}
     </div>
   </div>
 
-  <div class="card">
-    <div class="section-label">About NIST CSF 2.0</div>
-    <p style="font-size:.85rem;color:#2c4a6a;line-height:1.65;margin-bottom:10px">
-      <strong>NIST CSF</strong> (Cybersecurity Framework) is a framework built to help organizations assess and manage cybersecurity risk.
-      This tool helps you assess your organization's cyber maturity against NIST CSF.
-    </p>
-    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:0">
-      Official overview and downloads:
-      <a href="${NIST_CSF_URL}" target="_blank" rel="noopener noreferrer" style="color:#1e88e5;font-weight:600">NIST — Cybersecurity Framework</a>
-    </p>
-  </div>
-
-  <div class="card">
-    <div class="section-label">Functions to Assess</div>
-    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">All 6 functions selected by default. Deselect any to exclude related subcategories from this assessment.</p>
-    <div class="alert alert-info" style="margin-bottom:16px">
-      Next step is a <strong>structured evidence request list</strong>: multiple files per request, <strong>context per file</strong>,
-      or <strong>Not provided</strong> with a required reason.
+  <div class="consent-card">
+    <div class="section-label" style="margin-bottom:10px">Data &amp; Privacy Acknowledgment</div>
+    <div style="font-size:.84rem;color:#1a2332;line-height:1.7;margin-bottom:14px">
+      <p style="margin-bottom:8px">📁 <strong>Your uploaded documents</strong> are never stored on any server and are never seen by the assessment tool creator. They are processed locally in your browser and sent only to <strong>${escHtml(provName)}</strong> for AI analysis — the same API you've already configured.</p>
+      <p style="margin-bottom:8px">💾 <strong>Your assessment data</strong> (findings, answers, scores) is stored only in your browser's local storage. It is not transmitted to or retained by the assessment tool creator.</p>
+      <p style="margin-bottom:8px">📊 <strong>Benchmarking data</strong> — when your report is finalized, the following anonymized data will be shared with the assessment tool creator for research and benchmarking: your industry sector, organization size bands (total / IT / cyber), and numerical CMMI scores per CSF subcategory. No organization name, documents, or identifying information is included.</p>
+      <p>📋 This anonymized benchmark data may be used in aggregate form to publish sector peer comparisons and improve the tool's recommendations.</p>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      ${FUNCTIONS.map(f=>`
-      <label style="display:block;padding:14px 16px;border:1.5px solid ${S.includedFns.includes(f.id)?f.color:'#d0dce8'};border-radius:10px;cursor:pointer;background:${S.includedFns.includes(f.id)?f.light:'#fff'};transition:.15s">
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <input type="checkbox" name="fn" value="${f.id}" ${S.includedFns.includes(f.id)?'checked':''} style="margin-top:4px;flex-shrink:0">
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-              <span style="font-weight:800;color:${f.color};font-size:.9rem">${f.id}</span>
-              <span style="font-weight:700;font-size:.95rem;color:#0d2137">${f.name}</span>
-            </div>
-            <p style="font-size:.8rem;color:#3d5a78;line-height:1.55;margin:0">${f.explain}</p>
-          </div>
-        </div>
-      </label>`).join('')}
-    </div>
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0">
+      <input type="checkbox" id="inp-consent" ${o.dataConsentAcknowledged?'checked':''} style="margin-top:3px;flex-shrink:0;width:16px;height:16px">
+      <span style="font-size:.85rem;color:#1a2332;font-weight:600;line-height:1.5">I understand and acknowledge the above. I agree to the assessment creator receiving anonymized scoring data for benchmarking purposes.</span>
+    </label>
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-bottom:32px">
     <button class="btn btn-secondary" data-action="goto-welcome">← Back</button>
-    <button class="btn btn-primary" data-action="setup-next">Continue to Structured Document Upload →</button>
+    <button class="btn btn-primary" data-action="setup-next">Analyze Scope with AI →</button>
   </div>
 </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 2: SCOPE — AI-recommended subcategory selection
+// ════════════════════════════════════════════════════════════
+function renderScope(){
+  const excl=new Set(S.excludedSubcategories||[]);
+  const rec=S.aiScopeRec||{};
+  const total=SC_RAW.length;
+  const inScope=SC_RAW.filter(([id])=>!excl.has(id)).length;
+  function recBadge(id){
+    const r=rec[id];if(!r)return'';
+    if(r.action==='include')return`<span class="scope-sc-rec scope-rec-core" title="${escHtml(r.reason||'')}">Core</span>`;
+    if(r.action==='optional')return`<span class="scope-sc-rec scope-rec-optional" title="${escHtml(r.reason||'')}">Optional</span>`;
+    if(r.action==='exclude')return`<span class="scope-sc-rec scope-rec-low" title="${escHtml(r.reason||'')}">Low priority</span>`;
+    return'';
+  }
+  const fnHtml=FUNCTIONS.map(fn=>{
+    const fnScs=SC_BY_FN[fn.id]||[];
+    const fnIn=fnScs.filter(id=>!excl.has(id)).length;
+    const catHtml=(CATEGORIES[fn.id]||[]).map(catId=>{
+      const catScs=SC_BY_CAT[catId]||[];
+      const catIn=catScs.filter(id=>!excl.has(id)).length;
+      const scHtml=catScs.map(id=>{
+        const sc=SC_MAP[id];
+        return`<div class="scope-sc">
+          <input type="checkbox" data-action="toggle-sc" data-scid="${id}" ${!excl.has(id)?'checked':''}>
+          <span class="scope-sc-id">${escHtml(id)}</span>
+          <span class="scope-sc-text">${escHtml(sc?sc.text:'')}</span>
+          ${recBadge(id)}
+        </div>`;
+      }).join('');
+      const indeterminate=catIn>0&&catIn<catScs.length;
+      return`<div class="scope-cat">
+        <div class="scope-cat-head">
+          <input type="checkbox" data-action="toggle-cat" data-catid="${catId}" ${catIn>0?'checked':''} ${indeterminate?'data-partial="1"':''}>
+          <strong style="font-size:.77rem;color:#1a2332">${escHtml(catId)}</strong>
+          <span style="font-size:.74rem;color:#5a7a96;flex:1;margin-left:6px">${escHtml(CAT_NAMES[catId]||catId)}</span>
+          <span style="font-size:.71rem;color:#5a7a96" data-scope-cat-count="${catId}">${catIn}/${catScs.length}</span>
+        </div>
+        <div class="scope-cat-body">${scHtml}</div>
+      </div>`;
+    }).join('');
+    const fnIndeterminate=fnIn>0&&fnIn<fnScs.length;
+    return`<div class="scope-fn" style="border-color:${fn.color}55">
+      <div class="scope-fn-head" style="background:${fn.light}">
+        <input type="checkbox" data-action="toggle-fn" data-fnid="${fn.id}" ${fnIn>0?'checked':''} ${fnIndeterminate?'data-partial="1"':''}>
+        <span style="font-weight:800;color:${fn.color};font-size:.9rem;min-width:2.6em">${fn.id}</span>
+        <span style="font-weight:700;font-size:.92rem;color:#0d2137;flex:1">${fn.name}</span>
+        <span style="font-size:.77rem;color:#5a7a96" data-scope-fn-count="${fn.id}">${fnIn}/${fnScs.length} subcategories</span>
+      </div>
+      <div class="scope-fn-body">${catHtml}</div>
+    </div>`;
+  }).join('');
+  const targetHtml=FUNCTIONS.map(f=>{
+    const tv=S.targetFnScores&&S.targetFnScores[f.id]?String(S.targetFnScores[f.id]):'';
+    return`<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;border:1.5px solid ${f.color}44;border-radius:8px;background:${f.light}55;flex-wrap:wrap">
+      <span style="font-weight:800;color:${f.color};font-size:.85rem;min-width:2.2em">${f.id}</span>
+      <span style="font-size:.83rem;color:#1a2332;flex:1;min-width:120px">${f.name}</span>
+      <select id="inp-target-${f.id}" style="font-size:.8rem;padding:6px 10px;border:1.5px solid #d0dce8;border-radius:6px;min-width:200px">
+        <option value="">Not set</option>
+        <option value="2" ${tv==='2'?'selected':''}>2 — Managed (project-level)</option>
+        <option value="3" ${tv==='3'?'selected':''}>3 — Defined (org-wide, recommended)</option>
+        <option value="4" ${tv==='4'?'selected':''}>4 — Quantitatively Managed</option>
+        <option value="5" ${tv==='5'?'selected':''}>5 — Optimizing</option>
+      </select>
+    </div>`;
+  }).join('');
+  const hasRec=Object.keys(rec).length>0;
+  return`
+${topBar(2)}
+<div class="container">
+  <div class="card">
+    <h2>Assessment Scope</h2>
+    <p class="sub">Review and adjust the subcategories included in this assessment. ${hasRec?'The AI has pre-flagged subcategories based on your organization profile — hover any badge for the reasoning. You have full control.':'All subcategories are included by default — deselect any that don\'t apply.'}</p>
+    ${hasRec?`<div class="alert alert-info" style="margin-bottom:16px"><strong>AI Scope Recommendations</strong> — Subcategories flagged <span class="scope-sc-rec scope-rec-core" style="font-size:.72rem">Core</span> are essential for your profile. <span class="scope-sc-rec scope-rec-optional" style="font-size:.72rem">Optional</span> are situational. <span class="scope-sc-rec scope-rec-low" style="font-size:.72rem">Low priority</span> have been pre-deselected but you can re-include them. Hover any badge to see the AI's reasoning.</div>`:''}
+    <div class="scope-summary">
+      <div class="scope-stat"><div class="scope-stat-num" id="scope-in-count">${inScope}</div><div class="scope-stat-lbl">In scope</div></div>
+      <div class="scope-stat"><div class="scope-stat-num" style="color:#8aa3bc" id="scope-out-count">${total-inScope}</div><div class="scope-stat-lbl">Excluded</div></div>
+      <div class="scope-stat"><div class="scope-stat-num" style="color:#1a2332">${total}</div><div class="scope-stat-lbl">Total subcategories</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="scope-include-all">Include all</button>
+      ${hasRec?`<button type="button" class="btn btn-secondary btn-sm" data-action="scope-apply-ai-rec">Reset to AI recommendations</button>`:''}
+    </div>
+    <div id="scope-tree">${fnHtml}</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Target State — Current vs. Desired Maturity (Optional)</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:14px">Set a desired CMMI score per function to include a <strong>current vs. target gap analysis</strong> in the report. Leave unset to skip.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${targetHtml}</div>
+    <p style="font-size:.76rem;color:#7a9ab8;margin-top:10px">Most organizations target CMMI 3 (Defined) as a practical baseline. Heavily regulated sectors often target 3–4.</p>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;margin-bottom:32px">
+    <button class="btn btn-secondary" data-action="goto-setup">← Back</button>
+    <button class="btn btn-primary" data-action="scope-next">Continue to Document Upload →</button>
+  </div>
+</div>
+<script>
+(function(){
+  document.querySelectorAll('[data-partial="1"]').forEach(el=>{el.indeterminate=true;});
+})();
+</script>`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -954,7 +1178,7 @@ function renderDRL(){
     }).join('')}</div>
   </div>`;
   return`
-${topBar(2)}
+${topBar(3)}
 <div class="container container-drl">
   <div class="card">
     <h2>Document Upload — Evidence Collection</h2>
@@ -1049,7 +1273,7 @@ function renderAnalysis(){
   const counts={strong:0,adequate:0,weak:0,missing:0};
   allScs.forEach(id=>counts[qMap(id)]++);
   return`
-${topBar(3)}
+${topBar(5)}
 <div class="container">
   ${S.demoEvidence?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo mode is active.</strong> Rows used synthetic files and a local evidence map (no AI document read). Questionnaire and findings still call the AI using your key — use this to test those steps end-to-end.</div>':''}
   <div class="card">
@@ -1106,7 +1330,7 @@ function renderQuestionnaire(){
   const totalQ=q.roles.reduce((a,r)=>a+r.questions.length,0);
   const totalA=q.roles.reduce((a,r)=>a+r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length,0);
   return`
-${topBar(4)}
+${topBar(5)}
 <div class="container">
   <div class="card">
     <h2>Assessment Questionnaire</h2>
@@ -1312,81 +1536,293 @@ ${topBar(6)}
 // ════════════════════════════════════════════════════════════
 // STEP 8: REPORT
 // ════════════════════════════════════════════════════════════
+function _loeRank(l){return l==='low'?1:l==='medium'?2:3;}
+function _riskScore(f){return(f.likelihood||1)*(f.impact||1);}
+function _loeBadge(loe){const m={low:['#e8f5e9','#2e7d32'],medium:['#fffde7','#f57f17'],high:['#ffebee','#c62828']};const[bg,fg]=m[loe]||['#f0f4f8','#5a7a96'];return`<span style="background:${bg};color:${fg};padding:2px 7px;border-radius:8px;font-size:.72rem;font-weight:700;white-space:nowrap">${(loe||'—').toUpperCase()}</span>`;}
+function _riskBadge(score){if(score==null)return'—';const bg=score>=15?'#ffebee':score>=8?'#fff3e0':score>=4?'#fffde7':'#e8f5e9';const fg=score>=15?'#c62828':score>=8?'#e65100':score>=4?'#f57f17':'#2e7d32';return`<span style="background:${bg};color:${fg};padding:2px 9px;border-radius:8px;font-size:.78rem;font-weight:900">${score}</span>`;}
+function _navBar(fns,rp){
+  const pills=[`<button type="button" class="btn btn-sm ${rp===0?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="0">Exec Summary</button>`]
+    .concat(fns.map((fn,i)=>`<button type="button" class="btn btn-sm ${rp===i+1?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="${i+1}" style="border-left:3px solid ${fn.color}">${fn.id}</button>`)).join('');
+  return`<div class="card" style="padding:14px 20px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;margin-bottom:10px">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-prev" ${rp<=0?'disabled':''}>← Prev</button>
+      <span style="font-size:.8rem;font-weight:600;color:#2c4a6a">Section ${rp+1} of ${fns.length+1}</span>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-next" ${rp>=fns.length?'disabled':''}>Next →</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">${pills}</div>
+  </div>`;}
 function renderReport(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   const fnScores={};
   fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScores[fn.id]=avg(vals);});
   const overall=avg(Object.values(fnScores).filter(x=>x!=null));
   const oc=scoreColor(overall);
-  const allFindings=Object.entries(S.findings).filter(([id])=>S.includedFns.includes(id.split('.')[0])).sort((a,b)=>(a[1].cmmi_score||0)-(b[1].cmmi_score||0)).slice(0,10);
-  const lastPg=Math.max(0,fns.length);
-  const rp=Math.max(0,Math.min(S.reportPage|0,lastPg));
-  const overviewHtml=`
+  const rp=Math.max(0,Math.min(S.reportPage||0,fns.length));
+  const nav=_navBar(fns,rp);
+
+  if(rp===0){
+    // ── Exec Summary page ──
+    const riskEntries=Object.entries(S.findings)
+      .filter(([id])=>S.includedFns.includes(id.split('.')[0]))
+      .map(([id,f])=>({id,f,rs:_riskScore(f)}))
+      .sort((a,b)=>b.rs-a.rs||_loeRank(a.f.loe)-_loeRank(b.f.loe));
+    const hasRisk=riskEntries.some(e=>e.f.likelihood!=null);
+    const missingRisk=riskEntries.some(e=>e.f.likelihood==null||e.f.impact==null||!e.f.loe);
+    return`
+${topBar(7)}
+<div class="container">
+${nav}
   <div class="card" style="text-align:center">
     <div style="font-size:.75rem;font-weight:700;color:#7a9ab8;letter-spacing:1px;margin-bottom:8px">ASSESSMENT REPORT</div>
     <h2 style="font-size:1.6rem">${escHtml(S.org.name)} — NIST CSF 2.0 Assessment</h2>
-    <p style="color:#5a7a96;margin:6px 0">${S.org.industry} · Assessor: ${escHtml(S.org.assessorName||'Self-assessment')}</p>
+    <p style="color:#5a7a96;margin:6px 0">${escHtml(S.org.industry||'')} \xb7 Assessor: ${escHtml(S.org.assessorName||'Self-assessment')}</p>
     <div style="margin:20px auto;display:inline-block;padding:20px 40px;border-radius:16px;background:${oc.bg}">
       <div style="font-size:.8rem;font-weight:700;color:${oc.fg};letter-spacing:1px">OVERALL SCORE</div>
-      <div style="font-size:3rem;font-weight:900;color:${oc.fg}">${overall!=null?overall.toFixed(1):'N/A'}</div>
-      <div style="font-size:.85rem;color:${oc.fg}">${overall!=null?tierFromCmmi(overall)+' · CMMI '+Math.round(overall):'Not scored'}</div>
+      <div style="font-size:3rem;font-weight:900;color:${oc.fg}">${overall!=null?fmtScore(overall):'N/A'}</div>
+      <div style="font-size:.9rem;color:${oc.fg};margin-top:4px">${overall!=null?tierLabel(overall):''}</div>
+      <div style="font-size:.8rem;color:${oc.fg};opacity:.8">${overall!=null?'CMMI '+fmtScore(overall)+' of 5.0':''}</div>
     </div>
     <div style="margin-top:12px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
       <button type="button" class="btn btn-secondary" data-action="export-json">💾 Export JSON</button>
+      <button type="button" class="btn btn-secondary" data-action="regenerate-narratives">✨ Regenerate Narratives</button>
+      ${missingRisk?`<button type="button" class="btn btn-secondary" data-action="enrich-risk-data">⚡ Enrich Risk Data</button>`:''}
       <button type="button" class="btn btn-secondary" data-action="goto-findings-review">← Edit Findings</button>
     </div>
   </div>
 
   <div class="card">
-    <div class="section-label">Function Scores</div>
-    <div class="row" style="align-items:center;gap:24px">
-      <div style="flex:1;min-width:260px">${renderRadar(fns,fnScores)}</div>
-      <div style="flex:1">
-        <table class="evidence-table">
-          <thead><tr><th>Function</th><th>Score</th><th>CMMI</th><th>CSF Tier</th></tr></thead>
-          <tbody>${fns.map(fn=>{const s=fnScores[fn.id];const c=scoreColor(s);return`<tr><td><strong style="color:${fn.color}">${fn.id}</strong> — ${fn.name}</td><td><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${s!=null?s.toFixed(1):'-'}</span></td><td style="font-size:.82rem">${s!=null?'Level '+Math.round(s):'-'}</td><td style="font-size:.82rem">${s!=null?tierFromCmmi(s):'-'}</td></tr>`;}).join('')}</tbody>
+    <div class="section-label">Scoring Reference</div>
+    <p style="font-size:.85rem;color:#2c4a6a;line-height:1.6;margin-bottom:20px">Each CSF 2.0 subcategory is scored at <strong>0.25-point increments</strong> on two complementary scales. A score of 1–2 indicates significant gaps requiring immediate attention; 3 represents sound organizational practice; 4–5 indicates a measured and continuously improving program.</p>
+    <div class="row" style="gap:32px">
+      <div class="col" style="min-width:260px">
+        <div style="font-weight:700;font-size:.85rem;color:#0d2137;margin-bottom:10px;border-bottom:2px solid #e0eaf4;padding-bottom:6px">CMMI Scale (1.0 – 5.0)</div>
+        <table class="evidence-table" style="font-size:.8rem">
+          <thead><tr><th style="width:15%">Level</th><th style="width:28%">Label</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><span class="heat-cell" style="background:#ffebee;color:#c62828;padding:2px 8px">1</span></td><td style="font-weight:600">Initial</td><td style="color:#5a7a96">Ad hoc, reactive. No repeatable process.</td></tr>
+            <tr><td><span class="heat-cell" style="background:#fff3e0;color:#e65100;padding:2px 8px">2</span></td><td style="font-weight:600">Managed</td><td style="color:#5a7a96">Managed at project level; not org-wide.</td></tr>
+            <tr><td><span class="heat-cell" style="background:#fffde7;color:#f57f17;padding:2px 8px">3</span></td><td style="font-weight:600">Defined</td><td style="color:#5a7a96">Formally documented, consistently applied org-wide.</td></tr>
+            <tr><td><span class="heat-cell" style="background:#f1f8e9;color:#2e7d32;padding:2px 8px">4</span></td><td style="font-weight:600">Quantitatively Managed</td><td style="color:#5a7a96">Measured and controlled with quantitative targets.</td></tr>
+            <tr><td><span class="heat-cell" style="background:#e8f5e9;color:#1b5e20;padding:2px 8px">5</span></td><td style="font-weight:600">Optimizing</td><td style="color:#5a7a96">Continuous improvement embedded; adapts to new risks.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col" style="min-width:260px">
+        <div style="font-weight:700;font-size:.85rem;color:#0d2137;margin-bottom:10px;border-bottom:2px solid #e0eaf4;padding-bottom:6px">NIST CSF Implementation Tiers (1 – 4)</div>
+        <table class="evidence-table" style="font-size:.8rem">
+          <thead><tr><th style="width:15%">Tier</th><th style="width:28%">Label</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><span class="heat-cell" style="background:#ffebee;color:#c62828;padding:2px 8px">1</span></td><td style="font-weight:600">Partial</td><td style="color:#5a7a96">Ad hoc, reactive. Limited awareness. (CMMI &lt;1.75)</td></tr>
+            <tr><td><span class="heat-cell" style="background:#fff3e0;color:#e65100;padding:2px 8px">2</span></td><td style="font-weight:600">Risk Informed</td><td style="color:#5a7a96">Approved but not org-wide. (CMMI 1.75–2.74)</td></tr>
+            <tr><td><span class="heat-cell" style="background:#fffde7;color:#f57f17;padding:2px 8px">3</span></td><td style="font-weight:600">Repeatable</td><td style="color:#5a7a96">Consistent formal policies org-wide. (CMMI 2.75–3.74)</td></tr>
+            <tr><td><span class="heat-cell" style="background:#f1f8e9;color:#2e7d32;padding:2px 8px">4</span></td><td style="font-weight:600">Adaptive</td><td style="color:#5a7a96">Continuously improved from lessons learned. (CMMI ≥3.75)</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="section-label">Priority Gaps — Lowest Scoring Subcategories</div>
-    <table class="evidence-table" style="margin-top:12px">
-      <thead><tr><th>Subcategory</th><th>Score</th><th>Priority</th><th>Recommendation</th></tr></thead>
-      <tbody>${allFindings.map(([id,f])=>{const sc=SC_MAP[id];const c=scoreColor(f.cmmi_score);return`<tr><td><div style="font-weight:700;font-size:.82rem">${id}</div><div style="font-size:.78rem;color:#5a7a96">${escHtml((sc?.text||'').slice(0,80))}${(sc?.text||'').length>80?'...':''}</div></td><td><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${f.cmmi_score||'-'}</span></td><td><span class="chip ${f.priority==='high'?'chip-red':f.priority==='medium'?'chip-orange':'chip-lgreen'}">${(f.priority||'med').toUpperCase()}</span></td><td style="font-size:.8rem">${escHtml((f.recommendation||'-').slice(0,120))}${(f.recommendation||'').length>120?'...':''}</td></tr>`;}).join('')}</tbody>
-    </table>
-  </div>`;
-  const fnDetailCard=fn=>`
+    <div class="section-label">Function Scores</div>
+    <div class="row" style="align-items:center;gap:24px">
+      <div style="flex:1;min-width:240px">${renderRadar(fns,fnScores)}</div>
+      <div style="flex:1">
+        <table class="evidence-table">
+          <thead><tr><th>Function</th><th>CMMI</th><th>CSF Tier</th><th style="width:70px"></th></tr></thead>
+          <tbody>${fns.map((fn,i)=>{const s=fnScores[fn.id];const c=scoreColor(s);return`<tr>
+            <td><strong style="color:${fn.color}">${fn.id}</strong> — ${fn.name}</td>
+            <td><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${s!=null?fmtScore(s):'-'}</span></td>
+            <td style="font-size:.82rem">${s!=null?tierLabel(s):'-'}</td>
+            <td><button type="button" class="btn btn-secondary btn-sm" data-action="report-goto-page" data-page="${i+1}" style="font-size:.7rem;padding:3px 9px">View →</button></td>
+          </tr>`;}).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  ${(()=>{
+    // ── Industry peer comparison ──────────────────────────────
+    const bench=INDUSTRY_BENCHMARKS[S.org.industry]||INDUSTRY_BENCHMARKS['Other'];
+    const benchDelta=overall!=null&&bench?.overall!=null?Math.round((overall-bench.overall)*10)/10:null;
+    const commonGaps=INDUSTRY_COMMON_GAPS[S.org.industry]||[];
+    // ── Organizational strengths (CMMI ≥ 3.5) ────────────────
+    const strengths=Object.entries(S.findings)
+      .filter(([id,f])=>S.includedFns.includes(id.split('.')[0])&&(f.cmmi_score||0)>=3.5)
+      .sort((a,b)=>(b[1].cmmi_score||0)-(a[1].cmmi_score||0)).slice(0,8);
+    // ── 30/60/90-day roadmap from risk data ──────────────────
+    const byRisk=Object.entries(S.findings)
+      .filter(([id])=>S.includedFns.includes(id.split('.')[0]))
+      .sort((a,b)=>{
+        const rs=f=>(f.likelihood||2)*(f.impact||2);
+        const loO={low:0,medium:1,high:2};
+        return rs(b[1])-rs(a[1])||(loO[a[1].loe||'medium']||1)-(loO[b[1].loe||'medium']||1);
+      });
+    const p30=byRisk.filter(([,f])=>(f.likelihood||0)*(f.impact||0)>=9&&(f.loe||'medium')==='low').slice(0,5);
+    const usedA=new Set(p30.map(([id])=>id));
+    const p60=byRisk.filter(([id,f])=>!usedA.has(id)&&((f.likelihood||0)*(f.impact||0)>=9||(f.loe||'medium')==='medium')).slice(0,5);
+    const usedB=new Set([...usedA,...p60.map(([id])=>id)]);
+    const p90=byRisk.filter(([id])=>!usedB.has(id)).slice(0,5);
+    return`
   <div class="card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <div style="width:4px;height:24px;background:${fn.color};border-radius:2px"></div>
-      <h3 style="font-size:1rem;color:${fn.color}">${fn.id} — ${fn.name}</h3>
-      ${fnScores[fn.id]!=null?`<span class="score-badge" style="background:${scoreColor(fnScores[fn.id]).bg};color:${scoreColor(fnScores[fn.id]).fg}">${fnScores[fn.id].toFixed(1)}</span>`:''}
-    </div>
+    <div class="section-label">Industry Peer Comparison — ${escHtml(S.org.industry)}</div>
+    <p style="font-size:.8rem;color:#5a7a96;margin-bottom:14px">Approximate CMMI-equivalent benchmarks per sector from IBM X-Force, Ponemon/IBM, ISACA State of Cybersecurity, and SecurityScorecard industry reports. Individual organizations vary; use as directional context.</p>
     <table class="evidence-table">
-      <thead><tr><th>ID</th><th>Subcategory</th><th>CMMI</th><th>Tier</th><th>Rationale</th><th>Recommendation</th></tr></thead>
-      <tbody>${(SC_BY_FN[fn.id]||[]).map(id=>{const sc=SC_MAP[id];const f=S.findings[id];const c=scoreColor(f?.cmmi_score);return`<tr><td style="font-weight:700;font-size:.8rem;white-space:nowrap">${id}</td><td style="font-size:.78rem">${escHtml((sc?.text||'').slice(0,90))}${(sc?.text||'').length>90?'...':''}</td><td style="text-align:center"><span class="heat-cell" style="background:${c.bg};color:${c.fg};padding:3px 8px;font-size:.78rem">${f?.cmmi_score||'-'}</span></td><td style="font-size:.78rem;text-align:center">${f?.tier_score?'T'+f.tier_score:'-'}</td><td style="font-size:.76rem;color:#2c4a6a">${escHtml((f?.rationale||'Not assessed').slice(0,100))}${(f?.rationale||'').length>100?'...':''}</td><td style="font-size:.76rem;color:#2c4a6a">${escHtml((f?.recommendation||'-').slice(0,100))}${(f?.recommendation||'').length>100?'...':''}</td></tr>`;}).join('')}</tbody>
+      <thead><tr><th>Function</th><th style="text-align:center">Your Score</th><th style="text-align:center">Sector Avg</th><th style="text-align:center">Delta</th><th>Peer Standing</th></tr></thead>
+      <tbody>
+        ${fns.map(fn=>{
+          const s=fnScores[fn.id];const b=bench[fn.id];
+          const d=s!=null&&b!=null?Math.round((s-b)*10)/10:null;const c=scoreColor(s);
+          return`<tr>
+            <td><strong style="color:${fn.color}">${fn.id}</strong> — ${fn.name}</td>
+            <td style="text-align:center"><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${s!=null?fmtScore(s):'-'}</span></td>
+            <td style="text-align:center;color:#5a7a96;font-weight:600">${b!=null?b.toFixed(1):'-'}</td>
+            <td style="text-align:center">${d!=null?`<span style="color:${d>0?'#2e7d32':d<0?'#c62828':'#7a9ab8'};font-weight:700">${d>0?'▲ +':d<0?'▼ ':''}${d!==0?Math.abs(d).toFixed(1):'—'}</span>`:'—'}</td>
+            <td style="font-size:.8rem">${d==null?'—':d>=0.3?'<span style="color:#2e7d32;font-weight:600">Above avg</span>':d<=-0.3?'<span style="color:#c62828;font-weight:600">Below avg</span>':'Near avg'}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:#f8fafc">
+          <td style="font-weight:700">Overall</td>
+          <td style="text-align:center"><span class="heat-cell" style="background:${oc.bg};color:${oc.fg}">${overall!=null?fmtScore(overall):'-'}</span></td>
+          <td style="text-align:center;color:#5a7a96;font-weight:600">${bench?.overall!=null?bench.overall.toFixed(1):'-'}</td>
+          <td style="text-align:center">${benchDelta!=null?`<span style="color:${benchDelta>0?'#2e7d32':benchDelta<0?'#c62828':'#7a9ab8'};font-weight:700">${benchDelta>0?'▲ +':benchDelta<0?'▼ ':''}${benchDelta!==0?Math.abs(benchDelta).toFixed(1):'—'}</span>`:'—'}</td>
+          <td style="font-size:.8rem">${benchDelta==null?'—':benchDelta>=0.3?'<span style="color:#2e7d32;font-weight:600">Above avg</span>':benchDelta<=-0.3?'<span style="color:#c62828;font-weight:600">Below avg</span>':'Near avg'}</td>
+        </tr>
+      </tbody>
     </table>
-  </div>`;
-  const pills=[`<button type="button" class="btn btn-sm ${rp===0?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="0">Overview</button>`]
-    .concat(fns.map((fn,i)=>`<button type="button" class="btn btn-sm ${rp===i+1?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="${i+1}">${fn.id}</button>`)).join(' ');
-  const pager=`
-  <div class="card" style="padding:16px 20px">
-    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
-      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-prev" ${rp<=0?'disabled':''}>← Previous</button>
-      <span style="font-size:.82rem;font-weight:600;color:#2c4a6a">Report section ${rp+1} of ${lastPg+1}</span>
-      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-next" ${rp>=lastPg?'disabled':''}>Next →</button>
+    ${commonGaps.length?`<div class="alert alert-info" style="margin-top:12px;font-size:.82rem"><strong>Historically weak in ${escHtml(S.org.industry)}:</strong> ${commonGaps.map(c=>`<strong>${c}</strong> — ${CAT_NAMES[c]||c}`).join(' · ')}</div>`:''}
+  </div>
+
+  ${strengths.length?`
+  <div class="card">
+    <div class="section-label">Organizational Strengths — Subcategories Scoring ≥ 3.5</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:14px">Areas demonstrating mature, consistently practiced controls. These represent existing capabilities to build upon.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      ${strengths.map(([id,f])=>{const sc=SC_MAP[id];const c=scoreColor(f.cmmi_score);return`<div style="border:1.5px solid ${c.bg};border-radius:8px;padding:10px 14px;max-width:300px;flex:0 0 auto;background:${c.bg}33"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="score-badge" style="background:${c.bg};color:${c.fg};font-size:.74rem">${fmtScore(f.cmmi_score)}</span><span style="font-weight:700;font-size:.78rem;color:${c.fg}">${id}</span></div><div style="font-size:.74rem;color:#2c4a6a;line-height:1.4">${escHtml((sc?.text||'').slice(0,95))}${(sc?.text||'').length>95?'…':''}</div></div>`;}).join('')}
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center">${pills}</div>
-  </div>`;
-  const detailSection=rp>0&&fns[rp-1]?fnDetailCard(fns[rp-1]):'';
+  </div>`:''}
+
+  <div class="card">
+    <div class="section-label">Remediation Roadmap</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:16px">Suggested action phases based on Risk Score (Likelihood × Impact) and Level of Effort. Quick wins are high-risk gaps with low implementation effort — the fastest way to reduce material exposure.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px">
+      ${[
+        {label:'30 Days',sub:'Quick Wins: High Risk × Low Effort',col:'#c62828',bg:'#ffebee',items:p30},
+        {label:'60 Days',sub:'High Risk + Medium Effort / Process Improvements',col:'#e65100',bg:'#fff3e0',items:p60},
+        {label:'90 Days',sub:'Strategic & Governance Improvements',col:'#1565c0',bg:'#e3f2fd',items:p90},
+      ].map(col=>`<div style="border:2px solid ${col.col}33;border-radius:10px;overflow:hidden">
+        <div style="background:${col.col};color:#fff;padding:10px 16px"><div style="font-weight:800;font-size:.93rem">${col.label}</div><div style="font-size:.71rem;opacity:.9;margin-top:1px">${col.sub}</div></div>
+        <div style="padding:12px 14px;background:${col.bg}44;min-height:70px">
+          ${col.items.length?col.items.map(([id,f])=>`<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid ${col.col}22"><div style="font-weight:700;font-size:.76rem;color:${col.col};margin-bottom:2px">${id}<span style="background:${col.col}22;border-radius:3px;padding:1px 5px;margin-left:6px;font-size:.7rem">${fmtScore(f.cmmi_score)}</span>${f.loe?`<span style="background:${col.col}11;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:.68rem;opacity:.8">LOE ${f.loe}</span>`:''}</div><div style="font-size:.72rem;color:#2c4a6a;line-height:1.45">${escHtml((f.remediation_summary||f.recommendation||'').slice(0,120))}${(f.remediation_summary||f.recommendation||'').length>120?'…':''}</div></div>`).join('')
+          :`<div style="font-size:.8rem;color:#7a9ab8;font-style:italic">No items in this phase.</div>`}
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+`;})()}
+
+  <div class="card">
+    <div class="section-label">Risk Register — Prioritized by Risk Score \xd7 Level of Effort</div>
+    <p style="font-size:.82rem;color:#5a7a96;margin:4px 0 14px">Sorted by Risk Score (Likelihood \xd7 Impact, 1–25) descending, then Level of Effort ascending. Risk ≥15 = critical, 8–14 = high, 4–7 = elevated, &lt;4 = low.</p>
+    ${!hasRisk?`<div style="padding:14px;background:#fff8e1;border-radius:8px;border-left:4px solid #ffa726;font-size:.83rem;color:#7a5200">
+      Risk enrichment data (Likelihood, Impact, LOE) was not generated. Click <strong>⚡ Enrich Risk Data</strong> above, or re-run findings generation.
+    </div>`:`
+    <div style="overflow-x:auto">
+    <table class="evidence-table" style="table-layout:fixed;width:100%;min-width:700px">
+      <colgroup><col style="width:9%"><col style="width:20%"><col style="width:7%"><col style="width:5%"><col style="width:5%"><col style="width:8%"><col style="width:46%"></colgroup>
+      <thead><tr><th>ID</th><th>Subcategory</th><th>Risk</th><th>L</th><th>I</th><th>LOE</th><th>Remediation</th></tr></thead>
+      <tbody>${riskEntries.map(({id,f})=>{
+        const sc=SC_MAP[id];const c=scoreColor(f.cmmi_score);
+        const rs=f.likelihood!=null&&f.impact!=null?f.likelihood*f.impact:null;
+        return`<tr>
+          <td style="font-weight:700;font-size:.78rem;white-space:nowrap;vertical-align:top">${id}<br><span class="heat-cell" style="background:${c.bg};color:${c.fg};margin-top:2px;font-size:.7rem;padding:1px 5px;display:inline-block">${f.cmmi_score!=null?fmtScore(f.cmmi_score):'-'}</span></td>
+          <td style="font-size:.75rem;color:#2c4a6a;vertical-align:top;overflow-wrap:break-word">${escHtml(sc?.text||'')}</td>
+          <td style="text-align:center;vertical-align:top">${_riskBadge(rs)}</td>
+          <td style="text-align:center;vertical-align:top;font-size:.82rem;font-weight:700">${f.likelihood!=null?f.likelihood:'—'}</td>
+          <td style="text-align:center;vertical-align:top;font-size:.82rem;font-weight:700">${f.impact!=null?f.impact:'—'}</td>
+          <td style="text-align:center;vertical-align:top">${_loeBadge(f.loe)}${f.loe_detail?`<div style="font-size:.64rem;color:#7a9ab8;margin-top:3px;overflow-wrap:break-word">${escHtml(f.loe_detail)}</div>`:''}</td>
+          <td style="font-size:.74rem;color:#1a3a5c;vertical-align:top;overflow-wrap:break-word;line-height:1.5">${escHtml(f.remediation_summary||f.recommendation||'—')}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`}
+  </div>
+${nav}
+  <div style="margin-bottom:32px"></div>
+</div>`;
+  }
+
+  // ── Per-function page ──
+  const fn=fns[rp-1];
+  if(!fn)return`${topBar(7)}<div class="container">${nav}<div style="margin-bottom:32px"></div></div>`;
+  const fs=fnScores[fn.id];const fc=scoreColor(fs);
+  const narrative=S.functionNarratives?.[fn.id]||'';
+  const evQualColor={strong:'#2e7d32',adequate:'#f57f17',weak:'#e65100',missing:'#c62828'};
+  const evQualBg={strong:'#e8f5e9',adequate:'#fffde7',weak:'#fff3e0',missing:'#ffebee'};
   return`
 ${topBar(7)}
 <div class="container">
-  ${pager}
-  ${rp===0?overviewHtml:detailSection}
+${nav}
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:5px;height:36px;background:${fn.color};border-radius:3px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <h3 style="font-size:1.1rem;color:${fn.color};margin:0">${fn.id} — ${fn.name}</h3>
+        <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">${escHtml(fn.desc)}</div>
+      </div>
+      ${fs!=null?`<div style="text-align:right">
+        <span class="score-badge" style="background:${fc.bg};color:${fc.fg};font-size:.95rem;padding:7px 18px;display:block">${fmtScore(fs)}<span style="font-size:.72rem;font-weight:600;margin-left:6px">${tierFromCmmi(fs)}</span></span>
+        <div style="font-size:.7rem;color:#7a9ab8;margin-top:4px">${tierLabel(fs)}</div>
+      </div>`:''}
+    </div>
+    ${narrative?`
+    <div style="margin:12px 0 0;padding:14px 16px;background:#f4f8fc;border-left:4px solid ${fn.color};border-radius:0 8px 8px 0;font-size:.85rem;color:#1a2332;line-height:1.75">
+      <div style="font-size:.7rem;font-weight:700;color:${fn.color};letter-spacing:.6px;margin-bottom:8px;text-transform:uppercase">Executive Narrative</div>
+      ${escHtml(narrative)}
+    </div>`:`
+    <div style="margin:10px 0 0;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:.8rem;color:#8aa3bc;font-style:italic">
+      No executive narrative yet. Click <strong>✨ Regenerate Narratives</strong> from the Executive Summary page.
+    </div>`}
+  </div>
+
+  <div class="card">
+    <div class="section-label">Subcategory Detail — ${fn.id}</div>
+    <div style="overflow-x:auto">
+    <table class="evidence-table" style="table-layout:fixed;width:100%;margin-top:8px;min-width:800px">
+      <colgroup>
+        <col style="width:8%"><col style="width:16%"><col style="width:5%"><col style="width:6%"><col style="width:4%"><col style="width:4%"><col style="width:6%"><col style="width:30%"><col style="width:21%">
+      </colgroup>
+      <thead><tr><th>ID</th><th>Subcategory</th><th>CMMI</th><th>Tier</th><th>L</th><th>I</th><th>LOE</th><th>Rationale &amp; Evidence</th><th>Recommendation</th></tr></thead>
+      <tbody>${(SC_BY_FN[fn.id]||[]).map(id=>{
+        const sc=SC_MAP[id];const f=S.findings[id];const c=scoreColor(f?.cmmi_score);
+        const tier=f?.cmmi_score!=null?tierFromCmmi(f.cmmi_score):'-';
+        const ev=S.evidenceMap[id];
+        const evQ=ev?.quality||'missing';
+        const evExcerpts=(ev?.excerpts||[]).slice(0,4);
+        const criticNote=f?.critic_note?`<div style="margin-top:6px;font-size:.7rem;padding:4px 8px;background:#fff8e1;border-radius:4px;border-left:3px solid #ffa726;color:#7a5200">⚖️ <strong>Critic adjusted:</strong> ${escHtml(f.critic_note)}</div>`:'';
+        const evBlock=`<details style="margin-top:8px">
+          <summary style="cursor:pointer;font-size:.71rem;color:#1e88e5;font-weight:600;list-style:none;display:flex;align-items:center;gap:5px">
+            <span>▶ Evidence</span>
+            <span style="background:${evQualBg[evQ]||'#f0f4f8'};color:${evQualColor[evQ]||'#5a7a96'};padding:1px 6px;border-radius:8px;font-size:.66rem;font-weight:700">${evQ}</span>
+          </summary>
+          <div style="margin-top:6px;font-size:.71rem;color:#5a7a96;line-height:1.5">
+            ${evExcerpts.length?evExcerpts.map(e=>`<div style="margin-bottom:4px;padding:4px 6px;background:#f8fafc;border-radius:4px;overflow-wrap:break-word">${escHtml(e)}</div>`).join(''):'<div style="color:#b0c4d8;font-style:italic">No document excerpts captured.</div>'}
+          </div>
+        </details>`;
+        return`<tr>
+          <td style="font-weight:700;font-size:.78rem;white-space:nowrap;vertical-align:top">${id}</td>
+          <td style="font-size:.74rem;color:#2c4a6a;vertical-align:top;overflow-wrap:break-word">${escHtml(sc?.text||'')}</td>
+          <td style="text-align:center;vertical-align:top"><span class="heat-cell" style="background:${c.bg};color:${c.fg};padding:3px 7px;font-size:.78rem;display:inline-block">${f?.cmmi_score!=null?fmtScore(f.cmmi_score):'-'}</span></td>
+          <td style="font-size:.73rem;text-align:center;vertical-align:top;color:#5a7a96">${tier}</td>
+          <td style="text-align:center;vertical-align:top;font-size:.8rem;font-weight:700">${f?.likelihood!=null?f.likelihood:'—'}</td>
+          <td style="text-align:center;vertical-align:top;font-size:.8rem;font-weight:700">${f?.impact!=null?f.impact:'—'}</td>
+          <td style="text-align:center;vertical-align:top">${_loeBadge(f?.loe)}</td>
+          <td style="font-size:.74rem;color:#2c4a6a;vertical-align:top;overflow-wrap:break-word;line-height:1.55">${escHtml(f?.rationale||'Not assessed')}${criticNote}${evBlock}</td>
+          <td style="font-size:.74rem;color:#1a3a5c;vertical-align:top;overflow-wrap:break-word;line-height:1.55">${escHtml(f?.recommendation||'—')}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>
+${nav}
   <div style="margin-bottom:32px"></div>
 </div>`;
 }
@@ -1406,7 +1842,7 @@ function renderRadar(fns,fnScores){
 // TOP BAR
 // ════════════════════════════════════════════════════════════
 function topBar(activeStep){
-  const steps=['Setup','Documents','Analysis','Questionnaire','Findings','Review','Report'];
+  const steps=['Organization','Scope','Documents','Analysis','Questionnaire','Findings','Report'];
   return`
 <div class="top-bar">
   <h1>NIST CSF 2.0 Guided Assessment <span class="badge">AI-Powered</span>${S.demoEvidence?'<span class="badge" style="background:#e65100;margin-left:6px">Demo evidence</span>':''}</h1>
@@ -1527,8 +1963,10 @@ async function generateQuestionnaire(){
     if(gaps.length>GAP_CAP)gaps=gaps.slice(0,GAP_CAP)+'\n\n(... gap list truncated for length; prioritize the highest-risk gaps implied above.)';
     let confirmed=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&['strong','adequate'].includes(S.evidenceMap[id]?.quality)).map(([id])=>id).join(', ');
     if(confirmed.length>CONF_CAP)confirmed=confirmed.slice(0,CONF_CAP)+' ...';
-    const sys=`You are a NIST CSF 2.0 assessment expert. Output a single JSON object only (no markdown, no commentary). Each question text under 200 characters; guidance one short sentence only.`;
-    const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry}\nScope: ${S.org.scope}\n\nEvidence GAPS (focus questions here):\n${gaps}\n\nAlready confirmed via documents: ${confirmed}\n\nGenerate a questionnaire with 18-28 questions total. Rules:\n- Group by role (CISO/Security Lead, IT Lead, Risk Manager, HR Lead, Business Continuity Lead)\n- Questions reveal paper vs practice gaps; scenario-based where possible\n- Each question maps to specific subcategory IDs; do not ask what documents already confirm\n- Keep options arrays short (max 6 options for multichoice)\n\nReturn this JSON shape:\n{"roles":[{"role":"CISO / Security Lead","description":"short","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence"}]}]}`;
+    // Industry-specific common gaps to sharpen question targeting
+    const indGaps=(INDUSTRY_COMMON_GAPS[S.org.industry]||[]).map(c=>`${c} (${CAT_NAMES[c]||c})`).join(', ');
+    const sys=`You are a senior NIST CSF 2.0 assessor conducting a ${S.org.industry} sector assessment. You produce questionnaires that reveal the difference between paper compliance and actual operational practice. Output a single JSON object only (no markdown, no commentary). Question text under 200 characters; guidance one short sentence only.`;
+    const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry} | Size: ${S.org.orgSize||'Unknown'} employees\nIT team: ${S.org.itOrgSize||'Unknown'} | Cybersecurity team: ${S.org.cyberOrgSize||'Unknown'}\nScope: ${S.org.scope||'Enterprise-wide'}\n\nEvidence GAPS — subcategories with missing or weak document coverage (focus questions here):\n${gaps}\n\nAlready confirmed via documents (do NOT re-ask these): ${confirmed}\n\n${indGaps?`Historically weak areas in ${S.org.industry} sector (pay particular attention): ${indGaps}\n\n`:''}Generate a questionnaire with 18-28 questions total. Methodology:\n- Group by role: CISO/Security Lead, IT Lead, Risk Manager, HR Lead, Business Continuity Lead\n- PRIORITIZE scenario-based and behavioral questions over self-rating (e.g. "Walk me through what happens when X…" or "When did you last do Y?")\n- Reveal paper vs. practice gaps — what policies say vs. what staff actually do day to day\n- Incorporate ${S.org.industry}-specific context (regulatory requirements, supply chain risk, operational dependencies)\n- Each question maps to 1–3 specific subcategory IDs\n- Do NOT re-ask what documents already confirm\n- Use freetext for governance/process questions where nuance matters; likert5 for consistency/frequency; yesno/multichoice only when the answer is genuinely categorical\n- Keep options arrays short (max 5 options)\n\nReturn this JSON shape:\n{"roles":[{"role":"CISO / Security Lead","description":"short context sentence","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence on why we ask this"}]}]}`;
     const raw=await callAI(sys,msg,true,{outputTokens:16384,jsonMime:providerSupportsJsonMime()});
     S.questionnaire=parseJSON(raw);S.activeRole=0;S.step='questionnaire';saveState();
   }catch(e){
@@ -1537,17 +1975,137 @@ async function generateQuestionnaire(){
   }finally{clearLoading();render();}
 }
 
-async function fetchFindingsForFunction(fn,answerSummary){
+async function fetchFindingsForFunction(fn,answersStructured){
   const scs=SC_BY_FN[fn.id]||[];
   if(!scs.length)return{};
+  const fnScSet=new Set(scs);
   const scDetails=scs.map(id=>{
     const sc=SC_MAP[id];const ev=S.evidenceMap[id];
-    return`${id}: ${sc.text}\nEvidence: ${ev?.quality||'missing'}${(ev?.excerpts||[]).length?'\nExcerpts: '+(ev.excerpts||[]).slice(0,2).join(' | '):''}`;
+    const excerpts=(ev?.excerpts||[]).slice(0,3).map(e=>`    • ${e}`).join('\n')||'    • (no document excerpts)';
+    return`${id}: ${sc.text}\n  Evidence quality: ${ev?.quality||'missing'}\n  Document excerpts:\n${excerpts}`;
   }).join('\n\n');
-  const sys=`You are a NIST CSF 2.0 assessor generating assessment findings. Be specific and evidence-based. Return ONLY valid JSON.`;
-  const msg=`Org: ${S.org.name} | Industry: ${S.org.industry} | Scoring: ${S.scoringMethod}\n\nFUNCTION: ${fn.id} — ${fn.name}\n\nSubcategory evidence:\n${scDetails}\n\nQuestionnaire responses:\n${answerSummary.slice(0,3000)}\n\nGenerate findings for ALL subcategories in ${fn.id}. Return JSON:\n{"${scs[0]}":{"current_state":"2-3 sentences","gaps":"specific gaps or null","cmmi_score":2,"tier_score":2,"rationale":"2-3 sentences tying score to evidence","recommendation":"specific actionable improvement","priority":"high|medium|low"}}\n\nCMMI: 1=Initial/ad hoc, 2=Managed/project-level, 3=Defined/org-wide, 4=Quantitative, 5=Optimizing\nTier: 1=Partial, 2=Risk Informed, 3=Repeatable, 4=Adaptive`;
-  const raw=await callAI(sys,msg,true,{outputTokens:8192,jsonMime:providerSupportsJsonMime()});
+  const relevantQA=(answersStructured||[])
+    .filter(qa=>(qa.subcategories||[]).some(s=>fnScSet.has(s)))
+    .map(qa=>`[${qa.qid}] Q: "${qa.text}"\n  Answer: ${qa.answer}\n  Maps to: ${qa.subcategories.join(', ')}`)
+    .join('\n\n');
+  const sys=`You are a NIST CSF 2.0 assessor generating detailed, evidence-grounded assessment findings. Return ONLY valid JSON — no markdown, no commentary.`;
+  const msg=`Org: ${S.org.name} | Industry: ${S.org.industry} | Size: ${S.org.orgSize||'Unknown'} employees | IT: ${S.org.itOrgSize||'Unknown'} | Cyber team: ${S.org.cyberOrgSize||'Unknown'}
+Scope: ${S.org.scope||'Enterprise-wide'}
+FUNCTION: ${fn.id} — ${fn.name}
+
+═══ EVIDENCE PER SUBCATEGORY ═══
+${scDetails}
+
+═══ RELEVANT QUESTIONNAIRE RESPONSES ═══
+${relevantQA||'(No questionnaire responses captured for this function)'}
+
+═══ INSTRUCTIONS ═══
+Generate findings for ALL subcategories in ${fn.id}.
+
+RATIONALE FORMAT (critical): Your rationale MUST cite specific sources. Name documents by their exact filename from excerpts (e.g. "The [Network Architecture v2.pdf] shows..."). Reference questionnaire responses by ID (e.g. "When asked [Q4], the respondent stated..."). Then explain WHY the evidence does or does not support a higher score.
+
+CMMI scores: use 0.25-point increments (1.0, 1.25, 1.5 … 5.0).
+CMMI: 1=Initial/ad hoc  2=Managed/project-level  3=Defined/org-wide  4=Quantitative  5=Optimizing
+Tier: derive from CMMI (<1.75=T1, <2.75=T2, <3.75=T3, ≥3.75=T4)
+
+LIKELIHOOD (1–5): probability that this gap is exploited or causes harm in the next 12 months.
+IMPACT (1–5): severity of harm to the organization if the gap materializes.
+LOE: "low" = days-to-weeks, "medium" = 1-3 months, "high" = 3+ months.
+
+Return JSON — every subcategory in ${fn.id} must appear:
+{"${scs[0]}":{"current_state":"...","gaps":"...","cmmi_score":2.25,"tier_score":2,"rationale":"Cite [DocumentName] and [Qx]: ...","recommendation":"...","priority":"high|medium|low","likelihood":3,"impact":4,"loe":"medium","loe_detail":"Estimated time/effort description","remediation_summary":"Brief: what needs to be done"}}`;
+  const raw=await callAI(sys,msg,true,{outputTokens:10000,jsonMime:providerSupportsJsonMime()});
   return parseJSON(raw);
+}
+
+async function runCriticPassForFunction(fn){
+  const scs=SC_BY_FN[fn.id]||[];
+  const maxByQuality={strong:5,adequate:3.5,weak:2.5,missing:1.5};
+  let adjusted=0;
+  scs.forEach(id=>{
+    const f=S.findings[id];if(!f)return;
+    const ev=S.evidenceMap[id];
+    const cap=maxByQuality[ev?.quality||'missing']||1.5;
+    if((f.cmmi_score||0)>cap){
+      const old=f.cmmi_score;
+      f.cmmi_score=cap;
+      f.critic_note=`Score adjusted from ${old} → ${cap} (evidence quality "${ev?.quality||'missing'}" caps at ${cap}).`;
+      adjusted++;
+    }
+  });
+  return adjusted;
+}
+
+async function generateNarrativeForFunction(fn,fnScore){
+  const scs=SC_BY_FN[fn.id]||[];
+  if(!scs.length)return;
+  const sorted=[...scs].map(id=>({id,score:S.findings[id]?.cmmi_score})).filter(x=>x.score!=null).sort((a,b)=>b.score-a.score);
+  const top=sorted.slice(0,3).map(x=>`${x.id} (${fmtScore(x.score)})`).join(', ');
+  const bot=sorted.slice(-3).reverse().map(x=>`${x.id} (${fmtScore(x.score)})`).join(', ');
+  const tier=fnScore!=null?tierLabel(fnScore):'unscored';
+  const sys=`You are a NIST CSF 2.0 assessment expert writing an executive summary for a cybersecurity assessment report. Write clearly and confidently for a board-level audience.`;
+  const msg=`Write ONE concise executive paragraph (5–7 sentences) for the ${fn.id} — ${fn.name} function for ${escHtml(S.org.name)} (${S.org.industry} sector, ${S.org.orgSize||'unknown size'}).
+Assessment scope: ${S.org.scope||'Enterprise-wide'}.
+
+Overall function score: ${fnScore!=null?fmtScore(fnScore):'N/A'} / 5.0 — ${tier}
+Strongest subcategories: ${top||'none'}
+Weakest subcategories: ${bot||'none'}
+Function description: ${fn.desc}
+
+The paragraph must:
+1. Open by stating the function's overall maturity level in plain language
+2. Acknowledge 1–2 areas of relative strength with brief specifics
+3. Clearly name 2–3 material gaps that elevate organizational risk
+4. Close with one prioritised, actionable recommendation
+
+Do NOT use bullet points, headers, or markdown. Return plain text only — the paragraph itself, nothing else.`;
+  try{
+    const raw=await callAI(sys,msg,false,{outputTokens:512});
+    S.functionNarratives[fn.id]=(raw||'').trim();
+  }catch(e){console.warn(`[Narrative] ${fn.id} failed (non-fatal):`,e.message);}
+}
+
+async function runRiskEnrichmentPass(){
+  const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+  let enriched=0;
+  await Promise.allSettled(fns.map(async fn=>{
+    const scs=SC_BY_FN[fn.id]||[];
+    const needsEnrichment=scs.filter(id=>S.findings[id]&&(S.findings[id].likelihood==null||S.findings[id].impact==null||!S.findings[id].loe));
+    if(!needsEnrichment.length)return;
+    const scList=needsEnrichment.map(id=>{
+      const f=S.findings[id];
+      return`${id}: cmmi=${fmtScore(f.cmmi_score)}, gaps="${(f.gaps||'').slice(0,120)}"`;
+    }).join('\n');
+    const sys=`You are a NIST CSF 2.0 risk analyst. Return ONLY valid JSON — no markdown, no commentary.`;
+    const msg=`For the following subcategories in ${fn.id} — ${fn.name} (${S.org.name}, ${S.org.industry}), provide risk enrichment fields.
+
+${scList}
+
+LIKELIHOOD (1–5): probability the gap is exploited or causes harm in the next 12 months.
+IMPACT (1–5): severity of harm if the gap materializes.
+LOE: "low" = days-to-weeks, "medium" = 1-3 months, "high" = 3+ months.
+
+Return JSON keyed by subcategory ID:
+{"${needsEnrichment[0]}":{"likelihood":3,"impact":4,"loe":"medium","loe_detail":"Estimated 4-6 weeks to implement policy and tooling","remediation_summary":"Brief description of what needs to be done"}}`;
+    try{
+      const raw=await callAI(sys,msg,true,{outputTokens:3000,jsonMime:providerSupportsJsonMime()});
+      const parsed=parseJSON(raw);
+      if(parsed&&typeof parsed==='object'){
+        Object.entries(parsed).forEach(([id,data])=>{
+          if(S.findings[id]&&data){
+            if(data.likelihood!=null)S.findings[id].likelihood=data.likelihood;
+            if(data.impact!=null)S.findings[id].impact=data.impact;
+            if(data.loe)S.findings[id].loe=data.loe;
+            if(data.loe_detail)S.findings[id].loe_detail=data.loe_detail;
+            if(data.remediation_summary)S.findings[id].remediation_summary=data.remediation_summary;
+            enriched++;
+          }
+        });
+      }
+    }catch(e){console.warn(`[RiskEnrich] ${fn.id} failed:`,e.message);}
+  }));
+  saveState();
+  return enriched;
 }
 
 function applyDemoFindingsSkipAi(){
@@ -1580,18 +2138,18 @@ function applyDemoFindingsSkipAi(){
 async function generateFindings(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   const n=fns.length;
-  const findingsTimeHint=`Up to ${n} large AI requests run in parallel (one per CSF function in scope). That is usually faster than the old one-at-a-time flow, but each call is still heavy—plan on roughly 1–5 minutes when the API is responsive; free tiers may throttle or drop a request (check the console). Keep this tab open.`;
-  setLoading(`Generating findings (${n} parallel requests)…`,findingsTimeHint);
-  S.findings={};
-  S.demoFindings=false;
+  setLoading(`Step 1/3 — Generating findings (${n} parallel requests)…`,`Each CSF function runs in parallel. Plan on 2–5 minutes. Keep this tab open.`);
+  S.findings={};S.functionNarratives={};S.demoFindings=false;
   try{
-    const answerSummary=Object.entries(S.answers).map(([qid,val])=>{
-      const q=S.questionnaire?.roles?.flatMap(r=>r.questions).find(qu=>qu.id===qid);
-      if(!q)return'';
-      return`Q: ${q.text}\nAnswer: ${val}\nSubcategories: ${(q.subcategories||[]).join(', ')}`;
-    }).filter(Boolean).join('\n\n');
+    const allQuestions=S.questionnaire?.roles?.flatMap(r=>r.questions)||[];
+    const answersStructured=Object.entries(S.answers).map(([qid,val])=>{
+      const q=allQuestions.find(qu=>qu.id===qid);
+      if(!q)return null;
+      return{qid,text:q.text,answer:String(val),subcategories:q.subcategories||[]};
+    }).filter(Boolean);
 
-    const settled=await Promise.allSettled(fns.map(fn=>fetchFindingsForFunction(fn,answerSummary)));
+    // ── Phase 1: initial findings (parallel per function) ──
+    const settled=await Promise.allSettled(fns.map(fn=>fetchFindingsForFunction(fn,answersStructured)));
     let ok=0;
     settled.forEach((res,i)=>{
       if(res.status==='fulfilled'){
@@ -1604,10 +2162,17 @@ async function generateFindings(){
       }else{console.warn('Findings error:',fns[i]?.id,res.reason);}
     });
     if(ok===0)throw new Error('No findings were returned. Check your API key, model, and network; open the browser console (F12) for details.');
-    if(ok<fns.length){
-      const failed=fns.filter((_,i)=>settled[i].status==='rejected').map(f=>f.id);
-      if(failed.length)console.warn('Findings: some functions failed (partial merge):',failed.join(', '));
-    }
+
+    // ── Phase 2: critic quality-check (parallel, non-fatal) ──
+    setLoading(`Step 2/3 — Running critic quality check…`,`Verifying score consistency against evidence quality. Non-fatal — partial failures are OK.`);
+    await Promise.allSettled(fns.map(fn=>runCriticPassForFunction(fn).catch(e=>console.warn('[Critic]',fn.id,e.message))));
+
+    // ── Phase 3: executive narratives (parallel, non-fatal) ──
+    setLoading(`Step 3/3 — Writing executive narratives…`,`Generating one board-level paragraph per function.`);
+    const fnScoresForNarr={};
+    fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScoresForNarr[fn.id]=avg(vals);});
+    await Promise.allSettled(fns.map(fn=>generateNarrativeForFunction(fn,fnScoresForNarr[fn.id])));
+
     S.activeReviewFn=S.includedFns[0]||'GV';S.step='findings_review';saveState();
   }catch(e){
     clearLoading();render();
@@ -1620,8 +2185,8 @@ async function reanalyzeFinding(scId){
   if(!(f.dispute_note||'').trim()){alert('Please describe your dispute or provide additional context first.');return;}
   setLoading(`Re-analyzing ${scId}...`);
   try{
-    const sys=`You are a NIST CSF 2.0 assessor revising a finding based on new organizational context. Return ONLY valid JSON.`;
-    const msg=`Subcategory: ${scId}\nText: ${sc.text}\n\nOriginal finding:\nCurrent state: ${f.current_state}\nRationale: ${f.rationale}\nCMMI: ${f.cmmi_score} | Tier: ${f.tier_score}\n\nOrganization's dispute/context:\n${f.dispute_note}\n\nRevise the finding considering this new context. If new context changes the score, update it; otherwise maintain and note the organization's position.\n\nReturn JSON:\n{"current_state":"...","gaps":"...","cmmi_score":2,"tier_score":2,"rationale":"...","recommendation":"...","priority":"high|medium|low","dispute_resolution":"how dispute was resolved"}`;
+    const sys=`You are a NIST CSF 2.0 assessor revising a finding based on new organizational context. Write in business risk terms. Return ONLY valid JSON.`;
+    const msg=`Subcategory: ${scId}\nText: ${sc.text}\nOrg: ${S.org.name} | Industry: ${S.org.industry}\n\nOriginal finding:\nCurrent state: ${f.current_state}\nBusiness risk: ${f.business_risk||'not recorded'}\nRationale: ${f.rationale}\nCMMI: ${f.cmmi_score} | Tier: ${f.tier_score}\n\nOrganization's dispute/additional context:\n${f.dispute_note}\n\nRevise the finding in light of this context. Update score and rationale if the context materially changes the assessment; if not, acknowledge the org's position in dispute_resolution but maintain the original score with explanation.\n\nReturn JSON:\n{"current_state":"...","gaps":"specific gap or null","business_risk":"one sentence on business/operational risk","cmmi_score":2,"tier_score":2,"rationale":"...","recommendation":"specific actionable step","priority":"high|medium|low","dispute_resolution":"how the dispute was considered and resolved"}`;
     const raw=await callAI(sys,msg,true,{outputTokens:8192,jsonMime:providerSupportsJsonMime()});
     const parsed=parseJSON(raw);
     S.findings[scId]={...f,...parsed,status:'approved',dispute_note:f.dispute_note};saveState();
@@ -1650,6 +2215,163 @@ async function processFiles(catId,reqId,files){
 }
 function handleFileInput(e,catId,reqId){processFiles(catId,reqId,Array.from(e.target.files));}
 function handleDrop(e,catId,reqId){e.preventDefault();document.querySelector(`[data-dropzone][data-cat="${catId}"][data-req="${reqId}"]`)?.classList.remove('drag-over');processFiles(catId,reqId,Array.from(e.dataTransfer.files));}
+
+// ════════════════════════════════════════════════════════════
+// EMAIL / BENCHMARK — EmailJS (works from static HTML, no backend)
+// Sign up free at emailjs.com, create two templates, fill in the
+// four constants below. Until you do, dev-mode shows the code in
+// an alert() so the full flow works locally without any setup.
+// ════════════════════════════════════════════════════════════
+const _cfg = window.CSF_CONFIG || {};
+const EMAILJS_PUBLIC_KEY  = _cfg.EMAILJS_PUBLIC_KEY  || 'YOUR_EMAILJS_PUBLIC_KEY';
+const EMAILJS_SERVICE_ID  = _cfg.EMAILJS_SERVICE_ID  || 'YOUR_EMAILJS_SERVICE_ID';
+const EMAILJS_VERIFY_TPL  = _cfg.EMAILJS_VERIFY_TPL  || 'YOUR_VERIFY_TEMPLATE_ID';
+const EMAILJS_REPORT_TPL  = _cfg.EMAILJS_REPORT_TPL  || 'YOUR_REPORT_TEMPLATE_ID';
+const BENCHMARK_EMAIL     = _cfg.BENCHMARK_EMAIL     || 'jacobolstadlarsen@gmail.com';
+const BENCHMARK_WEBHOOK   = _cfg.BENCHMARK_WEBHOOK   || '';
+
+function isEJSConfigured(){
+  return EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY';
+}
+function initEJS(){
+  if(isEJSConfigured() && window.emailjs){
+    window.emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+  }
+}
+initEJS();
+
+function genCode(){
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendVerificationEmail(email){
+  const code = genCode();
+  S.org.verificationCode = code;
+  S.org.verificationSent = true;
+  S.org.emailVerified = false;
+  saveState();
+  if(!isEJSConfigured()){
+    // Dev / local mode: show code in alert so flow is fully testable
+    alert(`[DEV MODE — EmailJS not configured]\n\nYour verification code is:\n\n${code}\n\nIn production, this would be emailed to ${email}.`);
+    return;
+  }
+  if(!window.emailjs) throw new Error('EmailJS SDK not loaded. Check your internet connection.');
+  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_VERIFY_TPL, {
+    to_email: email,
+    verification_code: code,
+    org_name: S.org.name || 'Your organization',
+  });
+}
+
+async function sendBenchmarkData(){
+  // Only send if consent was given and we haven't sent yet
+  if(!S.org.dataConsentAcknowledged || S.benchmarkSent) return;
+  const fnScores = {};
+  FUNCTIONS.forEach(fn => {
+    const vals = (SC_BY_FN[fn.id]||[]).map(id => S.findings[id]?.cmmi_score).filter(x => x != null);
+    if(vals.length) fnScores[fn.id] = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+  });
+  const payload = {
+    industry:    S.org.industry,
+    org_size:    S.org.orgSize,
+    it_size:     S.org.itOrgSize,
+    cyber_size:  S.org.cyberOrgSize,
+    scoring_method: S.scoringMethod,
+    in_scope_count: subcategoriesInScopeCount(),
+    fn_scores:   JSON.stringify(fnScores),
+    date:        S.org.date || new Date().toISOString().slice(0,10),
+  };
+  if(!isEJSConfigured()){
+    console.log('[DEV] Benchmark payload (not sent — EmailJS unconfigured):', payload);
+    S.benchmarkSent = true;
+    saveState();
+    return;
+  }
+  if(!window.emailjs) return;
+  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REPORT_TPL, {
+    to_email: BENCHMARK_EMAIL,
+    benchmark_json: JSON.stringify(payload, null, 2),
+  });
+  S.benchmarkSent = true;
+  saveState();
+}
+
+async function analyzeScopeWithAI(){
+  setLoading('Analyzing scope with AI…','Reviewing your organization profile and recommending which CSF subcategories are most relevant. Usually takes 30–60 seconds.');
+  try{
+    const sys=`You are a NIST CSF 2.0 scoping expert. Given an organization's profile, you classify every CSF 2.0 subcategory as: "include" (essential for this org), "optional" (situational benefit), or "exclude" (low priority / not applicable). Be practical — small or mid-size orgs should have fewer "include" items than large enterprises.`;
+    const allScs=SC_RAW.map(([id,text])=>`${id}: ${text}`).join('\n');
+    const msg=`Organization Profile:
+- Industry: ${S.org.industry}
+- Total headcount: ${S.org.orgSize||'Unknown'}
+- IT org size: ${S.org.itOrgSize||'Unknown'}
+- Cybersecurity team: ${S.org.cyberOrgSize||'Unknown'}
+- Assessment scope: ${S.org.scope||'Enterprise-wide'}
+
+CSF 2.0 Subcategories (${SC_RAW.length} total):
+${allScs}
+
+Classify each subcategory. Return ONLY a JSON object (no markdown, no extra text):
+{
+  "GV.OC-01": {"action":"include","reason":"Core governance — applies to all orgs"},
+  "GV.OC-02": {"action":"optional","reason":"Useful for regulated sectors; situational otherwise"},
+  "PR.AA-05": {"action":"exclude","reason":"PKI/certificate mgmt — low priority for small org without complex infra"},
+  ...
+}
+Every subcategory ID must appear exactly once. Use only: "include", "optional", or "exclude" for action.`;
+    const raw=await callAI(sys,msg,true,{outputTokens:16384,jsonMime:providerSupportsJsonMime()});
+    const parsed=parseJSON(raw);
+    if(parsed&&typeof parsed==='object'){
+      S.aiScopeRec=parsed;
+      // Pre-exclude anything the AI flagged as exclude
+      S.excludedSubcategories=SC_RAW.map(([id])=>id).filter(id=>(parsed[id]?.action||'include')==='exclude');
+      S.includedFns=FUNCTIONS.map(f=>f.id); // all fns — scope page lets user refine
+    }
+    S.step='scope';saveState();
+  }catch(e){
+    clearLoading();
+    // Graceful fallback: go to scope page without AI recs
+    alert('Scope analysis failed: '+e.message+'\n\nContinuing without AI recommendations — all subcategories included by default.');
+    S.aiScopeRec={};
+    S.excludedSubcategories=[];
+    S.includedFns=FUNCTIONS.map(f=>f.id);
+    S.step='scope';saveState();render();
+    return;
+  }finally{clearLoading();render();}
+}
+
+function updateScopePageCounts(){
+  const excl=new Set(S.excludedSubcategories||[]);
+  const inScope=SC_RAW.filter(([id])=>!excl.has(id)).length;
+  const inEl=document.getElementById('scope-in-count');
+  const outEl=document.getElementById('scope-out-count');
+  if(inEl)inEl.textContent=inScope;
+  if(outEl)outEl.textContent=SC_RAW.length-inScope;
+  // Update per-function counts and checkboxes
+  FUNCTIONS.forEach(fn=>{
+    const fnScs=SC_BY_FN[fn.id]||[];
+    const fnIn=fnScs.filter(id=>!excl.has(id)).length;
+    const fnEl=document.querySelector(`[data-scope-fn-count="${fn.id}"]`);
+    if(fnEl)fnEl.textContent=`${fnIn}/${fnScs.length} subcategories`;
+    const fnCb=document.querySelector(`input[data-action="toggle-fn"][data-fnid="${fn.id}"]`);
+    if(fnCb){
+      fnCb.checked=fnIn>0;
+      fnCb.indeterminate=fnIn>0&&fnIn<fnScs.length;
+    }
+    // Per-category
+    (CATEGORIES[fn.id]||[]).forEach(catId=>{
+      const catScs=SC_BY_CAT[catId]||[];
+      const catIn=catScs.filter(id=>!excl.has(id)).length;
+      const catEl=document.querySelector(`[data-scope-cat-count="${catId}"]`);
+      if(catEl)catEl.textContent=`${catIn}/${catScs.length}`;
+      const catCb=document.querySelector(`input[data-action="toggle-cat"][data-catid="${catId}"]`);
+      if(catCb){
+        catCb.checked=catIn>0;
+        catCb.indeterminate=catIn>0&&catIn<catScs.length;
+      }
+    });
+  });
+}
 
 // ════════════════════════════════════════════════════════════
 // EVENT HANDLING
@@ -1693,20 +2415,110 @@ document.addEventListener('click',e=>{
   }
   else if(action==='goto-welcome'){S.step='welcome';persistAIPrefs();saveState();render();}
   else if(action==='goto-setup'){S.step='setup';render();}
+  else if(action==='goto-scope'){S.step='scope';render();}
   else if(action==='goto-drl'){S.step='drl';render();}
   else if(action==='goto-analysis'){S.step='analysis';render();}
   else if(action==='goto-questionnaire'){S.step='questionnaire';render();}
   else if(action==='goto-findings-review'){S.step='findings_review';render();}
+  else if(action==='send-verify-email'){
+    const emailEl=document.getElementById('inp-org-email');
+    const email=(emailEl?.value||'').trim();
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Please enter a valid email address first.');return;}
+    S.org.email=email;
+    saveState();
+    sendVerificationEmail(email).then(()=>{saveState();render();}).catch(err=>{alert('Failed to send verification email: '+err.message);});
+  }
+  else if(action==='check-verify-code'){
+    const inputEl=document.getElementById('inp-verify-code');
+    const entered=(inputEl?.value||'').trim();
+    if(!entered){alert('Please enter the verification code.');return;}
+    if(entered===S.org.verificationCode){
+      S.org.emailVerified=true;
+      saveState();render();
+    }else{
+      alert('Incorrect code. Please check your email and try again, or click "Resend code".');
+    }
+  }
+  else if(action==='set-size'){
+    const field=el.dataset.field;
+    const val=el.dataset.val;
+    if(field&&S.org.hasOwnProperty(field)){
+      S.org[field]=val;
+      saveState();
+      // Update button active states without full re-render
+      const row=el.closest('.size-options');
+      if(row){row.querySelectorAll('.size-btn').forEach(b=>{b.classList.toggle('active',b.dataset.val===val);});}
+    }
+  }
   else if(action==='setup-next'){
-    const name=document.getElementById('inp-org-name').value.trim();
+    const name=(document.getElementById('inp-org-name')?.value||'').trim();
     if(!name){alert('Organization name is required.');return;}
-    S.org.name=name;S.org.industry=document.getElementById('inp-org-industry').value;
-    S.org.assessorName=document.getElementById('inp-org-assessor').value.trim();
-    S.org.scope=document.getElementById('inp-org-scope').value.trim();
+    if(!S.org.emailVerified){alert('Please verify your email address before continuing.');return;}
+    const orgSize=S.org.orgSize;
+    const itSize=S.org.itOrgSize;
+    const cyberSize=S.org.cyberOrgSize;
+    if(!orgSize||!itSize||!cyberSize){alert('Please select organization, IT, and cybersecurity team sizes before continuing.');return;}
+    const consentCb=document.getElementById('inp-consent');
+    if(!consentCb?.checked){alert('Please acknowledge the data consent statement before continuing.');return;}
+    S.org.name=name;
+    S.org.industry=document.getElementById('inp-org-industry')?.value||S.org.industry;
+    S.org.assessorName=(document.getElementById('inp-org-assessor')?.value||'').trim();
+    S.org.date=document.getElementById('inp-org-date')?.value||S.org.date;
+    S.org.scope=(document.getElementById('inp-org-scope')?.value||'').trim();
+    S.org.dataConsentAcknowledged=true;
     S.scoringMethod=document.querySelector('input[name="scoring"]:checked')?.value||'both';
-    S.includedFns=Array.from(document.querySelectorAll('input[name="fn"]:checked')).map(x=>x.value);
-    if(!S.includedFns.length){alert('Select at least one function.');return;}
-    S.drlViewFns=FUNCTIONS.map(f=>f.id).filter(id=>S.includedFns.includes(id));
+    saveState();
+    analyzeScopeWithAI();
+  }
+  else if(action==='toggle-sc'){
+    const scid=el.dataset.scid;
+    if(!scid)return;
+    const excl=new Set(S.excludedSubcategories||[]);
+    if(excl.has(scid)){excl.delete(scid);}else{excl.add(scid);}
+    S.excludedSubcategories=[...excl];
+    saveState();
+    updateScopePageCounts();
+  }
+  else if(action==='toggle-cat'){
+    const catId=el.dataset.catid;
+    if(!catId)return;
+    const catScs=SC_BY_CAT[catId]||[];
+    const excl=new Set(S.excludedSubcategories||[]);
+    const allIn=catScs.every(id=>!excl.has(id));
+    if(allIn){catScs.forEach(id=>excl.add(id));}else{catScs.forEach(id=>excl.delete(id));}
+    S.excludedSubcategories=[...excl];
+    saveState();render();
+  }
+  else if(action==='toggle-fn'){
+    const fnid=el.dataset.fnid;
+    if(!fnid)return;
+    const fnScs=SC_BY_FN[fnid]||[];
+    const excl=new Set(S.excludedSubcategories||[]);
+    const allIn=fnScs.every(id=>!excl.has(id));
+    if(allIn){fnScs.forEach(id=>excl.add(id));}else{fnScs.forEach(id=>excl.delete(id));}
+    S.excludedSubcategories=[...excl];
+    saveState();render();
+  }
+  else if(action==='scope-include-all'){
+    S.excludedSubcategories=[];
+    saveState();render();
+  }
+  else if(action==='scope-apply-ai-rec'){
+    const rec=S.aiScopeRec||{};
+    S.excludedSubcategories=SC_RAW.map(([id])=>id).filter(id=>(rec[id]?.action||'include')==='exclude');
+    saveState();render();
+  }
+  else if(action==='scope-next'){
+    const excl=new Set(S.excludedSubcategories||[]);
+    const inScopeIds=SC_RAW.map(([id])=>id).filter(id=>!excl.has(id));
+    if(!inScopeIds.length){alert('At least one subcategory must be in scope.');return;}
+    // Derive includedFns from whichever functions have at least one in-scope subcategory
+    S.includedFns=FUNCTIONS.map(f=>f.id).filter(fid=>(SC_BY_FN[fid]||[]).some(id=>!excl.has(id)));
+    // Capture target state scores
+    const ts={};
+    FUNCTIONS.forEach(f=>{const v=document.getElementById('inp-target-'+f.id)?.value;if(v)ts[f.id]=parseInt(v);});
+    S.targetFnScores=ts;
+    S.drlViewFns=S.includedFns.slice();
     S.step='drl';saveState();render();
   }
   else if(action==='remove-file'){
@@ -1812,7 +2624,10 @@ document.addEventListener('click',e=>{
     });
     saveState();render();
   }
-  else if(action==='gen-report'){S.step='report';S.reportPage=0;saveState();render();}
+  else if(action==='gen-report'){
+    S.step='report';S.reportPage=0;saveState();render();
+    sendBenchmarkData().catch(err=>console.warn('[Benchmark] send failed:',err.message));
+  }
   else if(action==='report-page-prev'){S.reportPage=Math.max(0,(S.reportPage||0)-1);saveState();render();window.scrollTo(0,0);}
   else if(action==='report-page-next'){
     const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
@@ -1871,6 +2686,7 @@ function render(){
   switch(S.step){
     case 'welcome':         app.innerHTML=renderWelcome();break;
     case 'setup':           app.innerHTML=renderSetup();break;
+    case 'scope':           app.innerHTML=renderScope();break;
     case 'drl':             app.innerHTML=renderDRL();break;
     case 'analysis':        app.innerHTML=renderAnalysis();break;
     case 'questionnaire':   app.innerHTML=renderQuestionnaire();break;
