@@ -1,0 +1,19 @@
+---
+description: Protect nist-csf-assessment.html from accidental bulk removal when patching
+globs: nist-csf-assessment.html
+alwaysApply: false
+---
+
+# NIST CSF standalone HTML (`nist-csf-assessment.html`)
+
+This file is a single large inline script and template literals. A prior fix accidentally removed unrelated features (extra AI provider, report pagination, etc.).
+
+## Editing discipline
+
+- Prefer **small, targeted** edits (`search_replace` with minimal unique context). Do **not** replace entire `renderWelcome`, `renderReport`, `callAI`, or event-handler blocks unless the user explicitly asks for a full rewrite.
+- When changing one concern (e.g. `localStorage` / `persistAIPrefs`), **re-read** nearby sections (welcome providers, `callOpenAI`, report pager `data-action`s) before saving so nothing is dropped by mistake.
+- After substantive edits, **grep** for regressions: `openai`, `callOpenAI`, `report-page-`, `persistAIPrefs`, `defaultModelForProvider`, three `provider-card` blocks.
+
+## Version control
+
+This directory is a **git** repo. After meaningful changes, suggest or create a **commit** so `git diff` / `git checkout --` can recover dropped code.

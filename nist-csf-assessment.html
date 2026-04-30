@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIST CSF 2.0 Guided Assessment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
+#app{min-height:100vh}
+#loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.spinner{width:48px;height:48px;border:5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-msg{color:#fff;font-size:1rem;font-weight:500;max-width:420px;text-align:center;line-height:1.35}
+#loading-hint{display:none;color:rgba(255,255,255,.85);font-size:.82rem;font-weight:400;max-width:440px;text-align:center;line-height:1.5;padding:0 20px;margin-top:4px}
+.top-bar{background:#0d2137;color:#fff;padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
+.top-bar h1{font-size:1.05rem;font-weight:600;letter-spacing:.3px}
+.top-bar .badge{background:#1e88e5;color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600}
+.progress-bar{background:#1a3a5c;padding:0 32px}
+.steps-row{display:flex;gap:0}
+.step-pill{padding:10px 0;flex:1;text-align:center;font-size:.72rem;color:#7ab3d8;border-bottom:3px solid transparent;transition:.2s;cursor:default}
+.step-pill.active{color:#fff;border-bottom-color:#1e88e5}
+.step-pill.done{color:#66bb6a;border-bottom-color:#66bb6a}
+.container{max-width:960px;margin:32px auto;padding:0 24px}
+.container-drl{max-width:1220px}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:32px;margin-bottom:24px}
+.card h2{font-size:1.3rem;font-weight:700;color:#0d2137;margin-bottom:6px}
+.card .sub{color:#5a7a96;font-size:.9rem;margin-bottom:24px}
+.section-label{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1e88e5;margin-bottom:10px}
+label{display:block;font-size:.85rem;font-weight:600;color:#2c4a6a;margin-bottom:4px;margin-top:14px}
+input[type=text],input[type=date],input[type=password],select,textarea{width:100%;padding:10px 12px;border:1.5px solid #d0dce8;border-radius:8px;font-size:.9rem;color:#1a2332;background:#fff;outline:none;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:#1e88e5;box-shadow:0 0 0 3px rgba(30,136,229,.12)}
+textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;transition:.15s}
+.btn-primary{background:#1e88e5;color:#fff}.btn-primary:hover{background:#1565c0}
+.btn-secondary{background:#e3edf7;color:#1a3a5c}.btn-secondary:hover{background:#ccdcef}
+.btn-success{background:#43a047;color:#fff}.btn-success:hover{background:#2e7d32}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.col{flex:1;min-width:200px}
+.chip{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700}
+.chip-red{background:#ffebee;color:#c62828}
+.chip-orange{background:#fff3e0;color:#e65100}
+.chip-yellow{background:#fffde7;color:#f57f17}
+.chip-lgreen{background:#f1f8e9;color:#2e7d32}
+.chip-green{background:#e8f5e9;color:#1b5e20}
+.chip-gray{background:#f0f4f8;color:#5a7a96}
+.provider-card{border:1.5px solid #d0dce8;border-radius:10px;padding:16px;cursor:pointer;transition:.2s;display:flex;align-items:flex-start;gap:12px}
+.provider-card.selected{border-color:#1e88e5;background:#f0f7ff}
+.provider-card input{margin-top:3px;flex-shrink:0}
+.drl-table-wrap{margin-bottom:8px;border-radius:10px;border:1px solid #d0dce8;background:#fff;width:100%;max-width:100%;overflow-x:visible}
+.drl-master{width:100%;max-width:100%;min-width:0;border-collapse:collapse;font-size:.78rem;table-layout:fixed}
+.drl-master th{text-align:left;background:#f0f4f8;color:#2c4a6a;font-size:.68rem;text-transform:uppercase;letter-spacing:.35px;padding:10px 8px;border-bottom:2px solid #d0dce8;vertical-align:bottom;overflow-wrap:break-word}
+.drl-master td{padding:10px 8px;border-bottom:1px solid #e8eef4;vertical-align:top;overflow-wrap:break-word;word-wrap:break-word}
+.drl-master tbody tr:hover{background:#fafcfe}
+.drl-master tbody tr.drl-cat-done{background:#f9fff9}
+.drl-master tbody tr.drl-cat-done:hover{background:#f2fff2}
+.drl-th-fn,.drl-td-fn{width:13%}
+.drl-th-cat,.drl-td-cat{width:19%}
+.drl-th-req,.drl-td-req{width:17%}
+.drl-th-up,.drl-td-up{width:11%}
+.drl-th-ctx,.drl-td-ctx{width:22%}
+.drl-th-np,.drl-td-np{width:18%}
+.drl-td-fn,.drl-td-cat{background:#fbfdff}
+.drl-bucket-title{font-weight:700;font-size:.8rem;color:#0d2137;margin-bottom:4px;line-height:1.3}
+.drl-bucket-desc{font-size:.72rem;color:#5a7a96;line-height:1.45;margin:0 0 6px 0}
+.drl-fn-block{margin-top:8px;padding-top:8px;border-top:1px solid #e3edf7}
+.drl-td-fn .drl-fn-block:first-child{margin-top:0;padding-top:0;border-top:none}
+.drl-fn-name{font-size:.74rem;color:#0d2137}
+.drl-fn-explain{font-size:.7rem;color:#3d5a78;line-height:1.45;margin:4px 0 0 0}
+.drl-catlist-label{font-size:.68rem;font-weight:600;color:#1e88e5;margin-top:8px;margin-bottom:3px}
+.drl-catlist{margin:0;padding-left:16px}
+.drl-catlist li{margin-bottom:2px;font-size:.68rem;color:#4a6688;line-height:1.35}
+.drl-cell-muted{color:#8aa3bc;font-size:.75rem;padding:8px 0}
+.req-card{border:1px solid #d9e4ef;border-radius:8px;padding:10px;margin-bottom:10px;background:#fff}
+.req-title{font-size:.8rem;font-weight:700;color:#1a2332;margin-bottom:4px}
+.req-hint{font-size:.73rem;color:#7a9ab8;margin-bottom:8px}
+.req-context{margin-top:6px}
+.np-box{margin-top:8px;padding:8px;border:1px solid #ffd59c;background:#fff8ef;border-radius:8px}
+.drl-np-label{font-size:.75rem;font-weight:600;color:#8b5a00;margin:0;display:flex;align-items:flex-start;gap:8px;cursor:pointer;flex-wrap:wrap;max-width:100%}
+.drl-np-label input{flex-shrink:0;margin-top:2px}
+.drl-np-hint{display:block;width:100%;max-width:100%;box-sizing:border-box;font-size:.7rem;color:#7a8aa0;font-style:italic;margin:8px 0 0 0;line-height:1.45;overflow-wrap:break-word;word-wrap:break-word;white-space:normal}
+.drl-catlist-hint{font-weight:400;color:#8aa3bc;font-size:.65rem}
+.drl-cat-jump{color:#1565c0;text-decoration:none}
+.drl-cat-jump:hover{text-decoration:underline}
+.drl-page-split{display:flex;align-items:stretch;width:100%;max-width:100%;margin-bottom:16px;gap:0}
+.drl-sc-rail{flex:0 0 44px;display:flex;flex-direction:column;align-items:center;padding:12px 0;background:#e8eef4;border:1px solid #d0dce8;border-radius:10px 0 0 10px;border-right:0}
+.drl-sc-fab{width:36px;min-height:100px;padding:8px 4px;border:none;border-radius:8px;background:#fff;color:#1e88e5;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);line-height:1.2}
+.drl-sc-fab:hover{background:#f0f7ff}
+.drl-sc-sidebar{flex:0 0 288px;max-width:288px;display:flex;flex-direction:column;min-height:280px;max-height:min(78vh,calc(100vh - 48px));align-self:flex-start;position:sticky;top:12px;border:1px solid #d0dce8;border-left:0;background:#fbfdff;border-radius:0 10px 10px 0;transition:flex .22s ease,max-width .22s ease,opacity .22s ease,min-width .22s ease;overflow:hidden}
+.drl-sc-sidebar.collapsed{flex:0 0 0;max-width:0;min-width:0;width:0;opacity:0;border:none;padding:0;margin:0;pointer-events:none}
+.drl-sc-sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid #e0eaf4;font-size:.72rem;color:#0d2137;flex-shrink:0;background:#fff}
+.drl-sc-count{font-size:.68rem;color:#5a7a96;font-weight:600}
+.drl-sc-close{width:28px;height:28px;border:none;border-radius:6px;background:#f0f4f8;color:#2c4a6a;font-size:1.1rem;line-height:1;cursor:pointer}
+.drl-sc-close:hover{background:#e3edf7}
+.drl-sc-sidebar-scroll{overflow-y:auto;overflow-x:hidden;padding:8px 10px 14px;flex:1;font-size:.68rem;-webkit-overflow-scrolling:touch}
+.drl-sc-catsec{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e8eef4}
+.drl-sc-catsec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.drl-sc-cat-head{font-size:.7rem;color:#1e88e5;margin:0 0 6px 0;font-weight:700;line-height:1.3}
+.drl-sc-sublist{list-style:none;padding:0;margin:0}
+.drl-sc-subitem{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f4f8}
+.drl-sc-subitem:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.drl-sc-subid{font-weight:700;color:#0d2137;font-size:.66rem;margin-bottom:3px}
+.drl-sc-subtext{color:#3d5a78;line-height:1.4;font-size:.66rem}
+.drl-sc-catsec.drl-sc-flash{animation:drlScFlash 1.1s ease}
+@keyframes drlScFlash{0%{background:#fff8e1}40%{background:#fff3c4}100%{background:transparent}}
+.drl-sc-main{flex:1;min-width:0}
+.drl-fn-filter-card{padding:18px 24px!important;margin-bottom:16px}
+.drl-fn-filter-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e88e5;margin-bottom:6px}
+.drl-fn-filter-hint{font-size:.78rem;color:#5a7a96;margin:0 0 12px 0;line-height:1.45}
+.drl-fn-filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.drl-fn-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;border:1.5px solid #d0dce8;background:#fff;font-size:.72rem;font-weight:600;color:#5a7a96;cursor:pointer;transition:.15s}
+.drl-fn-pill .drl-fn-pill-name{font-weight:600;font-size:.72rem}
+.drl-fn-pill.is-on{color:#0d2137;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.drl-fn-pill:hover{filter:brightness(0.98)}
+.drl-drop-zone{min-height:44px;display:flex;align-items:center;justify-content:center;padding:10px 6px!important;font-size:.72rem!important}
+.np-box textarea{width:100%;min-height:72px;margin-top:0}
+.drl-master .req-context textarea{min-height:52px;font-size:.76rem;padding:8px}
+.drop-zone{border:2px dashed #b0c8e0;border-radius:8px;padding:16px;text-align:center;font-size:.8rem;color:#5a7a96;cursor:pointer;transition:.2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#1e88e5;background:#f0f7ff}
+.file-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.file-item{display:flex;align-items:center;justify-content:space-between;gap:6px;background:#f0f4f8;border-radius:6px;padding:5px 8px;font-size:.74rem;min-width:0}
+.file-item>span:first-child{min-width:0;overflow-wrap:anywhere;flex:1}
+.file-item .rm{cursor:pointer;color:#e53935;font-weight:700;margin-left:0;flex-shrink:0}
+.drl-master .req-title{font-size:.76rem;line-height:1.3}
+.drl-master .req-hint{font-size:.7rem}
+.q-card{background:#fff;border:1.5px solid #d0dce8;border-radius:10px;padding:20px;margin-bottom:14px}
+.q-text{font-size:.92rem;font-weight:600;margin-bottom:4px;color:#1a2332}
+.q-guide{font-size:.75rem;color:#7a9ab8;margin-bottom:12px;font-style:italic}
+.q-scs{font-size:.7rem;color:#1e88e5;margin-bottom:10px}
+.likert-row{display:flex;gap:6px;flex-wrap:wrap}
+.likert-btn{flex:1;min-width:80px;padding:8px 4px;border:1.5px solid #d0dce8;border-radius:8px;background:#fff;cursor:pointer;font-size:.75rem;text-align:center;transition:.15s}
+.likert-btn:hover{border-color:#1e88e5;background:#f0f7ff}
+.likert-btn.selected{border-color:#1e88e5;background:#1e88e5;color:#fff}
+.yn-row{display:flex;gap:8px}
+.yn-btn{flex:1;padding:9px;border:1.5px solid #d0dce8;border-radius:8px;background:#fff;cursor:pointer;font-size:.85rem;font-weight:600;text-align:center;transition:.15s}
+.yn-btn:hover{border-color:#1e88e5}
+.yn-btn.selected{border-color:#1e88e5;background:#1e88e5;color:#fff}
+.role-tabs{display:flex;gap:0;border-bottom:2px solid #e0eaf4;margin-bottom:24px;overflow-x:auto}
+.role-tab{padding:10px 20px;cursor:pointer;font-size:.85rem;font-weight:600;color:#5a7a96;border-bottom:3px solid transparent;white-space:nowrap;transition:.15s}
+.role-tab.active{color:#1e88e5;border-bottom-color:#1e88e5}
+.finding-card{border:1.5px solid #d0dce8;border-radius:10px;padding:20px;margin-bottom:12px;transition:.2s}
+.finding-card.approved{border-color:#66bb6a;background:#f9fff9}
+.finding-card.disputed{border-color:#ffa726;background:#fffbf0}
+.finding-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.finding-id{font-size:.8rem;font-weight:700;color:#1e88e5;white-space:nowrap}
+.finding-text{font-size:.85rem;color:#1a2332;font-weight:600;flex:1}
+.finding-scores{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.score-badge{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.finding-body{font-size:.83rem;color:#2c4a6a;line-height:1.55}
+.finding-body .label{font-weight:700;color:#0d2137;margin-top:8px;display:block}
+.finding-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.dispute-box{background:#fff8f0;border:1.5px solid #ffa726;border-radius:8px;padding:14px;margin-top:12px}
+.evidence-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.evidence-table th{background:#f0f4f8;padding:8px 12px;text-align:left;font-weight:700;color:#2c4a6a;border-bottom:2px solid #d0dce8}
+.evidence-table td{padding:8px 12px;border-bottom:1px solid #eef2f7;vertical-align:top}
+.evidence-table tr:hover td{background:#f8fafc}
+.tabs-row{display:flex;gap:0;border-bottom:2px solid #e0eaf4;margin-bottom:20px;overflow-x:auto}
+.fn-tab{padding:10px 18px;cursor:pointer;font-size:.83rem;font-weight:600;color:#5a7a96;border-bottom:3px solid transparent;white-space:nowrap;transition:.15s}
+.fn-tab.active{color:#0d2137;border-bottom-color:#1e88e5}
+.welcome-hero{background:linear-gradient(135deg,#0d2137 0%,#1a3a5c 100%);color:#fff;padding:60px 32px;text-align:center}
+.welcome-hero h1{font-size:2rem;font-weight:800;margin-bottom:10px}
+.welcome-hero p{font-size:1rem;color:#a8c8e8;max-width:560px;margin:0 auto 32px}
+.steps-preview{display:flex;gap:0;justify-content:center;flex-wrap:wrap}
+.sp-step{padding:8px 16px;font-size:.75rem;color:#7ab3d8;display:flex;align-items:center;gap:6px}
+.sp-step::after{content:'→';color:#3a6a8c;margin-left:8px}
+.sp-step:last-child::after{content:''}
+.stat-card{background:#f0f4f8;border-radius:10px;padding:16px;text-align:center}
+.stat-num{font-size:2rem;font-weight:800;color:#1e88e5}
+.stat-lbl{font-size:.78rem;color:#5a7a96;font-weight:600}
+.heat-cell{padding:8px 12px;border-radius:6px;text-align:center;font-weight:700;font-size:.85rem}
+.progress-ring{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.prog-bar-wrap{flex:1;background:#e0eaf4;border-radius:20px;height:10px;overflow:hidden}
+.prog-bar-fill{height:100%;background:#1e88e5;border-radius:20px;transition:.3s}
+.alert{padding:12px 16px;border-radius:8px;font-size:.85rem;margin-bottom:16px}
+.alert-info{background:#e3f2fd;color:#1565c0;border-left:4px solid #1e88e5}
+.alert-warn{background:#fff3e0;color:#e65100;border-left:4px solid #ffa726}
+.alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #66bb6a}
+.info-box{background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:16px;font-size:.83rem;color:#1a2332;line-height:1.6;margin-top:12px}
+@media print{
+  .top-bar .badge,.progress-bar,.btn,.step-pill,.finding-actions,.dispute-box{display:none!important}
+  .card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-msg">Processing...</div>
+  <div id="loading-hint" aria-live="polite"></div>
+</div>
+<div id="app"></div>
+<script>
+// ── PDF.js worker ────────────────────────────────────────────
+if(typeof pdfjsLib!=='undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ════════════════════════════════════════════════════════════
+// CSF 2.0 DATA
+// ════════════════════════════════════════════════════════════
+const FUNCTIONS=[
+  {id:'GV',name:'Govern',   color:'#7b2d8b',light:'#f3e5f5',desc:'Organizational context, strategy, and risk governance',explain:'This function is about leadership and oversight: cybersecurity strategy, policies, roles, risk appetite, and how the organization aligns with legal, regulatory, and supply-chain expectations.'},
+  {id:'ID',name:'Identify', color:'#1565c0',light:'#e3f2fd',desc:'Asset management, risk assessment, improvement',explain:'This function is about understanding what you need to protect—assets, data, suppliers, threats, vulnerabilities, and priorities—so risk decisions are grounded in reality.'},
+  {id:'PR',name:'Protect',  color:'#2e7d32',light:'#e8f5e9',desc:'Identity, training, data security, platform resilience',explain:'This function is about safeguards for identities, data, systems, and resilience—for example access control, secure configuration, encryption, backups, and security awareness.'},
+  {id:'DE',name:'Detect',   color:'#e65100',light:'#fff3e0',desc:'Continuous monitoring and adverse event analysis',explain:'This function is about finding and analyzing possible security problems in time—through logging, monitoring, and investigation before or as incidents unfold.'},
+  {id:'RS',name:'Respond',  color:'#c62828',light:'#ffebee',desc:'Incident management, analysis, communication, mitigation',explain:'This function is about what happens when an incident occurs: triage, analysis, communication, containment, mitigation, and reporting so harm is limited and stakeholders stay informed.'},
+  {id:'RC',name:'Recover',  color:'#00838f',light:'#e0f7fa',desc:'Recovery plan execution and communication',explain:'This function is about restoring normal operations after an incident and strengthening resilience—recovery plans, communications, and improvements based on what you learned.'},
+];
+const NIST_CSF_URL='https://www.nist.gov/itl/apply/cyberframework';
+const CATEGORIES={
+  GV:['GV.OC','GV.RM','GV.RR','GV.PO','GV.OV','GV.SC'],
+  ID:['ID.AM','ID.RA','ID.IM'],
+  PR:['PR.AA','PR.AT','PR.DS','PR.PS','PR.IR'],
+  DE:['DE.CM','DE.AE'],
+  RS:['RS.MA','RS.AN','RS.CO','RS.MI'],
+  RC:['RC.RP','RC.CO'],
+};
+const CAT_NAMES={
+  'GV.OC':'Organizational Context','GV.RM':'Risk Management Strategy',
+  'GV.RR':'Roles, Responsibilities & Authorities','GV.PO':'Policy',
+  'GV.OV':'Oversight','GV.SC':'Supply Chain Risk Management',
+  'ID.AM':'Asset Management','ID.RA':'Risk Assessment','ID.IM':'Improvement',
+  'PR.AA':'Identity & Access Control','PR.AT':'Awareness & Training',
+  'PR.DS':'Data Security','PR.PS':'Platform Security','PR.IR':'Infrastructure Resilience',
+  'DE.CM':'Continuous Monitoring','DE.AE':'Adverse Event Analysis',
+  'RS.MA':'Incident Management','RS.AN':'Incident Analysis',
+  'RS.CO':'Incident Communication','RS.MI':'Incident Mitigation',
+  'RC.RP':'Recovery Plan Execution','RC.CO':'Recovery Communication',
+};
+const SC_RAW=[
+  ['GV.OC-01','The organizational mission is understood and informs cybersecurity risk management','GV.OC'],
+  ['GV.OC-02','Internal and external stakeholders are understood, and their needs and expectations are considered in managing cybersecurity risk','GV.OC'],
+  ['GV.OC-03','Legal, regulatory, and contractual requirements regarding cybersecurity — including privacy and civil liberties obligations — are understood and managed','GV.OC'],
+  ['GV.OC-04','Critical objectives, capabilities, and services that stakeholders depend on or expect from the organization are understood','GV.OC'],
+  ['GV.OC-05','Outcomes, capabilities, and services that the organization depends on are understood and communicated','GV.OC'],
+  ['GV.RM-01','Risk management objectives are established and agreed to by organizational stakeholders','GV.RM'],
+  ['GV.RM-02','Risk appetite and risk tolerance statements are established, communicated, and maintained','GV.RM'],
+  ['GV.RM-03','Cybersecurity risk management activities and outcomes are included in enterprise risk management processes','GV.RM'],
+  ['GV.RM-04','Strategic direction that describes appropriate risk response options is established and communicated','GV.RM'],
+  ['GV.RM-05','Lines of communication across the organization are established for cybersecurity risks, including risks from suppliers and other third parties','GV.RM'],
+  ['GV.RM-06','A standardized method for calculating, documenting, categorizing, and prioritizing cybersecurity risks is established and communicated','GV.RM'],
+  ['GV.RM-07','Strategic opportunities (positive risks) are characterized and included in organizational cybersecurity risk discussions','GV.RM'],
+  ['GV.RR-01','Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture that is risk-aware, ethical, and continually improving','GV.RR'],
+  ['GV.RR-02','Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced','GV.RR'],
+  ['GV.RR-03','Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies','GV.RR'],
+  ['GV.RR-04','Cybersecurity is included in human resources practices','GV.RR'],
+  ['GV.PO-01','Policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities, and is communicated and enforced','GV.PO'],
+  ['GV.PO-02','Policy for managing cybersecurity risks is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission','GV.PO'],
+  ['GV.OV-01','Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction','GV.OV'],
+  ['GV.OV-02','The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks','GV.OV'],
+  ['GV.OV-03','Organizational cybersecurity risk management performance is evaluated and reviewed for adjustments needed','GV.OV'],
+  ['GV.SC-01','A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders','GV.SC'],
+  ['GV.SC-02','Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally','GV.SC'],
+  ['GV.SC-03','Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes','GV.SC'],
+  ['GV.SC-04','Suppliers are known and prioritized by criticality','GV.SC'],
+  ['GV.SC-05','Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties','GV.SC'],
+  ['GV.SC-06','Planning and due diligence are performed to reduce risks before entering into formal supplier or other third-party relationships','GV.SC'],
+  ['GV.SC-07','The risks posed by a supplier, their products and services, and other third parties are understood, recorded, prioritized, assessed, responded to, and monitored over the course of the relationship','GV.SC'],
+  ['GV.SC-08','Relevant suppliers and other third parties are included in incident planning, response, and recovery activities','GV.SC'],
+  ['GV.SC-09','Supply chain security practices are integrated into cybersecurity and enterprise risk management programs, and their performance is monitored throughout the technology product and service life cycle','GV.SC'],
+  ['GV.SC-10','Cybersecurity supply chain risk management plans include provisions for activities that occur after the conclusion of a partnership or service agreement','GV.SC'],
+  ['ID.AM-01','Inventories of hardware managed by the organization are maintained','ID.AM'],
+  ['ID.AM-02','Inventories of software, services, and systems managed by the organization are maintained','ID.AM'],
+  ['ID.AM-03','Representations of the organization\'s authorized network communication and internal and external network data flows are maintained','ID.AM'],
+  ['ID.AM-04','Inventories of services provided by suppliers are maintained','ID.AM'],
+  ['ID.AM-05','Assets are prioritized based on classification, criticality, resources, and impact on the mission','ID.AM'],
+  ['ID.AM-06','Cybersecurity roles and responsibilities for the entire workforce and third-party stakeholders (e.g., suppliers, customers, partners) are established','ID.AM'],
+  ['ID.AM-07','Inventories of data and corresponding metadata for designated data types are maintained','ID.AM'],
+  ['ID.AM-08','Systems, hardware, software, services, and data are managed throughout their life cycles','ID.AM'],
+  ['ID.RA-01','Vulnerabilities in assets are identified, validated, and recorded','ID.RA'],
+  ['ID.RA-02','Cyber threat intelligence is received from information sharing forums and sources','ID.RA'],
+  ['ID.RA-03','Internal and external threats to the organization are identified and recorded','ID.RA'],
+  ['ID.RA-04','Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded','ID.RA'],
+  ['ID.RA-05','Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization','ID.RA'],
+  ['ID.RA-06','Risk responses are chosen, prioritized, planned, tracked, and communicated','ID.RA'],
+  ['ID.RA-07','Changes and exceptions are managed, assessed for risk impact, recorded, and tracked','ID.RA'],
+  ['ID.RA-08','Processes for receiving, analyzing, and responding to vulnerability disclosures are established','ID.RA'],
+  ['ID.RA-09','The authenticity and integrity of hardware and software are assessed prior to acquisition and use','ID.RA'],
+  ['ID.RA-10','Critical suppliers are assessed prior to acquisition','ID.RA'],
+  ['ID.IM-01','Improvements are identified from evaluations','ID.IM'],
+  ['ID.IM-02','Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties','ID.IM'],
+  ['ID.IM-03','Improvements are identified from execution of operational processes, procedures, and activities','ID.IM'],
+  ['ID.IM-04','Incident response plans and other cybersecurity plans that affect operations are established, communicated, maintained, and improved','ID.IM'],
+  ['PR.AA-01','Identities and credentials for authorized users, services, and hardware are managed by the organization','PR.AA'],
+  ['PR.AA-02','Identities are proofed and bound to credentials based on the context of interactions','PR.AA'],
+  ['PR.AA-03','Users, services, and hardware are authenticated','PR.AA'],
+  ['PR.AA-04','Identity assertions are protected, conveyed, and verified','PR.AA'],
+  ['PR.AA-05','Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties','PR.AA'],
+  ['PR.AA-06','Physical access to assets is managed, monitored, and enforced commensurate with risk','PR.AA'],
+  ['PR.AT-01','Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind','PR.AT'],
+  ['PR.AT-02','Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind','PR.AT'],
+  ['PR.DS-01','The confidentiality, integrity, and availability of data-at-rest are protected','PR.DS'],
+  ['PR.DS-02','The confidentiality, integrity, and availability of data-in-transit are protected','PR.DS'],
+  ['PR.DS-10','The confidentiality, integrity, and availability of data-in-use are protected','PR.DS'],
+  ['PR.DS-11','Backups of data are created, protected, maintained, and tested','PR.DS'],
+  ['PR.PS-01','Configuration management practices are established and applied','PR.PS'],
+  ['PR.PS-02','Software is maintained, replaced, and removed commensurate with risk','PR.PS'],
+  ['PR.PS-03','Hardware is maintained, replaced, and removed commensurate with risk','PR.PS'],
+  ['PR.PS-04','Log records are generated and made available for continuous monitoring','PR.PS'],
+  ['PR.PS-05','Installation and execution of unauthorized software are prevented','PR.PS'],
+  ['PR.PS-06','Secure software development practices are integrated, and their security is evaluated','PR.PS'],
+  ['PR.IR-01','Networks and environments are protected from unauthorized logical access and usage','PR.IR'],
+  ['PR.IR-02','The organization\'s technology assets are protected from environmental threats','PR.IR'],
+  ['PR.IR-03','Mechanisms are implemented to achieve resilience requirements in normal and adverse situations','PR.IR'],
+  ['PR.IR-04','Adequate resource capacity to ensure availability is maintained','PR.IR'],
+  ['DE.CM-01','Networks and network services are monitored to find potentially adverse events','DE.CM'],
+  ['DE.CM-02','The physical environment is monitored to find potentially adverse events','DE.CM'],
+  ['DE.CM-03','Personnel activity and technology usage are monitored to find potentially adverse events','DE.CM'],
+  ['DE.CM-06','External service provider activities and services are monitored to find potentially adverse events','DE.CM'],
+  ['DE.CM-07','Monitoring for unauthorized personnel, connections, devices, and software is performed','DE.CM'],
+  ['DE.CM-09','Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events','DE.CM'],
+  ['DE.AE-02','Potentially adverse events are analyzed to better understand associated activities','DE.AE'],
+  ['DE.AE-03','Information is correlated from multiple sources','DE.AE'],
+  ['DE.AE-04','The estimated impact and scope of adverse events are understood','DE.AE'],
+  ['DE.AE-06','Information on adverse events is provided to authorized staff and tools','DE.AE'],
+  ['DE.AE-07','Cyber threat intelligence and other contextual information are integrated into the analysis','DE.AE'],
+  ['DE.AE-08','Incidents are declared when adverse events meet the defined criteria','DE.AE'],
+  ['RS.MA-01','The incident response plan is executed in coordination with relevant third parties once an incident is declared','RS.MA'],
+  ['RS.MA-02','Incident reports are triaged and validated','RS.MA'],
+  ['RS.MA-03','Incidents are categorized and prioritized','RS.MA'],
+  ['RS.MA-04','Incidents are escalated or elevated as needed','RS.MA'],
+  ['RS.MA-05','The criteria for initiating incident recovery are applied','RS.MA'],
+  ['RS.AN-03','Analysis is performed to establish what has taken place during an incident and the root cause of the incident','RS.AN'],
+  ['RS.AN-06','Actions performed during an investigation are recorded, and the records\' integrity and provenance are preserved','RS.AN'],
+  ['RS.AN-07','Cyber threat intelligence and other contextual information are integrated into the incident analysis','RS.AN'],
+  ['RS.AN-08','Incidents are categorized consistent with response plans','RS.AN'],
+  ['RS.CO-02','Internal and external stakeholders are notified of incidents in a timely manner as required','RS.CO'],
+  ['RS.CO-03','Information is shared with designated internal and external stakeholders as authorized','RS.CO'],
+  ['RS.MI-01','Incidents are contained','RS.MI'],
+  ['RS.MI-02','Incidents are eradicated','RS.MI'],
+  ['RC.RP-01','The recovery portion of the incident response plan is executed once initiated from the incident response process','RC.RP'],
+  ['RC.RP-03','Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders','RC.RP'],
+  ['RC.RP-04','The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed','RC.RP'],
+  ['RC.RP-05','The end of incident recovery is declared based on criteria, and incident-related documentation is completed','RC.RP'],
+  ['RC.CO-03','Recovery activities are communicated to internal and external stakeholders as well as executive and management teams','RC.CO'],
+  ['RC.CO-04','Public updates on incident recovery are shared using approved methods and messaging','RC.CO'],
+];
+const SC_MAP={};
+const SC_BY_CAT={};
+const SC_BY_FN={};
+SC_RAW.forEach(([id,text,cat])=>{
+  const fn=cat.split('.')[0];
+  SC_MAP[id]={id,text,cat,fn};
+  (SC_BY_CAT[cat]=SC_BY_CAT[cat]||[]).push(id);
+  (SC_BY_FN[fn]=SC_BY_FN[fn]||[]).push(id);
+});
+
+const DRL_CATS=[
+  {id:'governance',name:'Governance & Policy',fn:['GV'],desc:'Board and executive governance documents and cybersecurity policies',requests:[
+    {id:'gov_policy',title:'Cybersecurity / Information Security Policy',hint:'Approved version, owner, review cadence.'},
+    {id:'gov_aup',title:'Acceptable Use Policy',hint:'User obligations and enforcement language.'},
+    {id:'gov_minutes',title:'Board / Risk Committee / CISO Minutes',hint:'Cyber topics discussed and decisions made.'},
+    {id:'gov_charter',title:'Risk Committee or Security Governance Charter',hint:'Authority, accountability, escalation path.'}
+  ]},
+  {id:'risk_mgmt',name:'Risk Management',fn:['GV','ID'],desc:'Risk registers, risk appetite statements, enterprise risk management documentation',requests:[
+    {id:'risk_register',title:'Cyber Risk Register',hint:'Current open risks with owners and treatment plans.'},
+    {id:'risk_appetite',title:'Risk Appetite / Tolerance Statement',hint:'Documented limits and thresholds.'},
+    {id:'risk_erm',title:'Enterprise Risk Management Policy',hint:'How cyber risk is integrated with ERM.'},
+    {id:'risk_bia',title:'Business Impact Analysis (BIA)',hint:'Critical services and impact estimates.'}
+  ]},
+  {id:'asset_mgmt',name:'Asset Management',fn:['ID'],desc:'Hardware, software, data, and supplier service inventories',requests:[
+    {id:'asset_hardware',title:'Hardware Asset Inventory',hint:'Managed endpoints, servers, network devices.'},
+    {id:'asset_software',title:'Software / Application Inventory',hint:'Business critical software and ownership.'},
+    {id:'asset_data',title:'Data Inventory / Classification Inventory',hint:'Sensitive data types and locations.'},
+    {id:'asset_supplier',title:'Supplier Service Inventory',hint:'Third-party services and criticality.'}
+  ]},
+  {id:'access_control',name:'Access Control & Identity',fn:['PR'],desc:'IAM policies, privileged access management, access review records',requests:[
+    {id:'iam_policy',title:'IAM Policy',hint:'Provisioning/deprovisioning and role model.'},
+    {id:'iam_pam',title:'Privileged Access Management Procedure',hint:'How admin access is controlled.'},
+    {id:'iam_reviews',title:'Access Review Records',hint:'Recent periodic access certification evidence.'},
+    {id:'iam_mfa',title:'MFA Standard or Rollout Evidence',hint:'Coverage and exception handling.'}
+  ]},
+  {id:'training',name:'Training & Awareness',fn:['PR'],desc:'Security awareness training programs and completion records',requests:[
+    {id:'train_plan',title:'Security Awareness Program Plan',hint:'Who is trained, frequency, delivery method.'},
+    {id:'train_completion',title:'Training Completion Records',hint:'Completion rates and exceptions.'},
+    {id:'train_role',title:'Role-Based Security Training',hint:'Role-specific content for admins/devs/etc.'},
+    {id:'train_phish',title:'Phishing Simulation Results',hint:'Campaign outcomes and remediation actions.'}
+  ]},
+  {id:'data_security',name:'Data Security & Architecture',fn:['PR'],desc:'Data protection controls, encryption, network architecture, backup policies',requests:[
+    {id:'data_network',title:'Network / Architecture Diagram',hint:'Major segments, trust zones, controls.'},
+    {id:'data_flow',title:'Data Flow Diagram',hint:'Sensitive data flows and trust boundaries.'},
+    {id:'data_encrypt',title:'Encryption Standard / Policy',hint:'Encryption at rest/in transit requirements.'},
+    {id:'data_backup',title:'Backup / Recovery Policy',hint:'Backup scope, cadence, and retention.'}
+  ]},
+  {id:'vendor_mgmt',name:'Vendor & Supply Chain',fn:['GV','ID'],desc:'Vendor risk assessments, contracts with security requirements, supply chain security',requests:[
+    {id:'vendor_assess',title:'Vendor Risk Assessment(s)',hint:'Due diligence evidence for critical vendors.'},
+    {id:'vendor_contract',title:'Contract Security Clauses / DPA',hint:'Security obligations and rights to audit.'},
+    {id:'vendor_tiering',title:'Supplier Criticality Ranking',hint:'How vendors are tiered by risk/impact.'}
+  ]},
+  {id:'monitoring',name:'Monitoring & Detection',fn:['DE'],desc:'SIEM configuration, log management, alert and monitoring documentation',requests:[
+    {id:'monitor_siem',title:'SIEM / Central Logging Configuration',hint:'Data sources and log retention.'},
+    {id:'monitor_usecases',title:'Detection Use Cases / Alert Rules',hint:'High-priority detections and tuning notes.'},
+    {id:'monitor_process',title:'Alert Triage Procedure',hint:'Escalation and handling workflow.'}
+  ]},
+  {id:'vuln_mgmt',name:'Vulnerability Management',fn:['ID','PR'],desc:'Vulnerability scans, patch management records, threat intelligence subscriptions',requests:[
+    {id:'vuln_scans',title:'Vulnerability Scan Reports',hint:'Recent scans and unresolved criticals.'},
+    {id:'vuln_patch',title:'Patch Management Policy/Records',hint:'Patch SLAs and compliance evidence.'},
+    {id:'vuln_pt',title:'Penetration Test Results',hint:'Most recent report and remediation status.'}
+  ]},
+  {id:'incident_response',name:'Incident Response',fn:['RS'],desc:'Incident response plan, tabletop exercise records, incident logs',requests:[
+    {id:'ir_plan',title:'Incident Response Plan',hint:'Roles, process, severity model.'},
+    {id:'ir_tabletop',title:'Tabletop Exercise Record',hint:'Scenario, participants, lessons learned.'},
+    {id:'ir_tickets',title:'Incident Log / Case Records',hint:'Sample incidents and response actions.'}
+  ]},
+  {id:'recovery',name:'Business Continuity & Recovery',fn:['RC'],desc:'Business continuity plan, disaster recovery plan, recovery test results',requests:[
+    {id:'rc_bcp',title:'Business Continuity Plan (BCP)',hint:'Critical process continuity approach.'},
+    {id:'rc_drp',title:'Disaster Recovery Plan (DRP)',hint:'Recovery strategy for critical systems.'},
+    {id:'rc_tests',title:'Recovery Test Results',hint:'Evidence of restore/DR tests and outcomes.'}
+  ]},
+  {id:'audit',name:'Audit & Assessment',fn:['GV','ID'],desc:'Internal audits, third-party assessments, prior cybersecurity assessments',requests:[
+    {id:'audit_internal',title:'Internal Cyber Audit Reports',hint:'Latest audit and remediation tracking.'},
+    {id:'audit_external',title:'Third-Party Assessment Reports',hint:'SOC2/ISO or similar external assurance.'},
+    {id:'audit_prior',title:'Previous CSF / Security Assessments',hint:'Baseline and trend evidence.'}
+  ]},
+];
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+const _savedProv=localStorage.getItem('csf_provider');
+const _savedModel=localStorage.getItem('csf_model');
+const _initialProvider=_savedProv==='anthropic'||_savedProv==='gemini'||_savedProv==='openai'?_savedProv:'gemini';
+function defaultModelForProvider(p){
+  if(p==='gemini')return'gemini-2.0-flash';
+  if(p==='openai')return'gpt-4o-mini';
+  return'claude-haiku-4-5-20251001';
+}
+const _initialModel=_savedModel||defaultModelForProvider(_initialProvider);
+let S={
+  step:'welcome',
+  provider:_initialProvider,   // 'gemini' | 'anthropic' | 'openai'
+  apiKey:localStorage.getItem('csf_apiKey')||'',
+  model:_initialModel,
+  org:{name:'',industry:'',scope:'',date:'',assessorName:''},
+  scoringMethod:'both',
+  includedFns:['GV','ID','PR','DE','RS','RC'],
+  drlViewFns:null,
+  demoEvidence:false,
+  demoFindings:false,
+  drl:{},
+  drlValidationErrors:[],
+  evidenceMap:{},
+  docSummaries:[],
+  questionnaire:null,
+  answers:{},
+  activeRole:0,
+  findings:{},
+  activeReviewFn:'GV',
+  reportPage:0,
+};
+
+function saveState(){try{localStorage.setItem('csf_state',JSON.stringify(S));}catch(e){}}
+function loadState(){
+  const r=localStorage.getItem('csf_state');
+  if(r){
+    try{
+      Object.assign(S,JSON.parse(r));
+      if(S.provider!=='gemini'&&S.provider!=='anthropic'&&S.provider!=='openai')S.provider='gemini';
+      if(S.reportPage==null||typeof S.reportPage!=='number')S.reportPage=0;
+      persistAIPrefs();
+    }catch(e){}
+  }
+}
+function persistAIPrefs(){
+  try{
+    if(S.provider)localStorage.setItem('csf_provider',S.provider);
+    if(S.model)localStorage.setItem('csf_model',S.model);
+  }catch(e){}
+}
+function findingScidFromEl(el){return el&&typeof el.getAttribute==='function'?el.getAttribute('data-scid'):null;}
+
+// ════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════
+function setLoading(msg='Working...', hint=''){
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('loading-msg').textContent=msg;
+  const hi=document.getElementById('loading-hint');
+  if(hi){
+    hi.textContent=hint||'';
+    hi.style.display=hint?'block':'none';
+  }
+}
+function clearLoading(){
+  document.getElementById('loading-overlay').style.display='none';
+  const hi=document.getElementById('loading-hint');
+  if(hi){hi.textContent='';hi.style.display='none';}
+}
+function scoreColor(s){
+  if(!s||s<1)return{bg:'#f0f4f8',fg:'#5a7a96'};
+  if(s<2)    return{bg:'#ffebee',fg:'#c62828'};
+  if(s<3)    return{bg:'#fff3e0',fg:'#e65100'};
+  if(s<3.5)  return{bg:'#fffde7',fg:'#f57f17'};
+  if(s<4.5)  return{bg:'#f1f8e9',fg:'#2e7d32'};
+  return          {bg:'#e8f5e9',fg:'#1b5e20'};
+}
+function scoreChip(v,label=''){const c=scoreColor(v);return`<span class="score-badge" style="background:${c.bg};color:${c.fg}">${label}${v!=null?v:'-'}</span>`;}
+function tierFromCmmi(c){if(!c||c<1)return'-';if(c<2)return'Tier 1';if(c<2.5)return'Tier 1–2';if(c<4)return'Tier 3';if(c<4.5)return'Tier 3–4';return'Tier 4';}
+function avg(arr){const v=arr.filter(x=>x!=null&&x>0);if(!v.length)return null;return Math.round((v.reduce((a,b)=>a+b,0)/v.length)*10)/10;}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function parseJSON(str){
+  let s=String(str||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'');
+  const i=s.indexOf('{');
+  const j=s.lastIndexOf('}');
+  if(i===-1||j===-1||j<i)throw new Error('No JSON object found in model response.');
+  s=s.slice(i,j+1);
+  try{return JSON.parse(s);}
+  catch(e){throw new Error(((e&&e.message)||'Invalid JSON')+' — model output may be truncated or contain unescaped characters.');}
+}
+function getDrlEntry(catId,reqId){
+  if(!S.drl[catId])S.drl[catId]={};
+  if(!S.drl[catId][reqId])S.drl[catId][reqId]={files:[],notProvided:false,notProvidedReason:''};
+  return S.drl[catId][reqId];
+}
+function allRequests(){return DRL_CATS.flatMap(cat=>cat.requests.map(r=>({catId:cat.id,catName:cat.name,...r})));} 
+function drlStats(useViewFilter){
+  const reqs=useViewFilter?allRequestsForView():allRequests();
+  let addressed=0,totalFiles=0;
+  reqs.forEach(r=>{
+    const e=getDrlEntry(r.catId,r.id);
+    totalFiles+=e.files.length;
+    const hasReason=e.notProvided&&(e.notProvidedReason||'').trim().length>=10;
+    const filesComplete=e.files.length>0&&e.files.every(f=>(f.context||'').trim().length>=5);
+    if(hasReason||filesComplete)addressed++;
+  });
+  return{addressed,total:reqs.length,totalFiles};
+}
+function validateDRL(){
+  const errs=[];
+  allRequestsForView().forEach(r=>{
+    const e=getDrlEntry(r.catId,r.id);
+    if(e.notProvided){
+      if((e.notProvidedReason||'').trim().length<10)errs.push(`${r.title}: provide a not-provided reason (10+ chars).`);
+      return;
+    }
+    if(!e.files.length){errs.push(`${r.title}: upload at least one file or mark as not provided.`);return;}
+    e.files.forEach((f,idx)=>{if((f.context||'').trim().length<5)errs.push(`${r.title} (file ${idx+1}: ${f.name}) needs context (5+ chars).`);});
+  });
+  return errs;
+}
+function ensureDrlViewFns(){
+  const inc=(S.includedFns&&S.includedFns.length)?S.includedFns:FUNCTIONS.map(f=>f.id);
+  if(!S.drlViewFns||!Array.isArray(S.drlViewFns)||!S.drlViewFns.length)S.drlViewFns=[inc[0]];
+  S.drlViewFns=S.drlViewFns.filter(f=>inc.includes(f));
+  if(!S.drlViewFns.length)S.drlViewFns=[inc[0]];
+  S.drlViewFns=FUNCTIONS.map(f=>f.id).filter(id=>S.drlViewFns.includes(id));
+}
+function drlCatsForTable(){
+  ensureDrlViewFns();
+  return DRL_CATS.filter(cat=>cat.fn.some(fid=>S.drlViewFns.includes(fid)));
+}
+function allRequestsForView(){
+  return drlCatsForTable().flatMap(cat=>cat.requests.map(r=>({catId:cat.id,catName:cat.name,...r})));
+}
+/** CSF 2.0 subcategory outcomes in current assessment scope (used for evidence map / analysis tables). */
+function subcategoriesInScopeCount(){
+  return SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).length;
+}
+function drlViewCoversAllIncluded(){
+  ensureDrlViewFns();
+  return S.includedFns.length===S.drlViewFns.length&&S.includedFns.every(f=>S.drlViewFns.includes(f));
+}
+function drlSelectAllViewFns(){
+  const inc=(S.includedFns&&S.includedFns.length)?S.includedFns:FUNCTIONS.map(f=>f.id);
+  S.drlViewFns=FUNCTIONS.map(f=>f.id).filter(id=>inc.includes(id));
+}
+function drlFunctionContextHtml(cat,viewFns){
+  const vf=viewFns&&viewFns.length?viewFns:null;
+  const fids=vf?(cat.fn||[]).filter(fid=>vf.includes(fid)):(cat.fn||[]);
+  return fids.map(fid=>{
+    const f=FUNCTIONS.find(x=>x.id===fid);
+    if(!f)return'';
+    return`<div class="drl-fn-block"><span class="chip" style="background:${f.light};color:${f.color}">${escHtml(fid)}</span> <strong class="drl-fn-name">${escHtml(f.name)}</strong><p class="drl-fn-explain">${escHtml(f.explain)}</p></div>`;
+  }).join('');
+}
+function scCatDomId(catCode){return'sc-cat-'+String(catCode).replace(/\./g,'-');}
+function allCategoriesInOrder(){
+  const seen=new Set();
+  const out=[];
+  FUNCTIONS.forEach(f=>{
+    (CATEGORIES[f.id]||[]).forEach(c=>{
+      if(SC_BY_CAT[c]&&!seen.has(c)){seen.add(c);out.push(c);}
+    });
+  });
+  return out;
+}
+function renderScInventorySidebarInnerHtml(){
+  return allCategoriesInOrder().map(c=>{
+    const subs=(SC_BY_CAT[c]||[]).map(scid=>{
+      const sc=SC_MAP[scid];
+      if(!sc)return'';
+      const subId='sc-sub-'+String(scid).replace(/\./g,'-');
+      return`<li id="${subId}" class="drl-sc-subitem"><div class="drl-sc-subid">${escHtml(scid)}</div><div class="drl-sc-subtext">${escHtml(sc.text)}</div></li>`;
+    }).join('');
+    return`<section id="${scCatDomId(c)}" class="drl-sc-catsec" data-sc-cat="${escHtml(c)}"><h4 class="drl-sc-cat-head">${escHtml(c)} — ${escHtml(CAT_NAMES[c]||c)}</h4><ul class="drl-sc-sublist">${subs}</ul></section>`;
+  }).join('');
+}
+function drlCategoryContextHtml(cat,viewFns){
+  const vf=viewFns&&viewFns.length?viewFns:null;
+  const fidsForCats=vf?(cat.fn||[]).filter(fid=>vf.includes(fid)):(cat.fn||[]);
+  const bucket=`<div class="drl-bucket-title">${escHtml(cat.name)}</div><p class="drl-bucket-desc">${escHtml(cat.desc)}</p>`;
+  const seen={};
+  const cats=[];
+  fidsForCats.forEach(fid=>{(CATEGORIES[fid]||[]).forEach(c=>{if(!seen[c]){seen[c]=1;cats.push(c);}})});
+  const catUl=`<div class="drl-catlist-label">Related CSF categories <span class="drl-catlist-hint">(click a code to view subcategories)</span></div><ul class="drl-catlist">${cats.map(c=>{
+    const sid=String(c).replace(/\./g,'-');
+    return`<li><a href="#" class="drl-cat-jump" data-action="drl-jump-sc-cat" data-catref="${escHtml(sid)}" title="Open inventory: ${escHtml(c)}"><strong>${escHtml(c)}</strong></a> — ${escHtml(CAT_NAMES[c]||c)}</li>`;
+  }).join('')}</ul>`;
+  return bucket+catUl;
+}
+
+// ════════════════════════════════════════════════════════════
+// AI API — routes to Gemini or Anthropic based on provider
+// ════════════════════════════════════════════════════════════
+/** Google often retires bare gemini-1.5-pro on v1beta; map to a model that supports generateContent. */
+function normalizeGeminiModelId(model){
+  const m=String(model||'gemini-2.0-flash').trim();
+  if(m==='gemini-1.5-pro'||m==='gemini-1.5-pro-latest'||m==='gemini-1.5-pro-001'||m==='gemini-1.5-pro-002')return'gemini-2.0-flash';
+  return m;
+}
+/** @param callOpts {{outputTokens?:number,jsonMime?:boolean}} Gemini/OpenAI: JSON mode when jsonMime; Anthropic: max_tokens only */
+function providerSupportsJsonMime(){return S.provider==='gemini'||S.provider==='openai';}
+async function callAI(system, userMsg, qualityCall=false, callOpts={}){
+  const outTok=callOpts.outputTokens!=null?callOpts.outputTokens:(qualityCall?8192:4096);
+  if(S.provider==='gemini'){
+    return callGemini(system,userMsg,normalizeGeminiModelId(S.model),{
+      maxOutputTokens:outTok,
+      jsonMime:!!callOpts.jsonMime,
+    });
+  }
+  if(S.provider==='openai'){
+    const maxTok=Math.max(outTok,qualityCall?8192:4096);
+    return callOpenAI(system,userMsg,S.model||'gpt-4o-mini',{maxTokens:maxTok,jsonObject:!!callOpts.jsonMime});
+  }
+  const model=qualityCall?'claude-sonnet-4-6':S.model;
+  const maxTok=Math.max(outTok,qualityCall?8192:4096);
+  return callAnthropic(system,userMsg,model,{maxTokens:maxTok});
+}
+
+async function callGemini(system, userMsg, model='gemini-2.0-flash', opts={}){
+  model=normalizeGeminiModelId(model);
+  const maxOutputTokens=opts.maxOutputTokens!=null?opts.maxOutputTokens:4096;
+  const generationConfig={maxOutputTokens,temperature:0.2};
+  if(opts.jsonMime)generationConfig.responseMimeType='application/json';
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${S.apiKey}`;
+  const resp=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      systemInstruction:{parts:[{text:system}]},
+      contents:[{parts:[{text:userMsg}]}],
+      generationConfig,
+    }),
+  });
+  if(!resp.ok){const e=await resp.text();throw new Error(`Gemini error ${resp.status}: ${e}`);}
+  const d=await resp.json();
+  const c=d.candidates&&d.candidates[0];
+  if(!c)throw new Error('Gemini returned no candidates (content may be blocked). '+(d.promptFeedback?JSON.stringify(d.promptFeedback):''));
+  const reason=c.finishReason;
+  if(reason==='MAX_TOKENS')throw new Error('Gemini hit the output token limit (truncated JSON). Use a shorter questionnaire scope or try again.');
+  if(reason==='OTHER')throw new Error('Gemini stopped with an incomplete response (finishReason OTHER). Try again or narrow the assessment scope.');
+  if(reason&&reason!=='STOP')console.warn('Gemini finishReason:',reason);
+  const parts=c.content&&c.content.parts;
+  if(!parts||!parts.length)throw new Error('Gemini response had no content parts.');
+  const t=parts.map(p=>p.text||'').join('');
+  if(!t.trim())throw new Error('Gemini returned empty text.');
+  return t;
+}
+
+async function callAnthropic(system, userMsg, model, opts={}){
+  model=model||S.model;
+  const max_tokens=opts.maxTokens!=null?opts.maxTokens:4096;
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model,max_tokens,system,messages:[{role:'user',content:userMsg}]}),
+  });
+  if(!resp.ok){const e=await resp.text();throw new Error(`Anthropic error ${resp.status}: ${e}`);}
+  const d=await resp.json();
+  return d.content[0].text;
+}
+
+async function callOpenAI(system,userMsg,model,opts={}){
+  const max_tokens=opts.maxTokens!=null?opts.maxTokens:4096;
+  const body={
+    model:model||'gpt-4o-mini',
+    messages:[{role:'system',content:system},{role:'user',content:userMsg}],
+    max_tokens,
+    temperature:0.2,
+  };
+  if(opts.jsonObject)body.response_format={type:'json_object'};
+  const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.apiKey},
+    body:JSON.stringify(body),
+  });
+  if(!resp.ok){const e=await resp.text();throw new Error(`OpenAI error ${resp.status}: ${e}`);}
+  const d=await resp.json();
+  const msg=d.choices&&d.choices[0]&&d.choices[0].message;
+  const t=(msg&&msg.content)||'';
+  if(!String(t).trim())throw new Error('OpenAI returned empty content.');
+  return t;
+}
+
+// ════════════════════════════════════════════════════════════
+// FILE EXTRACTION
+// ════════════════════════════════════════════════════════════
+async function extractText(file){
+  const n=file.name.toLowerCase();
+  if(n.endsWith('.pdf'))return extractPDF(file);
+  if(n.endsWith('.docx'))return extractDOCX(file);
+  return file.text();
+}
+async function extractPDF(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let t='';
+  for(let i=1;i<=Math.min(pdf.numPages,30);i++){
+    const pg=await pdf.getPage(i);
+    const tc=await pg.getTextContent();
+    t+=tc.items.map(x=>x.str).join(' ')+'\n';
+  }
+  return t.slice(0,12000);
+}
+async function extractDOCX(file){
+  const buf=await file.arrayBuffer();
+  const r=await mammoth.extractRawText({arrayBuffer:buf});
+  return r.value.slice(0,12000);
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 1: WELCOME
+// ════════════════════════════════════════════════════════════
+function renderWelcome(){
+  const hasSaved=!!localStorage.getItem('csf_state');
+  const prov=S.provider;
+  return `
+<div class="welcome-hero">
+  <h1>NIST CSF 2.0 Guided Assessment</h1>
+  <p>An AI-powered tool that guides your organization through a complete NIST Cybersecurity Framework 2.0 evaluation — from document evidence to scored findings and an executive report.</p>
+  <div class="steps-preview">
+    <div class="sp-step">📁 Upload Evidence</div>
+    <div class="sp-step">🤖 AI Analysis</div>
+    <div class="sp-step">📋 Questionnaire</div>
+    <div class="sp-step">📊 Findings</div>
+    <div class="sp-step">📄 Report</div>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>Get Started</h2>
+    <p class="sub">Choose your AI provider and enter your API key. The AI analyzes your documents, generates a targeted questionnaire, and produces draft findings for your review.</p>
+
+    <div class="section-label" style="margin-top:0">AI Provider</div>
+    <div class="row" style="margin-bottom:8px;align-items:stretch">
+      <label class="provider-card ${prov==='gemini'?'selected':''}" style="margin:0;flex:1;min-width:200px">
+        <input type="radio" name="provider" value="gemini" ${prov==='gemini'?'checked':''} data-action="set-provider">
+        <div>
+          <div style="font-weight:700;font-size:.9rem;color:#1a2332">Google Gemini <span style="background:#e8f5e9;color:#2e7d32;font-size:.7rem;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:4px">FREE TIER</span></div>
+          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">Gemini 2.0 Flash is free with generous daily limits — ideal for development and assessments. Get a key at <a href="https://aistudio.google.com" target="_blank" style="color:#1e88e5">aistudio.google.com</a>.</div>
+        </div>
+      </label>
+      <label class="provider-card ${prov==='anthropic'?'selected':''}" style="margin:0;flex:1;min-width:200px">
+        <input type="radio" name="provider" value="anthropic" ${prov==='anthropic'?'checked':''} data-action="set-provider">
+        <div>
+          <div style="font-weight:700;font-size:.9rem;color:#1a2332">Anthropic Claude</div>
+          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">Claude Haiku or Sonnet. Pay-as-you-go via the Anthropic API. Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a>.</div>
+        </div>
+      </label>
+      <label class="provider-card ${prov==='openai'?'selected':''}" style="margin:0;flex:1;min-width:200px">
+        <input type="radio" name="provider" value="openai" ${prov==='openai'?'checked':''} data-action="set-provider">
+        <div>
+          <div style="font-weight:700;font-size:.9rem;color:#1a2332">OpenAI</div>
+          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">GPT-4o family via the OpenAI API. Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#1e88e5">platform.openai.com</a>.</div>
+        </div>
+      </label>
+    </div>
+
+    ${prov==='gemini'?`
+    <div id="api-help" class="info-box" style="display:none">
+      <strong style="color:#1565c0">How to get a free Gemini API key</strong>
+      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1e88e5">aistudio.google.com/apikey</a> and sign in with your Google account.</li>
+        <li>Click <strong>Create API key</strong>.</li>
+        <li>Copy the key and paste it below. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">AIza</code>.</li>
+      </ol>
+      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is never sent anywhere except Google's API.</div>
+    </div>
+    <div style="margin-bottom:4px"></div>
+    <label>Gemini API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
+    <input type="password" id="inp-apikey" placeholder="AIza..." value="${escHtml(S.apiKey)}">
+    <label>Model</label>
+    <select id="inp-model">
+      <option value="gemini-2.0-flash" ${S.model==='gemini-2.0-flash'?'selected':''}>Gemini 2.0 Flash (free, fast — recommended)</option>
+      <option value="gemini-1.5-flash" ${S.model==='gemini-1.5-flash'?'selected':''}>Gemini 1.5 Flash (free, slightly older)</option>
+      <option value="gemini-1.5-pro" ${S.model==='gemini-1.5-pro'?'selected':''}>Gemini 1.5 Pro (higher quality, limited free tier)</option>
+    </select>`:prov==='openai'?`
+    <div id="api-help" class="info-box" style="display:none">
+      <strong style="color:#1565c0">How to get an OpenAI API key</strong>
+      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#1e88e5">platform.openai.com/api-keys</a> and sign in.</li>
+        <li>Create a new secret key and copy it (often starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-</code> or <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-proj-</code>).</li>
+      </ol>
+      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is sent only to OpenAI's API from this page.</div>
+    </div>
+    <div style="margin-bottom:4px"></div>
+    <label>OpenAI API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
+    <input type="password" id="inp-apikey" placeholder="sk-..." value="${escHtml(S.apiKey)}">
+    <label>Model</label>
+    <select id="inp-model">
+      <option value="gpt-4o-mini" ${S.model==='gpt-4o-mini'?'selected':''}>GPT-4o mini (lower cost)</option>
+      <option value="gpt-4o" ${S.model==='gpt-4o'?'selected':''}>GPT-4o (higher quality)</option>
+    </select>`:`
+    <div id="api-help" class="info-box" style="display:none">
+      <strong style="color:#1565c0">How to get an Anthropic API key</strong>
+      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        <li>Go to <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a> and create an account.</li>
+        <li>Click <strong>API Keys</strong> in the left sidebar, then <strong>Create Key</strong>.</li>
+        <li>Copy the key and paste it below. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-ant-</code>.</li>
+      </ol>
+      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is never sent anywhere except Anthropic's API.</div>
+    </div>
+    <div style="margin-bottom:4px"></div>
+    <label>Anthropic API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
+    <input type="password" id="inp-apikey" placeholder="sk-ant-..." value="${escHtml(S.apiKey)}">
+    <label>Model</label>
+    <select id="inp-model">
+      <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku (faster, lower cost)</option>
+      <option value="claude-sonnet-4-6" ${S.model==='claude-sonnet-4-6'?'selected':''}>Claude Sonnet (higher quality)</option>
+    </select>`}
+
+    <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
+      <button class="btn btn-primary" data-action="welcome-start">Start New Assessment →</button>
+      ${hasSaved?'<button class="btn btn-secondary" data-action="welcome-resume">Resume Saved Assessment</button>':''}
+    </div>
+  </div>
+
+  <div class="card" style="background:#f8fafc">
+    <div class="section-label">What this tool does</div>
+    <div class="row" style="gap:24px;margin-top:8px">
+      <div class="col"><strong style="font-size:.85rem">1 — Document Upload</strong><p style="font-size:.8rem;color:#5a7a96;margin-top:4px">Upload evidence documents across 12 categories (policies, risk registers, asset inventories, IR plans, etc.) via a guided Document Request List.</p></div>
+      <div class="col"><strong style="font-size:.85rem">2 — AI Evidence Analysis</strong><p style="font-size:.8rem;color:#5a7a96;margin-top:4px">The AI reads each document, maps it to CSF 2.0 subcategories, and rates evidence quality — identifying gaps that need questionnaire follow-up.</p></div>
+      <div class="col"><strong style="font-size:.85rem">3 — Targeted Questionnaire</strong><p style="font-size:.8rem;color:#5a7a96;margin-top:4px">The AI generates a custom questionnaire focused on your evidence gaps — replacing traditional stakeholder interviews. Grouped by role.</p></div>
+      <div class="col"><strong style="font-size:.85rem">4 — Findings & Report</strong><p style="font-size:.8rem;color:#5a7a96;margin-top:4px">The AI drafts findings for each CSF subcategory in your scope (${SC_RAW.length} outcomes in this tool’s catalog). You review and approve or dispute each one. A scored executive and technical report is generated.</p></div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 2: SETUP
+// ════════════════════════════════════════════════════════════
+function renderSetup(){
+  const industries=['Technology','Financial Services','Healthcare','Government / Public Sector','Energy / Utilities','Manufacturing','Retail / E-commerce','Education','Nonprofit','Professional Services','Other'];
+  return`
+${topBar(1)}
+<div class="container">
+  <div class="card">
+    <h2>Organization Setup</h2>
+    <p class="sub">Tell us about your organization and how you'd like to run this assessment.</p>
+    <div class="row">
+      <div class="col"><label>Organization Name <span style="color:#e53935">*</span></label><input type="text" id="inp-org-name" value="${escHtml(S.org.name)}" placeholder="Acme Corp"></div>
+      <div class="col"><label>Industry</label><select id="inp-org-industry">${industries.map(i=>`<option ${S.org.industry===i?'selected':''}>${i}</option>`).join('')}</select></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Assessor Name</label><input type="text" id="inp-org-assessor" value="${escHtml(S.org.assessorName)}" placeholder="Your name"></div>
+    </div>
+    <label>Assessment Scope</label>
+    <textarea id="inp-org-scope" placeholder="Describe what is in scope: entire enterprise, specific division, asset types (IT, OT, cloud, third-party), exclusions, etc.">${escHtml(S.org.scope)}</textarea>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Scoring Methodology</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:16px">Choose how findings will be scored.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      ${['both','cmmi','tiers'].map(m=>`
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid ${S.scoringMethod===m?'#1e88e5':'#d0dce8'};border-radius:10px;cursor:pointer;flex:1;min-width:200px;background:${S.scoringMethod===m?'#f0f7ff':'#fff'}">
+        <input type="radio" name="scoring" value="${m}" ${S.scoringMethod===m?'checked':''} style="margin-top:3px">
+        <div>
+          <div style="font-weight:700;font-size:.85rem">${m==='both'?'Both (Recommended)':m==='cmmi'?'CMMI 1–5 Only':'CSF Tiers 1–4 Only'}</div>
+          <div style="font-size:.75rem;color:#5a7a96;margin-top:2px">${m==='both'?'CMMI as primary with CSF Tier equivalent — best for executive reporting':m==='cmmi'?'5-level scale widely understood by boards':'NIST-native 4-level scale'}</div>
+        </div>
+      </label>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">About NIST CSF 2.0</div>
+    <p style="font-size:.85rem;color:#2c4a6a;line-height:1.65;margin-bottom:10px">
+      <strong>NIST CSF</strong> (Cybersecurity Framework) is a framework built to help organizations assess and manage cybersecurity risk.
+      This tool helps you assess your organization's cyber maturity against NIST CSF.
+    </p>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:0">
+      Official overview and downloads:
+      <a href="${NIST_CSF_URL}" target="_blank" rel="noopener noreferrer" style="color:#1e88e5;font-weight:600">NIST — Cybersecurity Framework</a>
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Functions to Assess</div>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">All 6 functions selected by default. Deselect any to exclude related subcategories from this assessment.</p>
+    <div class="alert alert-info" style="margin-bottom:16px">
+      Next step is a <strong>structured evidence request list</strong>: multiple files per request, <strong>context per file</strong>,
+      or <strong>Not provided</strong> with a required reason.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${FUNCTIONS.map(f=>`
+      <label style="display:block;padding:14px 16px;border:1.5px solid ${S.includedFns.includes(f.id)?f.color:'#d0dce8'};border-radius:10px;cursor:pointer;background:${S.includedFns.includes(f.id)?f.light:'#fff'};transition:.15s">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <input type="checkbox" name="fn" value="${f.id}" ${S.includedFns.includes(f.id)?'checked':''} style="margin-top:4px;flex-shrink:0">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+              <span style="font-weight:800;color:${f.color};font-size:.9rem">${f.id}</span>
+              <span style="font-weight:700;font-size:.95rem;color:#0d2137">${f.name}</span>
+            </div>
+            <p style="font-size:.8rem;color:#3d5a78;line-height:1.55;margin:0">${f.explain}</p>
+          </div>
+        </div>
+      </label>`).join('')}
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;margin-bottom:32px">
+    <button class="btn btn-secondary" data-action="goto-welcome">← Back</button>
+    <button class="btn btn-primary" data-action="setup-next">Continue to Structured Document Upload →</button>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 3: DRL
+// ════════════════════════════════════════════════════════════
+function renderDRL(){
+  ensureDrlViewFns();
+  const catsShow=drlCatsForTable();
+  const st=drlStats(true);
+  const pct=st.total?Math.round(st.addressed/st.total*100):0;
+  const fnFilterCard=`<div class="card drl-fn-filter-card">
+    <div class="drl-fn-filter-label">Show evidence for</div>
+    <p class="drl-fn-filter-hint">Pick one or more CSF functions to narrow the table and the progress counts above. <strong>Analyze Evidence</strong> runs only on visible rows and clears prior document-based evidence each time—select every function you want in that pass, or run again after switching.</p>
+    <div class="drl-fn-filter-row" style="margin-bottom:8px">
+      <button type="button" class="btn btn-sm btn-secondary" data-action="drl-view-all-fns" ${drlViewCoversAllIncluded()?'disabled':''}>Show all functions</button>
+      ${drlViewCoversAllIncluded()?'<span style="font-size:.72rem;color:#5a7a96">All functions in scope are shown.</span>':''}
+    </div>
+    <div class="drl-fn-filter-row">${S.includedFns.map(fid=>{
+      const f=FUNCTIONS.find(x=>x.id===fid);
+      if(!f)return'';
+      const on=S.drlViewFns.includes(fid);
+      return`<button type="button" class="drl-fn-pill ${on?'is-on':''}" data-action="drl-toggle-viewfn" data-fn="${fid}" style="border-color:${on?f.color:'#d0dce8'};background:${on?f.light:'#fff'};color:${on?f.color:'#5a7a96'}" title="${on?'Click to hide':'Click to show'} ${escHtml(f.name)} evidence rows">${escHtml(fid)} <span class="drl-fn-pill-name">${escHtml(f.name)}</span></button>`;
+    }).join('')}</div>
+  </div>`;
+  return`
+${topBar(2)}
+<div class="container container-drl">
+  <div class="card">
+    <h2>Document Upload — Evidence Collection</h2>
+    <p class="sub">For each document request below, upload one or more files and provide context for each file. If a request is not applicable, mark "Not provided" and explain why.</p>
+    <div class="progress-ring">
+      <div style="font-size:.83rem;font-weight:600;color:#2c4a6a;white-space:nowrap">${st.addressed} / ${st.total} evidence requests done</div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:.83rem;color:#5a7a96;white-space:nowrap">${st.totalFiles} file${st.totalFiles!==1?'s':''} uploaded</div>
+    </div>
+    <p class="sub" style="margin-top:0;font-size:.78rem;color:#5a7a96;line-height:1.45">This page counts <strong>${st.total}</strong> evidence <strong>requests</strong> (artifact rows in your current table). After analysis, the tool scores <strong>${subcategoriesInScopeCount()}</strong> CSF <strong>subcategories</strong> in your scope — finer outcome-level statements (${subcategoriesInScopeCount()} is larger because one policy or log export can support many subcategories).</p>
+    <div class="alert alert-info">💡 Supported formats: PDF, Word (.docx), and plain text. Each uploaded file requires context. For non-applicable requests, select "Not provided" and explain (e.g., on-prem control not applicable in all-cloud environment).</div>
+    <div class="alert alert-warn" style="border-color:#90caf9;background:#f3f9ff">
+      <strong>Demo mode</strong> — Use <strong>Demo: synthetic data → Analysis</strong> below to fill synthetic files, build a local evidence map (no document AI), and jump to Analysis to test questionnaire and findings with your API key.
+    </div>
+    ${S.drlValidationErrors?.length?`<div class="alert alert-warn"><strong>Complete these before analysis:</strong><ul style="margin-top:6px;padding-left:18px">${S.drlValidationErrors.slice(0,12).map(e=>`<li style="margin-bottom:3px">${escHtml(e)}</li>`).join('')}</ul>${S.drlValidationErrors.length>12?`<div style="margin-top:4px;font-size:.78rem">+ ${S.drlValidationErrors.length-12} more...</div>`:''}</div>`:''}
+  </div>
+  ${fnFilterCard}
+
+  <div class="drl-page-split">
+    <div class="drl-sc-rail">
+      <button type="button" class="drl-sc-fab" data-action="toggle-sc-sidebar" aria-expanded="false" title="Show or hide the CSF 2.0 subcategory inventory (${subcategoriesInScopeCount()} in your scope of ${SC_RAW.length} in catalog)">▶</button>
+    </div>
+    <aside id="drl-sc-sidebar" class="drl-sc-sidebar collapsed" aria-label="NIST CSF 2.0 subcategory inventory">
+      <div class="drl-sc-sidebar-head">
+        <span><strong>CSF subcategories</strong> <span class="drl-sc-count">${subcategoriesInScopeCount()} in scope</span> <span class="drl-sc-count" style="color:#8aa3bc">(${SC_RAW.length} in tool)</span></span>
+        <button type="button" class="drl-sc-close" data-action="toggle-sc-sidebar" title="Collapse sidebar" aria-label="Collapse">×</button>
+      </div>
+      <div class="drl-sc-sidebar-scroll">${renderScInventorySidebarInnerHtml()}</div>
+    </aside>
+    <div class="drl-sc-main">
+  <div class="drl-table-wrap">
+    <table class="drl-master">
+      <thead>
+        <tr>
+          <th class="drl-th-fn">Function</th>
+          <th class="drl-th-cat">Category</th>
+          <th class="drl-th-req">Requested item</th>
+          <th class="drl-th-up">Upload</th>
+          <th class="drl-th-ctx">Context (per file)</th>
+          <th class="drl-th-np">Not provided</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${catsShow.map(cat=>{
+          const n=cat.requests.length;
+          return cat.requests.map((req,i)=>{
+            const e=getDrlEntry(cat.id,req.id);
+            const rowCls=(e.files.length||e.notProvided)?'drl-cat-done':'';
+            const fileList=e.files.length?`<div class="file-list">${e.files.map((f,idx)=>`<div class="file-item"><span>📄 ${escHtml(f.name)}</span><span class="rm" data-action="remove-file" data-cat="${cat.id}" data-req="${req.id}" data-idx="${idx}">✕</span></div><div class="req-context"><textarea data-action="set-file-context" data-cat="${cat.id}" data-req="${req.id}" data-idx="${idx}" placeholder="What this file shows; scope; timeframe (for AI).">${escHtml(f.context||'')}</textarea></div>`).join('')}</div>`:'';
+            const contextCol=e.notProvided?`<td class="drl-td-ctx"><span class="drl-cell-muted">—</span></td>`:`<td class="drl-td-ctx">${fileList||'<span class="drl-cell-muted">Add files, then context per file.</span>'}</td>`;
+            const uploadCol=e.notProvided?`<td class="drl-td-up"><span class="drl-cell-muted">—</span></td>`:`<td class="drl-td-up"><div class="drop-zone drl-drop-zone" data-dropzone="1" data-cat="${cat.id}" data-req="${req.id}" onclick="document.getElementById('fi-${cat.id}-${req.id}').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'${cat.id}','${req.id}')">📎 Add files</div>
+              <input type="file" id="fi-${cat.id}-${req.id}" multiple accept=".pdf,.docx,.txt" style="display:none" onchange="handleFileInput(event,'${cat.id}','${req.id}')"></td>`;
+            const npCol=`<td class="drl-td-np">
+            <label class="drl-np-label"><input type="checkbox" data-action="toggle-not-provided" data-cat="${cat.id}" data-req="${req.id}" ${e.notProvided?'checked':''}><span>Not provided</span></label>
+            ${e.notProvided?`<div class="np-box"><textarea data-action="set-not-provided-reason" data-cat="${cat.id}" data-req="${req.id}" rows="3" placeholder="Why not provided (e.g., all-cloud — on-prem artifact N/A). Min. 10 characters.">${escHtml(e.notProvidedReason||'')}</textarea></div>`:`<p class="drl-np-hint">If this request does not apply, check the box and explain why.</p>`}
+            </td>`;
+            const fnCell=i===0?`<td rowspan="${n}" class="drl-td-fn">${drlFunctionContextHtml(cat,S.drlViewFns)}</td>`:'';
+            const catCell=i===0?`<td rowspan="${n}" class="drl-td-cat">${drlCategoryContextHtml(cat,S.drlViewFns)}</td>`:'';
+            return`<tr class="${rowCls}">${fnCell}${catCell}
+            <td class="drl-td-req"><div class="req-title">${req.title}</div><div class="req-hint">${req.hint}</div></td>
+            ${uploadCol}
+            ${contextCol}
+            ${npCol}
+            </tr>`;
+          }).join('');
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:24px 0 32px;align-items:center">
+    <button class="btn btn-secondary" data-action="goto-setup">← Back</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="btn btn-secondary" data-action="drl-demo-skip" title="Fill rows with synthetic files and a local evidence map, then go to Analysis (tests questionnaire/findings)">Demo: synthetic data → Analysis</button>
+      <button class="btn btn-primary" data-action="drl-analyze">🤖 Analyze Evidence Package →</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 4: ANALYSIS RESULTS
+// ════════════════════════════════════════════════════════════
+function renderAnalysis(){
+  ensureDrlViewFns();
+  const drlReqTotal=allRequestsForView().length;
+  const allScs=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(x=>x[0]);
+  const scScope=allScs.length;
+  const qMap=id=>(S.evidenceMap[id]?.quality)||'missing';
+  const counts={strong:0,adequate:0,weak:0,missing:0};
+  allScs.forEach(id=>counts[qMap(id)]++);
+  return`
+${topBar(3)}
+<div class="container">
+  ${S.demoEvidence?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo mode is active.</strong> Rows used synthetic files and a local evidence map (no AI document read). Questionnaire and findings still call the AI using your key — use this to test those steps end-to-end.</div>':''}
+  <div class="card">
+    <h2>Evidence Analysis Complete</h2>
+    <p class="sub">${S.demoEvidence?'Synthetic demo files were used instead of AI document analysis.':'The AI has mapped your documents to NIST CSF 2.0 subcategories.'} Review the coverage below, then generate your targeted questionnaire.</p>
+    <p class="sub" style="margin-top:-8px;font-size:.78rem;color:#5a7a96;line-height:1.45">The tables below add up to <strong>${scScope}</strong> CSF <strong>subcategories</strong> in your scope (each row’s <strong>Total</strong> is how many subcategories sit in that category). That is different from the <strong>${drlReqTotal}</strong> evidence <strong>requests</strong> on Document Upload: those rows are the artifact checklist; subcategories are the finer outcomes the model rates from your whole evidence package.</p>
+    <div class="row" style="margin-bottom:24px">
+      <div class="stat-card col"><div class="stat-num" style="color:#2e7d32">${counts.strong}</div><div class="stat-lbl">Strong Evidence</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#1e88e5">${counts.adequate}</div><div class="stat-lbl">Adequate Evidence</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#e65100">${counts.weak}</div><div class="stat-lbl">Weak Evidence</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#c62828">${counts.missing}</div><div class="stat-lbl">No Evidence</div></div>
+    </div>
+    ${counts.missing+counts.weak>0?`<div class="alert alert-warn">⚠️ ${counts.missing+counts.weak} subcategories have missing or weak evidence — the questionnaire will focus on these areas.</div>`:''}
+  </div>
+
+  ${FUNCTIONS.filter(f=>S.includedFns.includes(f.id)).map(fn=>`
+  <div class="card" style="padding:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:4px;height:24px;background:${fn.color};border-radius:2px"></div>
+      <h3 style="font-size:1rem;font-weight:700;color:${fn.color}">${fn.id} — ${fn.name}</h3>
+    </div>
+    <table class="evidence-table">
+      <thead><tr><th>Category</th><th>Total</th><th>Strong</th><th>Adequate</th><th>Weak</th><th>Missing</th></tr></thead>
+      <tbody>${CATEGORIES[fn.id].filter(cat=>SC_BY_CAT[cat]).map(cat=>{
+        const scs=SC_BY_CAT[cat]||[];
+        const cs={strong:0,adequate:0,weak:0,missing:0};
+        scs.forEach(id=>cs[qMap(id)]=(cs[qMap(id)]||0)+1);
+        return`<tr>
+          <td><strong>${CAT_NAMES[cat]}</strong><br><span style="font-size:.72rem;color:#7a9ab8">${cat}</span></td>
+          <td style="text-align:center">${scs.length}</td>
+          <td style="text-align:center">${cs.strong?`<span class="chip chip-green">${cs.strong}</span>`:'-'}</td>
+          <td style="text-align:center">${cs.adequate?`<span class="chip chip-lgreen">${cs.adequate}</span>`:'-'}</td>
+          <td style="text-align:center">${cs.weak?`<span class="chip chip-orange">${cs.weak}</span>`:'-'}</td>
+          <td style="text-align:center">${cs.missing?`<span class="chip chip-red">${cs.missing}</span>`:'-'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`).join('')}
+
+  <div style="display:flex;justify-content:space-between;margin:0 0 32px">
+    <button class="btn btn-secondary" data-action="goto-drl">← Back to Documents</button>
+    <button class="btn btn-primary" data-action="gen-questionnaire">🤖 Generate Questionnaire →</button>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 5: QUESTIONNAIRE
+// ════════════════════════════════════════════════════════════
+function renderQuestionnaire(){
+  const q=S.questionnaire;
+  if(!q||!q.roles||!q.roles.length)return`<div class="container"><div class="card"><p>No questionnaire loaded.</p></div></div>`;
+  const role=q.roles[S.activeRole]||q.roles[0];
+  const totalQ=q.roles.reduce((a,r)=>a+r.questions.length,0);
+  const totalA=q.roles.reduce((a,r)=>a+r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length,0);
+  return`
+${topBar(4)}
+<div class="container">
+  <div class="card">
+    <h2>Assessment Questionnaire</h2>
+    <p class="sub">These questions were generated based on your evidence gaps to reveal "paper vs. practice" differences. All roles can be answered by the same person if appropriate.</p>
+    <div class="progress-ring">
+      <div style="font-size:.83rem;font-weight:600;color:#2c4a6a;white-space:nowrap">${totalA} / ${totalQ} answered</div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${totalQ?Math.round(totalA/totalQ*100):0}%"></div></div>
+    </div>
+    <div class="alert alert-warn" style="margin-top:14px;border-color:#90caf9;background:#f3f9ff">
+      <strong>Testing</strong> — <strong>Demo: fill answers</strong> populates questions; <strong>Demo: findings (no AI)</strong> skips the API and opens Findings Review instantly so you can confirm the rest of the flow. <strong>Generate Findings</strong> runs real AI (several parallel requests; still often a few minutes). Not for real assessments.
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="role-tabs" style="padding:0 20px;background:#f8fafc">
+      ${q.roles.map((r,i)=>{const ra=r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length;return`<div class="role-tab ${i===S.activeRole?'active':''}" data-action="set-role" data-idx="${i}">${r.role} <span style="font-size:.7rem;color:${ra===r.questions.length?'#66bb6a':'#aaa'}">(${ra}/${r.questions.length})</span></div>`;}).join('')}
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:.82rem;color:#5a7a96;margin-bottom:16px;font-style:italic">${role.description}</div>
+      ${role.questions.map((qu,qi)=>renderQuestion(qu,qi)).join('')}
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 32px">
+    <button class="btn btn-secondary" data-action="goto-analysis">← Back to Analysis</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="btn btn-secondary" data-action="questionnaire-demo-fill">Demo: fill answers</button>
+      <button type="button" class="btn btn-secondary" data-action="questionnaire-demo-findings" title="Fill draft findings locally; no API call">Demo: findings (no AI)</button>
+      <button class="btn btn-primary" data-action="gen-findings" ${totalA<Math.ceil(totalQ*0.5)?'disabled':''}>🤖 Generate Findings ${totalA<Math.ceil(totalQ*0.5)?'(answer more questions first)':''} →</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function demoAnswerHash(seed){
+  let h=0;
+  const s=String(seed||'');
+  for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;
+  return h>>>0;
+}
+function applyDemoQuestionnaireAnswers(){
+  const q=S.questionnaire;
+  if(!q||!q.roles||!q.roles.length){alert('No questionnaire loaded.');return;}
+  const totalA=q.roles.reduce((a,r)=>a+r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length,0);
+  if(totalA>0&&!confirm(`Replace ${totalA} existing answer(s) with synthetic demo answers?`))return;
+  const openings=[
+    '[Demo] In our environment, ',
+    '[Demo walkthrough] Staff report that ',
+    '[Demo] For this topic, ',
+    '[Demo] Process-wise, ',
+    '[Demo] Evidence suggests ',
+    '[Demo] Practically, ',
+    '[Demo] For testing: ',
+    '[Demo] Interview-style note: ',
+  ];
+  const middles=[
+    'we review this on a quarterly cadence with named owners.',
+    'exceptions are uncommon and tracked in a ticketing system.',
+    'policy exists and is enforced first on higher-risk systems.',
+    'metrics are still maturing but sponsorship is visible.',
+    'critical vendors are assessed at least annually.',
+    'logging coverage expanded after the last assessment cycle.',
+    'the steering group escalates gaps to leadership within a few weeks.',
+    'a tabletop exercise partially validated the workflow.',
+    'ownership is split between security and IT with clear RACI.',
+    'budget was approved for remediation items tied to this area.',
+    'we use a risk register entry and revisit it at each QBR.',
+    'training is role-based; completion is monitored in the LMS.',
+  ];
+  const closings=[
+    'No production customer data was used in this demo answer.',
+    'Numbers here are illustrative for UI testing only.',
+    'Further detail would come from policy attachments and tickets.',
+    'This line is unique to this question id for downstream AI testing.',
+  ];
+  let n=0;
+  q.roles.forEach((r,ri)=>{
+    r.questions.forEach((qu,qi)=>{
+      const seed=`${qu.id}|${ri}|${qi}|${r.role||''}|${(qu.text||'').slice(0,80)}`;
+      const h=demoAnswerHash(seed+n);
+      const t=(qu.type||'freetext').toLowerCase();
+      if(t==='likert5')S.answers[qu.id]=String((h%5)+1);
+      else if(t==='likert3')S.answers[qu.id]=String((h%3)+1);
+      else if(t==='yesno'){const yn=['yes','no','partial','na'];S.answers[qu.id]=yn[h%4];}
+      else if(t==='multichoice'&&qu.options&&qu.options.length)S.answers[qu.id]=qu.options[h%qu.options.length];
+      else{
+        const qtext=(qu.text||'').replace(/\s+/g,' ').trim().slice(0,100);
+        const sc=(qu.subcategories&&qu.subcategories.length)?` Maps to: ${qu.subcategories.slice(0,4).join(', ')}.`:'';
+        S.answers[qu.id]=
+          openings[n%openings.length]+
+          middles[(h+ri+qi)%middles.length]+
+          ` Question ${qu.id} (${(r.role||'Role').slice(0,32)}): ${qtext}.${sc}`+
+          closings[h%closings.length];
+      }
+      n++;
+    });
+  });
+  saveState();render();
+}
+
+function renderQuestion(qu,qi){
+  const val=S.answers[qu.id];
+  const l5=['1 — Never / Not at all','2 — Rarely / Minimal','3 — Sometimes / Partial','4 — Usually / Mostly','5 — Always / Fully'];
+  const l3=['Ad hoc / Informal','Partially defined','Fully defined & consistent'];
+  let inp='';
+  if(qu.type==='likert5'){inp=`<div class="likert-row">${l5.map((l,i)=>`<button class="likert-btn ${val==(i+1)?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="${i+1}">${l}</button>`).join('')}</div>`;}
+  else if(qu.type==='likert3'){inp=`<div class="likert-row">${l3.map((l,i)=>`<button class="likert-btn ${val==(i+1)?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="${i+1}">${l}</button>`).join('')}</div>`;}
+  else if(qu.type==='yesno'){inp=`<div class="yn-row"><button class="yn-btn ${val==='yes'?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="yes">Yes</button><button class="yn-btn ${val==='no'?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="no">No</button><button class="yn-btn ${val==='partial'?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="partial">Partially</button><button class="yn-btn ${val==='na'?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="na">N/A</button></div>`;}
+  else if(qu.type==='multichoice'&&qu.options){inp=`<div class="likert-row">${qu.options.map(o=>`<button class="likert-btn ${val===o?'selected':''}" data-action="answer-q" data-qid="${qu.id}" data-val="${escHtml(o)}">${escHtml(o)}</button>`).join('')}</div>`;}
+  else{inp=`<textarea rows="3" placeholder="Describe your current practice..." data-action="answer-text" data-qid="${qu.id}">${escHtml(val||'')}</textarea>`;}
+  return`<div class="q-card"><div style="font-size:.72rem;font-weight:700;color:#7a9ab8;margin-bottom:4px">Q${qi+1}</div><div class="q-text">${escHtml(qu.text)}</div>${qu.guidance?`<div class="q-guide">Why we ask: ${escHtml(qu.guidance)}</div>`:''}${qu.subcategories?`<div class="q-scs">📎 ${qu.subcategories.join(', ')}</div>`:''}${inp}</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 7: FINDINGS REVIEW
+// ════════════════════════════════════════════════════════════
+function renderFindingsReview(){
+  const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+  const activeFn=S.activeReviewFn||fns[0]?.id;
+  const allScs=SC_BY_FN[activeFn]||[];
+  const fn=FUNCTIONS.find(f=>f.id===activeFn);
+  const inScopeIds=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(([id])=>id);
+  const total=inScopeIds.length;
+  const withFinding=inScopeIds.filter(id=>S.findings[id]).length;
+  const notInModelOutput=Math.max(0,total-withFinding);
+  const approved=Object.values(S.findings).filter(f=>f.status==='approved').length;
+  const disputed=Object.values(S.findings).filter(f=>f.status==='disputed').length;
+  const pending=Object.values(S.findings).filter(f=>!f.status||f.status==='pending').length;
+  const allReviewed=Object.keys(S.findings).length>0&&pending===0;
+  return`
+${topBar(6)}
+<div class="container">
+  ${S.demoFindings?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo findings</strong> — These rows were generated locally for UI testing (no AI). Use <strong>Generate Findings</strong> on the questionnaire for real model output.</div>':''}
+  <div class="card">
+    <h2>Findings Review</h2>
+    <p class="sub">${S.demoFindings?'Review the locally generated demo rows.':'Review the AI-generated draft findings.'} Approve findings you agree with, or dispute those that need revision. Disputed findings can be re-analyzed with your additional context.</p>
+    <div style="display:flex;justify-content:flex-end;margin:12px 0 0;flex-wrap:wrap;gap:8px">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="approve-all-pending" ${pending===0?'disabled':''} title="Marks every pending in-scope finding as approved">Approve all pending…</button>
+    </div>
+    <div class="row" style="margin-bottom:16px">
+      <div class="stat-card col"><div class="stat-num" style="color:#2e7d32">${approved}</div><div class="stat-lbl">Approved</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#e65100">${disputed}</div><div class="stat-lbl">Disputed</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#7a9ab8">${pending}</div><div class="stat-lbl">Pending Review</div></div>
+      <div class="stat-card col"><div class="stat-num" style="color:#1e88e5">${total}</div><div class="stat-lbl">In-scope subcategories</div></div>
+    </div>
+    ${notInModelOutput>0?`<p class="sub" style="font-size:.78rem;margin-top:8px;color:#5a7a96;line-height:1.5"><strong>${notInModelOutput}</strong> in-scope subcategor${notInModelOutput===1?'y':'ies'} had no row in the AI output (they appear as <strong>Not analyzed</strong> in the list). Totals above count only <strong>generated</strong> findings. You can generate the report once every generated row is approved or disputed — you do not need a finding for all ${total} subcategories.</p>`:''}
+    ${allReviewed?`<div class="alert alert-success">✓ All generated findings reviewed — you can generate the final report when ready.</div>`:''}
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tabs-row" style="padding:0 20px;background:#f8fafc">
+      ${fns.map(f=>{const scs=SC_BY_FN[f.id]||[];const app=scs.filter(id=>S.findings[id]?.status==='approved').length;return`<div class="fn-tab ${f.id===activeFn?'active':''}" data-action="set-review-fn" data-fn="${f.id}" style="${f.id===activeFn?`border-bottom-color:${f.color};color:${f.color}`:''}"> ${f.id} — ${f.name} <span style="font-size:.7rem;color:${app===scs.length?'#66bb6a':'#aaa'}">(${app}/${scs.length})</span></div>`;}).join('')}
+    </div>
+    <div style="padding:20px">
+      ${allScs.map(scId=>{
+        const sc=SC_MAP[scId];
+        const f=S.findings[scId];
+        if(!f)return`<div class="finding-card"><div class="finding-header"><span class="finding-id">${scId}</span><span class="chip chip-gray">Not analyzed</span></div><div class="finding-text">${escHtml(sc.text)}</div></div>`;
+        const status=f.status||'pending';
+        const c=scoreColor(f.cmmi_score);
+        return`
+        <div class="finding-card ${status}" id="fc-${scId}">
+          <div class="finding-header">
+            <div><div class="finding-id">${scId} · ${CAT_NAMES[sc.cat]}</div><div class="finding-text">${escHtml(sc.text)}</div></div>
+            <div class="finding-scores">
+              ${S.scoringMethod!=='tiers'?scoreChip(f.cmmi_score,'CMMI '):''}
+              ${S.scoringMethod!=='cmmi'?`<span class="score-badge" style="background:${c.bg};color:${c.fg}">${f.tier_score?'Tier '+f.tier_score:'-'}</span>`:''}
+              <span class="chip ${status==='approved'?'chip-green':status==='disputed'?'chip-orange':'chip-gray'}">${status==='approved'?'✓ Approved':status==='disputed'?'⚠ Disputed':'Pending'}</span>
+            </div>
+          </div>
+          <div class="finding-body">
+            <span class="label">Current State</span>${escHtml(f.current_state)}
+            ${f.gaps?`<span class="label">Gaps Identified</span>${escHtml(f.gaps)}`:''}
+            <span class="label">Rationale</span>${escHtml(f.rationale)}
+            <span class="label">Recommendation</span>${escHtml(f.recommendation)}
+            ${f.priority?`<span class="label">Priority</span><span class="chip ${f.priority==='high'?'chip-red':f.priority==='medium'?'chip-orange':'chip-lgreen'}">${f.priority.toUpperCase()}</span>`:''}
+          </div>
+          <div class="finding-actions">
+            ${status!=='approved'?`<button type="button" class="btn btn-success btn-sm" data-action="approve-finding" data-scid="${scId}">✓ Approve</button>`:''}
+            <button type="button" class="btn btn-secondary btn-sm" data-action="dispute-finding" data-scid="${scId}">⚑ Dispute</button>
+          </div>
+          ${status==='disputed'?`
+          <div class="dispute-box">
+            <div style="font-size:.8rem;font-weight:700;margin-bottom:6px">Your dispute / additional context:</div>
+            <textarea rows="3" placeholder="Explain why you disagree or provide additional evidence..." data-action="dispute-text" data-scid="${scId}">${escHtml(f.dispute_note||'')}</textarea>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button type="button" class="btn btn-primary btn-sm" data-action="reanalyze-finding" data-scid="${scId}">🤖 Re-analyze with my context</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="accept-dispute" data-scid="${scId}">Accept as-is with note</button>
+            </div>
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;margin:0 0 32px">
+    <button class="btn btn-secondary" data-action="goto-questionnaire">← Back to Questionnaire</button>
+    <button class="btn btn-primary" data-action="gen-report" ${!allReviewed?'disabled':''}>📄 Generate Report ${!allReviewed?'(review all findings first)':''} →</button>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 8: REPORT
+// ════════════════════════════════════════════════════════════
+function renderReport(){
+  const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+  const fnScores={};
+  fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScores[fn.id]=avg(vals);});
+  const overall=avg(Object.values(fnScores).filter(x=>x!=null));
+  const oc=scoreColor(overall);
+  const allFindings=Object.entries(S.findings).filter(([id])=>S.includedFns.includes(id.split('.')[0])).sort((a,b)=>(a[1].cmmi_score||0)-(b[1].cmmi_score||0)).slice(0,10);
+  const lastPg=Math.max(0,fns.length);
+  const rp=Math.max(0,Math.min(S.reportPage|0,lastPg));
+  const overviewHtml=`
+  <div class="card" style="text-align:center">
+    <div style="font-size:.75rem;font-weight:700;color:#7a9ab8;letter-spacing:1px;margin-bottom:8px">ASSESSMENT REPORT</div>
+    <h2 style="font-size:1.6rem">${escHtml(S.org.name)} — NIST CSF 2.0 Assessment</h2>
+    <p style="color:#5a7a96;margin:6px 0">${S.org.industry} · Assessor: ${escHtml(S.org.assessorName||'Self-assessment')}</p>
+    <div style="margin:20px auto;display:inline-block;padding:20px 40px;border-radius:16px;background:${oc.bg}">
+      <div style="font-size:.8rem;font-weight:700;color:${oc.fg};letter-spacing:1px">OVERALL SCORE</div>
+      <div style="font-size:3rem;font-weight:900;color:${oc.fg}">${overall!=null?overall.toFixed(1):'N/A'}</div>
+      <div style="font-size:.85rem;color:${oc.fg}">${overall!=null?tierFromCmmi(overall)+' · CMMI '+Math.round(overall):'Not scored'}</div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
+      <button type="button" class="btn btn-secondary" data-action="export-json">💾 Export JSON</button>
+      <button type="button" class="btn btn-secondary" data-action="goto-findings-review">← Edit Findings</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Function Scores</div>
+    <div class="row" style="align-items:center;gap:24px">
+      <div style="flex:1;min-width:260px">${renderRadar(fns,fnScores)}</div>
+      <div style="flex:1">
+        <table class="evidence-table">
+          <thead><tr><th>Function</th><th>Score</th><th>CMMI</th><th>CSF Tier</th></tr></thead>
+          <tbody>${fns.map(fn=>{const s=fnScores[fn.id];const c=scoreColor(s);return`<tr><td><strong style="color:${fn.color}">${fn.id}</strong> — ${fn.name}</td><td><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${s!=null?s.toFixed(1):'-'}</span></td><td style="font-size:.82rem">${s!=null?'Level '+Math.round(s):'-'}</td><td style="font-size:.82rem">${s!=null?tierFromCmmi(s):'-'}</td></tr>`;}).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Priority Gaps — Lowest Scoring Subcategories</div>
+    <table class="evidence-table" style="margin-top:12px">
+      <thead><tr><th>Subcategory</th><th>Score</th><th>Priority</th><th>Recommendation</th></tr></thead>
+      <tbody>${allFindings.map(([id,f])=>{const sc=SC_MAP[id];const c=scoreColor(f.cmmi_score);return`<tr><td><div style="font-weight:700;font-size:.82rem">${id}</div><div style="font-size:.78rem;color:#5a7a96">${escHtml((sc?.text||'').slice(0,80))}${(sc?.text||'').length>80?'...':''}</div></td><td><span class="heat-cell" style="background:${c.bg};color:${c.fg}">${f.cmmi_score||'-'}</span></td><td><span class="chip ${f.priority==='high'?'chip-red':f.priority==='medium'?'chip-orange':'chip-lgreen'}">${(f.priority||'med').toUpperCase()}</span></td><td style="font-size:.8rem">${escHtml((f.recommendation||'-').slice(0,120))}${(f.recommendation||'').length>120?'...':''}</td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+  const fnDetailCard=fn=>`
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:4px;height:24px;background:${fn.color};border-radius:2px"></div>
+      <h3 style="font-size:1rem;color:${fn.color}">${fn.id} — ${fn.name}</h3>
+      ${fnScores[fn.id]!=null?`<span class="score-badge" style="background:${scoreColor(fnScores[fn.id]).bg};color:${scoreColor(fnScores[fn.id]).fg}">${fnScores[fn.id].toFixed(1)}</span>`:''}
+    </div>
+    <table class="evidence-table">
+      <thead><tr><th>ID</th><th>Subcategory</th><th>CMMI</th><th>Tier</th><th>Rationale</th><th>Recommendation</th></tr></thead>
+      <tbody>${(SC_BY_FN[fn.id]||[]).map(id=>{const sc=SC_MAP[id];const f=S.findings[id];const c=scoreColor(f?.cmmi_score);return`<tr><td style="font-weight:700;font-size:.8rem;white-space:nowrap">${id}</td><td style="font-size:.78rem">${escHtml((sc?.text||'').slice(0,90))}${(sc?.text||'').length>90?'...':''}</td><td style="text-align:center"><span class="heat-cell" style="background:${c.bg};color:${c.fg};padding:3px 8px;font-size:.78rem">${f?.cmmi_score||'-'}</span></td><td style="font-size:.78rem;text-align:center">${f?.tier_score?'T'+f.tier_score:'-'}</td><td style="font-size:.76rem;color:#2c4a6a">${escHtml((f?.rationale||'Not assessed').slice(0,100))}${(f?.rationale||'').length>100?'...':''}</td><td style="font-size:.76rem;color:#2c4a6a">${escHtml((f?.recommendation||'-').slice(0,100))}${(f?.recommendation||'').length>100?'...':''}</td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+  const pills=[`<button type="button" class="btn btn-sm ${rp===0?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="0">Overview</button>`]
+    .concat(fns.map((fn,i)=>`<button type="button" class="btn btn-sm ${rp===i+1?'btn-primary':'btn-secondary'}" data-action="report-goto-page" data-page="${i+1}">${fn.id}</button>`)).join(' ');
+  const pager=`
+  <div class="card" style="padding:16px 20px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-prev" ${rp<=0?'disabled':''}>← Previous</button>
+      <span style="font-size:.82rem;font-weight:600;color:#2c4a6a">Report section ${rp+1} of ${lastPg+1}</span>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="report-page-next" ${rp>=lastPg?'disabled':''}>Next →</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center">${pills}</div>
+  </div>`;
+  const detailSection=rp>0&&fns[rp-1]?fnDetailCard(fns[rp-1]):'';
+  return`
+${topBar(7)}
+<div class="container">
+  ${pager}
+  ${rp===0?overviewHtml:detailSection}
+  <div style="margin-bottom:32px"></div>
+</div>`;
+}
+
+function renderRadar(fns,fnScores){
+  const cx=180,cy=180,r=130,n=fns.length,max=5;
+  let rings='',axes='',labels='',poly='';
+  [1,2,3,4,5].forEach(l=>{const pts=fns.map((_,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2,d=r*(l/max);return`${cx+Math.cos(a)*d},${cy+Math.sin(a)*d}`;}).join(' ');rings+=`<polygon points="${pts}" fill="none" stroke="#e0eaf4" stroke-width="1"/>`;});
+  fns.forEach((fn,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;axes+=`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r}" y2="${cy+Math.sin(a)*r}" stroke="#e0eaf4" stroke-width="1"/>`;labels+=`<text x="${cx+Math.cos(a)*r*1.15}" y="${cy+Math.sin(a)*r*1.15+5}" text-anchor="middle" font-size="11" font-weight="700" fill="${fn.color}">${fn.id}</text>`;});
+  const pts=fns.map((fn,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2,v=(fnScores[fn.id]||0)/max;return`${cx+Math.cos(a)*r*v},${cy+Math.sin(a)*r*v}`;}).join(' ');
+  poly=`<polygon points="${pts}" fill="rgba(30,136,229,.15)" stroke="#1e88e5" stroke-width="2"/>`;
+  fns.forEach((fn,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2,v=(fnScores[fn.id]||0)/max;poly+=`<circle cx="${cx+Math.cos(a)*r*v}" cy="${cy+Math.sin(a)*r*v}" r="4" fill="${fn.color}"/>`;});
+  return`<svg viewBox="0 0 360 360" style="width:100%;max-width:320px;display:block;margin:0 auto">${rings}${axes}${poly}${labels}</svg>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// TOP BAR
+// ════════════════════════════════════════════════════════════
+function topBar(activeStep){
+  const steps=['Setup','Documents','Analysis','Questionnaire','Findings','Review','Report'];
+  return`
+<div class="top-bar">
+  <h1>NIST CSF 2.0 Guided Assessment <span class="badge">AI-Powered</span>${S.demoEvidence?'<span class="badge" style="background:#e65100;margin-left:6px">Demo evidence</span>':''}</h1>
+  <div style="font-size:.8rem;color:#7ab3d8">${escHtml(S.org.name||'New Assessment')}</div>
+</div>
+<div class="progress-bar">
+  <div class="steps-row">${steps.map((s,i)=>`<div class="step-pill ${i+1===activeStep?'active':i+1<activeStep?'done':''}">${i+1<activeStep?'✓ ':''} ${s}</div>`).join('')}</div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// DEMO — synthetic uploads + evidence map (no document AI; tests full flow)
+// ════════════════════════════════════════════════════════════
+function scIdsTouchingDrlCategory(cat){
+  const fns=(cat.fn||[]).filter(fid=>S.includedFns.includes(fid));
+  const seen=new Set();
+  fns.forEach(fn=>{(SC_BY_FN[fn]||[]).forEach(id=>{if(S.includedFns.includes(id.split('.')[0]))seen.add(id);});});
+  return[...seen];
+}
+function applyDemoEvidenceSkip(){
+  if(!confirm('Demo mode: fill each evidence row with a synthetic file (as if uploaded), build a simulated evidence map and document summaries, then open Analysis so you can run Generate Questionnaire and Findings using your API key. Nothing is sent for document parsing. Continue?'))return;
+  drlSelectAllViewFns();
+  const rank={strong:3,adequate:2,weak:1,missing:0};
+  const qualities=['strong','adequate','weak','missing'];
+  S.evidenceMap={};
+  S.docSummaries=[];
+  const demoBody='This is synthetic assessment text for tool testing. It describes policies, access control, monitoring, logging, incident response, recovery planning, vendor risk, and management oversight in generic terms so downstream questionnaire and findings steps have plausible material to reference. ';
+  ensureDrlViewFns();
+  allRequestsForView().forEach((r,idx)=>{
+    const e=getDrlEntry(r.catId,r.id);
+    e.notProvided=false;
+    e.notProvidedReason='';
+    const fname=`[Demo] ${r.title}.txt`;
+    e.files=[{
+      name:fname,
+      context:'Synthetic demo file for walkthrough; not real organizational evidence.',
+      content:demoBody.repeat(3)+`Bucket: ${r.catName}. Artifact: ${r.title}. Row ${idx+1}.`
+    }];
+    const cat=DRL_CATS.find(c=>c.id===r.catId);
+    const candidates=cat?scIdsTouchingDrlCategory(cat):[];
+    const pick=candidates.length?candidates.slice(0,Math.min(5,candidates.length)):SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(x=>x[0]).slice(0,3);
+    const mapping={};
+    pick.forEach((scId,j)=>{
+      const q=qualities[(idx+j)%4];
+      mapping[scId]={evidence_quality:q,excerpt:`Demo line for ${scId} from ${r.title}.`,notes:'Synthetic demo mapping'};
+    });
+    Object.entries(mapping).forEach(([scId,ev])=>{
+      if(!S.evidenceMap[scId])S.evidenceMap[scId]={quality:'missing',excerpts:[]};
+      if((rank[ev.evidence_quality]||0)>(rank[S.evidenceMap[scId].quality]||0))S.evidenceMap[scId].quality=ev.evidence_quality;
+      S.evidenceMap[scId].excerpts.push(`[${fname}] ${ev.excerpt}`);
+    });
+    S.docSummaries.push({
+      catId:r.catId,requestId:r.id,name:fname,
+      summary:`Synthetic demo stand-in for "${r.title}" (no AI document read).`,
+      mappings:mapping
+    });
+  });
+  SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id],i)=>{
+    if(!S.evidenceMap[id])S.evidenceMap[id]={quality:qualities[i%4],excerpts:[`[Demo] Placeholder coverage for ${id}`]};
+  });
+  S.drlValidationErrors=[];
+  S.demoEvidence=true;
+  S.step='analysis';
+  saveState();render();
+}
+
+// ════════════════════════════════════════════════════════════
+// AI ACTIONS
+// ════════════════════════════════════════════════════════════
+async function analyzeDocuments(){
+  const errs=validateDRL();
+  S.drlValidationErrors=errs;
+  if(errs.length){saveState();render();alert(`Please address ${errs.length} evidence request issue(s) before analysis.`);return;}
+  if(S.demoEvidence&&!confirm('Replace demo evidence with a real AI read of your uploaded files? Your current demo evidence map and summaries will be cleared.'))return;
+  S.demoEvidence=false;
+  setLoading('Analyzing documents with AI...');
+  S.evidenceMap={};S.docSummaries=[];
+  try{
+    const scList=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(([id,text])=>`${id}: ${text}`).join('\n');
+    ensureDrlViewFns();
+    for(const cat of drlCatsForTable()){
+      for(const req of cat.requests){
+        const entry=getDrlEntry(cat.id,req.id);
+        if(entry.notProvided){
+          S.docSummaries.push({catId:cat.id,requestId:req.id,name:req.title,summary:`Not provided: ${entry.notProvidedReason}`,mappings:{}});
+          continue;
+        }
+        for(const file of(entry.files||[])){
+        setLoading(`Analyzing: ${file.name}...`);
+        const sys=`You are a NIST CSF 2.0 expert assessor. Analyze the document excerpt and identify which CSF 2.0 subcategories it provides evidence for. Return ONLY valid JSON, no markdown.`;
+        const msg=`Document category: ${cat.name}\nRequested artifact: ${req.title}\nDocument: ${file.name}\nUploader context: ${file.context||'None provided'}\n\nContent:\n${file.content.slice(0,6000)}\n\nSubcategories:\n${scList}\n\nReturn JSON:\n{"document_type":"policy|procedure|risk_register|asset_inventory|training|architecture|contract|audit|other","document_summary":"one sentence","mappings":{"SC_ID":{"evidence_quality":"strong|adequate|weak","excerpt":"relevant text max 150 chars","notes":"why this supports the subcategory"}}}`;
+        try{
+          const raw=await callAI(sys,msg,false);
+          const p=parseJSON(raw);
+          S.docSummaries.push({catId:cat.id,requestId:req.id,name:file.name,summary:p.document_summary,mappings:p.mappings||{}});
+          const rank={strong:3,adequate:2,weak:1,missing:0};
+          Object.entries(p.mappings||{}).forEach(([scId,ev])=>{
+            if(!S.evidenceMap[scId])S.evidenceMap[scId]={quality:'missing',excerpts:[]};
+            if((rank[ev.evidence_quality]||0)>(rank[S.evidenceMap[scId].quality]||0))S.evidenceMap[scId].quality=ev.evidence_quality;
+            if(ev.excerpt)S.evidenceMap[scId].excerpts.push(`[${file.name}] ${ev.excerpt}`);
+          });
+        }catch(e){console.warn('Doc error:',file.name,e);}
+      }
+      }
+    }
+    SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id])=>{if(!S.evidenceMap[id])S.evidenceMap[id]={quality:'missing',excerpts:[]};});
+    S.drlValidationErrors=[];
+    S.step='analysis';saveState();
+  }finally{clearLoading();render();}
+}
+
+async function generateQuestionnaire(){
+  setLoading('Generating targeted questionnaire…','This step often takes a few minutes (roughly 2 to 5 is typical; it can reach about 10 with a large scope, a slower model, or busy APIs). Leave this tab open until the questionnaire appears.');
+  try{
+    const GAP_CAP=12000;
+    const CONF_CAP=6000;
+    let gaps=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&['missing','weak'].includes(S.evidenceMap[id]?.quality)).map(([id,text])=>`${id}: ${text}`).join('\n');
+    if(gaps.length>GAP_CAP)gaps=gaps.slice(0,GAP_CAP)+'\n\n(... gap list truncated for length; prioritize the highest-risk gaps implied above.)';
+    let confirmed=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&['strong','adequate'].includes(S.evidenceMap[id]?.quality)).map(([id])=>id).join(', ');
+    if(confirmed.length>CONF_CAP)confirmed=confirmed.slice(0,CONF_CAP)+' ...';
+    const sys=`You are a NIST CSF 2.0 assessment expert. Output a single JSON object only (no markdown, no commentary). Each question text under 200 characters; guidance one short sentence only.`;
+    const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry}\nScope: ${S.org.scope}\n\nEvidence GAPS (focus questions here):\n${gaps}\n\nAlready confirmed via documents: ${confirmed}\n\nGenerate a questionnaire with 18-28 questions total. Rules:\n- Group by role (CISO/Security Lead, IT Lead, Risk Manager, HR Lead, Business Continuity Lead)\n- Questions reveal paper vs practice gaps; scenario-based where possible\n- Each question maps to specific subcategory IDs; do not ask what documents already confirm\n- Keep options arrays short (max 6 options for multichoice)\n\nReturn this JSON shape:\n{"roles":[{"role":"CISO / Security Lead","description":"short","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence"}]}]}`;
+    const raw=await callAI(sys,msg,true,{outputTokens:16384,jsonMime:providerSupportsJsonMime()});
+    S.questionnaire=parseJSON(raw);S.activeRole=0;S.step='questionnaire';saveState();
+  }catch(e){
+    clearLoading();render();
+    alert('Error generating questionnaire: '+e.message);
+  }finally{clearLoading();render();}
+}
+
+async function fetchFindingsForFunction(fn,answerSummary){
+  const scs=SC_BY_FN[fn.id]||[];
+  if(!scs.length)return{};
+  const scDetails=scs.map(id=>{
+    const sc=SC_MAP[id];const ev=S.evidenceMap[id];
+    return`${id}: ${sc.text}\nEvidence: ${ev?.quality||'missing'}${(ev?.excerpts||[]).length?'\nExcerpts: '+(ev.excerpts||[]).slice(0,2).join(' | '):''}`;
+  }).join('\n\n');
+  const sys=`You are a NIST CSF 2.0 assessor generating assessment findings. Be specific and evidence-based. Return ONLY valid JSON.`;
+  const msg=`Org: ${S.org.name} | Industry: ${S.org.industry} | Scoring: ${S.scoringMethod}\n\nFUNCTION: ${fn.id} — ${fn.name}\n\nSubcategory evidence:\n${scDetails}\n\nQuestionnaire responses:\n${answerSummary.slice(0,3000)}\n\nGenerate findings for ALL subcategories in ${fn.id}. Return JSON:\n{"${scs[0]}":{"current_state":"2-3 sentences","gaps":"specific gaps or null","cmmi_score":2,"tier_score":2,"rationale":"2-3 sentences tying score to evidence","recommendation":"specific actionable improvement","priority":"high|medium|low"}}\n\nCMMI: 1=Initial/ad hoc, 2=Managed/project-level, 3=Defined/org-wide, 4=Quantitative, 5=Optimizing\nTier: 1=Partial, 2=Risk Informed, 3=Repeatable, 4=Adaptive`;
+  const raw=await callAI(sys,msg,true,{outputTokens:8192,jsonMime:providerSupportsJsonMime()});
+  return parseJSON(raw);
+}
+
+function applyDemoFindingsSkipAi(){
+  const prios=['high','medium','low'];
+  const inScope=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0]));
+  S.findings={};
+  S.demoFindings=true;
+  inScope.forEach(([id,text],i)=>{
+    const ev=S.evidenceMap[id];
+    const q=ev?.quality||'missing';
+    const base=2+(i%4);
+    const tier=Math.min(4,Math.max(1,(i%4)+1));
+    S.findings[id]={
+      current_state:`[Demo] Illustrative current-state narrative for ${id}. Evidence in this session is rated "${q}" (synthetic / local only).`,
+      gaps:i%7===0?'[Demo] Example gap: formalize evidence collection and ownership.':null,
+      cmmi_score:Math.min(5,Math.max(1,base)),
+      tier_score:tier,
+      rationale:`[Demo] Scores reflect placeholder logic for UI testing, not a real assessment. Subcategory: ${text.slice(0,120)}${text.length>120?'…':''}`,
+      recommendation:`[Demo] Strengthen documentation, monitoring, and accountability for ${id}.`,
+      priority:prios[i%3],
+      status:'pending'
+    };
+  });
+  S.activeReviewFn=S.includedFns[0]||'GV';
+  S.step='findings_review';
+  saveState();
+  render();
+}
+
+async function generateFindings(){
+  const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+  const n=fns.length;
+  const findingsTimeHint=`Up to ${n} large AI requests run in parallel (one per CSF function in scope). That is usually faster than the old one-at-a-time flow, but each call is still heavy—plan on roughly 1–5 minutes when the API is responsive; free tiers may throttle or drop a request (check the console). Keep this tab open.`;
+  setLoading(`Generating findings (${n} parallel requests)…`,findingsTimeHint);
+  S.findings={};
+  S.demoFindings=false;
+  try{
+    const answerSummary=Object.entries(S.answers).map(([qid,val])=>{
+      const q=S.questionnaire?.roles?.flatMap(r=>r.questions).find(qu=>qu.id===qid);
+      if(!q)return'';
+      return`Q: ${q.text}\nAnswer: ${val}\nSubcategories: ${(q.subcategories||[]).join(', ')}`;
+    }).filter(Boolean).join('\n\n');
+
+    const settled=await Promise.allSettled(fns.map(fn=>fetchFindingsForFunction(fn,answerSummary)));
+    let ok=0;
+    settled.forEach((res,i)=>{
+      if(res.status==='fulfilled'){
+        const parsed=res.value;
+        if(parsed&&typeof parsed==='object'){
+          Object.assign(S.findings,parsed);
+          Object.keys(parsed).forEach(id=>{if(S.findings[id]&&!S.findings[id].status)S.findings[id].status='pending';});
+          ok++;
+        }
+      }else{console.warn('Findings error:',fns[i]?.id,res.reason);}
+    });
+    if(ok===0)throw new Error('No findings were returned. Check your API key, model, and network; open the browser console (F12) for details.');
+    if(ok<fns.length){
+      const failed=fns.filter((_,i)=>settled[i].status==='rejected').map(f=>f.id);
+      if(failed.length)console.warn('Findings: some functions failed (partial merge):',failed.join(', '));
+    }
+    S.activeReviewFn=S.includedFns[0]||'GV';S.step='findings_review';saveState();
+  }catch(e){
+    clearLoading();render();
+    alert('Error generating findings: '+e.message);
+  }finally{clearLoading();render();}
+}
+
+async function reanalyzeFinding(scId){
+  const f=S.findings[scId];const sc=SC_MAP[scId];
+  if(!(f.dispute_note||'').trim()){alert('Please describe your dispute or provide additional context first.');return;}
+  setLoading(`Re-analyzing ${scId}...`);
+  try{
+    const sys=`You are a NIST CSF 2.0 assessor revising a finding based on new organizational context. Return ONLY valid JSON.`;
+    const msg=`Subcategory: ${scId}\nText: ${sc.text}\n\nOriginal finding:\nCurrent state: ${f.current_state}\nRationale: ${f.rationale}\nCMMI: ${f.cmmi_score} | Tier: ${f.tier_score}\n\nOrganization's dispute/context:\n${f.dispute_note}\n\nRevise the finding considering this new context. If new context changes the score, update it; otherwise maintain and note the organization's position.\n\nReturn JSON:\n{"current_state":"...","gaps":"...","cmmi_score":2,"tier_score":2,"rationale":"...","recommendation":"...","priority":"high|medium|low","dispute_resolution":"how dispute was resolved"}`;
+    const raw=await callAI(sys,msg,true,{outputTokens:8192,jsonMime:providerSupportsJsonMime()});
+    const parsed=parseJSON(raw);
+    S.findings[scId]={...f,...parsed,status:'approved',dispute_note:f.dispute_note};saveState();
+  }catch(e){
+    clearLoading();render();
+    alert('Re-analysis error: '+e.message);
+  }finally{clearLoading();render();}
+}
+
+// ════════════════════════════════════════════════════════════
+// FILE HANDLERS
+// ════════════════════════════════════════════════════════════
+async function processFiles(catId,reqId,files){
+  setLoading('Reading files...');
+  const entry=getDrlEntry(catId,reqId);
+  entry.notProvided=false;
+  entry.notProvidedReason='';
+  for(const file of files){
+    try{
+      const content=await extractText(file);
+      entry.files.push({name:file.name,content,size:file.size,context:''});
+    }
+    catch(e){console.warn('File error:',file.name,e);}
+  }
+  clearLoading();saveState();render();
+}
+function handleFileInput(e,catId,reqId){processFiles(catId,reqId,Array.from(e.target.files));}
+function handleDrop(e,catId,reqId){e.preventDefault();document.querySelector(`[data-dropzone][data-cat="${catId}"][data-req="${reqId}"]`)?.classList.remove('drag-over');processFiles(catId,reqId,Array.from(e.dataTransfer.files));}
+
+// ════════════════════════════════════════════════════════════
+// EVENT HANDLING
+// ════════════════════════════════════════════════════════════
+document.addEventListener('click',e=>{
+  const t=e.target instanceof Element?e.target:e.target?.parentElement;
+  const el=t?.closest?.('[data-action]');
+  if(!el)return;
+  const action=el.dataset.action;
+
+  if(action==='set-provider'){
+    const prov=el.value||el.dataset.val;
+    S.provider=prov;
+    S.model=defaultModelForProvider(prov==='gemini'||prov==='anthropic'||prov==='openai'?prov:'gemini');
+    S.apiKey=localStorage.getItem('csf_apiKey')||'';
+    persistAIPrefs();
+    render();
+  }
+  else if(action==='toggle-api-help'){
+    const box=document.getElementById('api-help');
+    if(box){const shown=box.style.display==='none';box.style.display=shown?'block':'none';el.textContent=shown?'Hide':'How do I get this?';}
+  }
+  else if(action==='welcome-start'){
+    S.provider=document.querySelector('input[name="provider"]:checked')?.value||S.provider;
+    S.apiKey=document.getElementById('inp-apikey').value.trim();
+    S.model=document.getElementById('inp-model').value;
+    if(!S.apiKey){alert('Please enter your API key.');return;}
+    localStorage.setItem('csf_apiKey',S.apiKey);
+    persistAIPrefs();
+    S.demoEvidence=false;
+    S.step='setup';saveState();render();
+  }
+  else if(action==='welcome-resume'){
+    loadState();
+    const keyInput=document.getElementById('inp-apikey');
+    if(keyInput?.value.trim())S.apiKey=keyInput.value.trim();
+    if(!S.apiKey){alert('Please enter your API key.');return;}
+    persistAIPrefs();
+    saveState();
+    render();
+  }
+  else if(action==='goto-welcome'){S.step='welcome';persistAIPrefs();saveState();render();}
+  else if(action==='goto-setup'){S.step='setup';render();}
+  else if(action==='goto-drl'){S.step='drl';render();}
+  else if(action==='goto-analysis'){S.step='analysis';render();}
+  else if(action==='goto-questionnaire'){S.step='questionnaire';render();}
+  else if(action==='goto-findings-review'){S.step='findings_review';render();}
+  else if(action==='setup-next'){
+    const name=document.getElementById('inp-org-name').value.trim();
+    if(!name){alert('Organization name is required.');return;}
+    S.org.name=name;S.org.industry=document.getElementById('inp-org-industry').value;
+    S.org.assessorName=document.getElementById('inp-org-assessor').value.trim();
+    S.org.scope=document.getElementById('inp-org-scope').value.trim();
+    S.scoringMethod=document.querySelector('input[name="scoring"]:checked')?.value||'both';
+    S.includedFns=Array.from(document.querySelectorAll('input[name="fn"]:checked')).map(x=>x.value);
+    if(!S.includedFns.length){alert('Select at least one function.');return;}
+    S.drlViewFns=FUNCTIONS.map(f=>f.id).filter(id=>S.includedFns.includes(id));
+    S.step='drl';saveState();render();
+  }
+  else if(action==='remove-file'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    entry.files.splice(parseInt(el.dataset.idx),1);
+    saveState();render();
+  }
+  else if(action==='toggle-not-provided'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    entry.notProvided=!!el.checked;
+    if(entry.notProvided){entry.files=[];}
+    if(!entry.notProvided){entry.notProvidedReason='';}
+    saveState();render();
+  }
+  else if(action==='drl-view-all-fns'){
+    drlSelectAllViewFns();
+    saveState();render();
+  }
+  else if(action==='drl-toggle-viewfn'){
+    const fid=el.dataset.fn;
+    if(!fid||!S.includedFns.includes(fid))return;
+    ensureDrlViewFns();
+    const set=new Set(S.drlViewFns);
+    if(set.has(fid)){
+      if(set.size<=1)return;
+      set.delete(fid);
+    }else set.add(fid);
+    S.drlViewFns=FUNCTIONS.map(f=>f.id).filter(id=>set.has(id));
+    saveState();render();
+  }
+  else if(action==='toggle-sc-sidebar'){
+    const sb=document.getElementById('drl-sc-sidebar');
+    const rail=document.querySelector('.drl-sc-fab');
+    if(!sb)return;
+    sb.classList.toggle('collapsed');
+    const open=!sb.classList.contains('collapsed');
+    if(rail){rail.textContent=open?'◀':'▶';rail.setAttribute('aria-expanded',open?'true':'false');}
+  }
+  else if(action==='drl-jump-sc-cat'){
+    e.preventDefault();
+    const ref=el.dataset.catref;
+    if(!ref)return;
+    const sb=document.getElementById('drl-sc-sidebar');
+    const target=document.getElementById('sc-cat-'+ref);
+    const rail=document.querySelector('.drl-sc-fab');
+    if(sb)sb.classList.remove('collapsed');
+    if(rail){rail.textContent='◀';rail.setAttribute('aria-expanded','true');}
+    if(target){
+      const scrollEl=document.querySelector('.drl-sc-sidebar-scroll');
+      setTimeout(()=>{
+        if(scrollEl){
+          const y=target.getBoundingClientRect().top-scrollEl.getBoundingClientRect().top+scrollEl.scrollTop;
+          scrollEl.scrollTo({top:Math.max(0,y-10),behavior:'smooth'});
+        }else{target.scrollIntoView({behavior:'smooth',block:'nearest'});}
+        target.classList.remove('drl-sc-flash');
+        void target.offsetWidth;
+        target.classList.add('drl-sc-flash');
+        setTimeout(()=>target.classList.remove('drl-sc-flash'),1200);
+      },70);
+    }
+  }
+  else if(action==='drl-demo-skip'){applyDemoEvidenceSkip();}
+  else if(action==='drl-analyze'){analyzeDocuments();}
+  else if(action==='gen-questionnaire'){generateQuestionnaire();}
+  else if(action==='gen-findings'){generateFindings();}
+  else if(action==='questionnaire-demo-fill'){applyDemoQuestionnaireAnswers();}
+  else if(action==='questionnaire-demo-findings'){applyDemoFindingsSkipAi();}
+  else if(action==='set-role'){S.activeRole=parseInt(el.dataset.idx);render();}
+  else if(action==='answer-q'){S.answers[el.dataset.qid]=el.dataset.val;saveState();render();}
+  else if(action==='set-review-fn'){S.activeReviewFn=el.dataset.fn;render();}
+  else if(action==='approve-finding'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('approve-finding: missing finding for',sid);return;}
+    S.findings[sid].status='approved';saveState();render();
+  }
+  else if(action==='dispute-finding'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('dispute-finding: missing finding for',sid);return;}
+    S.findings[sid].status='disputed';saveState();render();
+  }
+  else if(action==='reanalyze-finding'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('reanalyze-finding: missing finding for',sid);return;}
+    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
+    if(ta)S.findings[sid].dispute_note=ta.value;
+    reanalyzeFinding(sid);
+  }
+  else if(action==='accept-dispute'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('accept-dispute: missing finding for',sid);return;}
+    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
+    if(ta)S.findings[sid].dispute_note=ta.value;
+    S.findings[sid].status='approved';saveState();render();
+  }
+  else if(action==='approve-all-pending'){
+    const msg='This will mark every PENDING in-scope finding as Approved.\n\nOnly continue after you have reviewed each finding. Use Dispute on any row that is wrong before proceeding — rows already marked Disputed will not be changed.\n\nContinue?';
+    if(!confirm(msg))return;
+    SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id])=>{
+      const f=S.findings[id];
+      if(!f)return;
+      const st=f.status;
+      if(!st||st==='pending')f.status='approved';
+    });
+    saveState();render();
+  }
+  else if(action==='gen-report'){S.step='report';S.reportPage=0;saveState();render();}
+  else if(action==='report-page-prev'){S.reportPage=Math.max(0,(S.reportPage||0)-1);saveState();render();window.scrollTo(0,0);}
+  else if(action==='report-page-next'){
+    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+    S.reportPage=Math.min(fns.length,(S.reportPage||0)+1);
+    saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='report-goto-page'){
+    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+    const p=parseInt(el.dataset.page,10);
+    if(Number.isNaN(p)||p<0||p>fns.length)return;
+    S.reportPage=p;
+    saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='export-json'){
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`csf-assessment-${(S.org.name||'org').replace(/\s+/g,'-')}-${S.org.date||new Date().toISOString().slice(0,10)}.json`;a.click();
+  }
+});
+
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(!(el instanceof Element))return;
+  const action=el.dataset.action;
+  if(action==='answer-text'){S.answers[el.dataset.qid]=el.value;clearTimeout(el._t);el._t=setTimeout(()=>saveState(),800);}
+  else if(action==='dispute-text'){
+    const sid=findingScidFromEl(el);
+    if(sid&&S.findings[sid])S.findings[sid].dispute_note=el.value;
+  }
+  else if(action==='set-file-context'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    const idx=parseInt(el.dataset.idx);
+    if(entry.files[idx])entry.files[idx].context=el.value;
+    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
+  }
+  else if(action==='set-not-provided-reason'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    entry.notProvidedReason=el.value;
+    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
+  }
+});
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t&&t.id==='inp-model'){
+    S.model=t.value;
+    persistAIPrefs();
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ════════════════════════════════════════════════════════════
+function render(){
+  const app=document.getElementById('app');
+  switch(S.step){
+    case 'welcome':         app.innerHTML=renderWelcome();break;
+    case 'setup':           app.innerHTML=renderSetup();break;
+    case 'drl':             app.innerHTML=renderDRL();break;
+    case 'analysis':        app.innerHTML=renderAnalysis();break;
+    case 'questionnaire':   app.innerHTML=renderQuestionnaire();break;
+    case 'findings_review': app.innerHTML=renderFindingsReview();break;
+    case 'report':          app.innerHTML=renderReport();break;
+    default:                app.innerHTML=renderWelcome();
+  }
+}
+render();
+</script>
+</body>
+</html>
