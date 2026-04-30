@@ -936,6 +936,7 @@ function renderWelcome(){
     <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
       <button class="btn btn-primary" data-action="welcome-start">Start New Assessment →</button>
       ${hasSaved?'<button class="btn btn-secondary" data-action="welcome-resume">Resume Saved Assessment</button>':''}
+      ${hasSaved?'<button class="btn btn-secondary" style="color:#c62828;border-color:#e57373" data-action="welcome-reset">🗑 Clear &amp; Start Fresh</button>':''}
     </div>
   </div>
 
@@ -992,16 +993,16 @@ ${topBar(1)}
 
   <div class="card">
     <div class="section-label">Contact Email & Verification</div>
-    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">Enter the email address associated with your organization. We'll send a verification code to confirm it's valid. A copy of your scored report will also be sent here.</p>
+    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">Enter the email address associated with your organization. We'll send a one-time verification code to confirm it. This email is also used for assessment continuity.</p>
     <label>Email Address <span style="color:#e53935">*</span></label>
     <div class="verify-row">
       <input type="text" id="inp-org-email" value="${escHtml(o.email)}" placeholder="you@yourorg.com"${o.emailVerified?' disabled style="background:#f0fff4;border-color:#66bb6a"':''}>
       ${o.emailVerified
         ?`<span class="chip chip-green" style="padding:9px 14px;font-size:.8rem;white-space:nowrap">✓ Verified</span>`
-        :`<button type="button" class="btn btn-secondary" data-action="send-verify-email"${o.verificationSent?' disabled':''}>${o.verificationSent?'Code sent — resend':'Send verification code'}</button>`
+        :`<button type="button" class="btn btn-secondary" data-action="send-verify-email">${o.verificationSent?'Resend code':'Send verification code'}</button>`
       }
     </div>
-    ${o.emailVerified?`<p style="font-size:.75rem;color:#2e7d32;margin-top:6px">✓ Email verified — you're good to go.</p>`:
+    ${o.emailVerified?`<p style="font-size:.75rem;color:#2e7d32;margin-top:6px">✓ Email verified — you're good to go. <span style="color:#1e88e5;cursor:pointer;text-decoration:underline;font-size:.73rem" data-action="change-email">Change email</span></p>`:
       o.verificationSent?`
     <div style="margin-top:12px">
       <label>Enter Verification Code</label>
@@ -1145,7 +1146,7 @@ ${topBar(2)}
 
   <div style="display:flex;justify-content:space-between;margin-bottom:32px">
     <button class="btn btn-secondary" data-action="goto-setup">← Back</button>
-    <button class="btn btn-primary" data-action="scope-next">Continue to Document Upload →</button>
+    <button class="btn btn-primary" data-action="scope-next">Continue to Document Upload (${subcategoriesInScopeCount()} subcategories in scope) →</button>
   </div>
 </div>
 <script>
@@ -1182,6 +1183,7 @@ ${topBar(3)}
 <div class="container container-drl">
   <div class="card">
     <h2>Document Upload — Evidence Collection</h2>
+    <p class="sub" style="font-size:.78rem;color:#1e88e5;margin-bottom:4px"><strong>${subcategoriesInScopeCount()} subcategories in scope</strong> across ${FUNCTIONS.filter(f=>S.includedFns.includes(f.id)).length} functions${(S.excludedSubcategories||[]).length>0?` · <span style="color:#8aa3bc">${S.excludedSubcategories.length} excluded</span>`:` · Full catalog`}</p>
     <p class="sub">For each document request below, upload one or more files and provide context for each file. If a request is not applicable, mark "Not provided" and explain why.</p>
     <div class="progress-ring">
       <div style="font-size:.83rem;font-weight:600;color:#2c4a6a;white-space:nowrap">${st.addressed} / ${st.total} evidence requests done</div>
@@ -1252,7 +1254,7 @@ ${topBar(3)}
   </div>
 
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:24px 0 32px;align-items:center">
-    <button class="btn btn-secondary" data-action="goto-setup">← Back</button>
+    <button class="btn btn-secondary" data-action="goto-scope">← Back to Scope</button>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button type="button" class="btn btn-secondary" data-action="drl-demo-skip" title="Fill rows with synthetic files and a local evidence map, then go to Analysis (tests questionnaire/findings)">Demo: synthetic data → Analysis</button>
       <button class="btn btn-primary" data-action="drl-analyze">🤖 Analyze Evidence Package →</button>
@@ -1273,12 +1275,13 @@ function renderAnalysis(){
   const counts={strong:0,adequate:0,weak:0,missing:0};
   allScs.forEach(id=>counts[qMap(id)]++);
   return`
-${topBar(5)}
+${topBar(4)}
 <div class="container">
   ${S.demoEvidence?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo mode is active.</strong> Rows used synthetic files and a local evidence map (no AI document read). Questionnaire and findings still call the AI using your key — use this to test those steps end-to-end.</div>':''}
   <div class="card">
     <h2>Evidence Analysis Complete</h2>
     <p class="sub">${S.demoEvidence?'Synthetic demo files were used instead of AI document analysis.':'The AI has mapped your documents to NIST CSF 2.0 subcategories.'} Review the coverage below, then generate your targeted questionnaire.</p>
+    <p class="sub" style="margin-top:-8px;font-size:.79rem;color:#1e88e5"><strong>${subcategoriesInScopeCount()} subcategories in scope</strong> across ${FUNCTIONS.filter(f=>S.includedFns.includes(f.id)).length} functions${(S.excludedSubcategories||[]).length>0?\` · <span style="color:#8aa3bc">${S.excludedSubcategories.length} excluded via scope selection</span>\`:''}</p>
     <p class="sub" style="margin-top:-8px;font-size:.78rem;color:#5a7a96;line-height:1.45">The tables below add up to <strong>${scScope}</strong> CSF <strong>subcategories</strong> in your scope (each row’s <strong>Total</strong> is how many subcategories sit in that category). That is different from the <strong>${drlReqTotal}</strong> evidence <strong>requests</strong> on Document Upload: those rows are the artifact checklist; subcategories are the finer outcomes the model rates from your whole evidence package.</p>
     <div class="row" style="margin-bottom:24px">
       <div class="stat-card col"><div class="stat-num" style="color:#2e7d32">${counts.strong}</div><div class="stat-lbl">Strong Evidence</div></div>
@@ -1450,16 +1453,16 @@ function renderQuestion(qu,qi){
 function renderFindingsReview(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   const activeFn=S.activeReviewFn||fns[0]?.id;
-  const allScs=SC_BY_FN[activeFn]||[];
+  const _exclFR=new Set(S.excludedSubcategories||[]);const allScs=(SC_BY_FN[activeFn]||[]).filter(id=>!_exclFR.has(id));
   const fn=FUNCTIONS.find(f=>f.id===activeFn);
-  const inScopeIds=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(([id])=>id);
+  const inScopeIds=inScopeSubs().map(([id])=>id);
   const total=inScopeIds.length;
   const withFinding=inScopeIds.filter(id=>S.findings[id]).length;
   const notInModelOutput=Math.max(0,total-withFinding);
-  const approved=Object.values(S.findings).filter(f=>f.status==='approved').length;
-  const disputed=Object.values(S.findings).filter(f=>f.status==='disputed').length;
-  const pending=Object.values(S.findings).filter(f=>!f.status||f.status==='pending').length;
-  const allReviewed=Object.keys(S.findings).length>0&&pending===0;
+  const approved=inScopeIds.filter(id=>S.findings[id]?.status==='approved').length;
+  const disputed=inScopeIds.filter(id=>S.findings[id]?.status==='disputed').length;
+  const pending=inScopeIds.filter(id=>S.findings[id]&&(!S.findings[id].status||S.findings[id].status==='pending')).length;
+  const allReviewed=withFinding>0&&pending===0;
   return`
 ${topBar(6)}
 <div class="container">
@@ -1554,7 +1557,8 @@ function _navBar(fns,rp){
 function renderReport(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   const fnScores={};
-  fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScores[fn.id]=avg(vals);});
+  const _exclRpt=new Set(S.excludedSubcategories||[]);
+  fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).filter(id=>!_exclRpt.has(id)).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScores[fn.id]=avg(vals);});
   const overall=avg(Object.values(fnScores).filter(x=>x!=null));
   const oc=scoreColor(overall);
   const rp=Math.max(0,Math.min(S.reportPage||0,fns.length));
@@ -1647,12 +1651,14 @@ ${nav}
     const benchDelta=overall!=null&&bench?.overall!=null?Math.round((overall-bench.overall)*10)/10:null;
     const commonGaps=INDUSTRY_COMMON_GAPS[S.org.industry]||[];
     // ── Organizational strengths (CMMI ≥ 3.5) ────────────────
+    const _exclStr=new Set(S.excludedSubcategories||[]);
     const strengths=Object.entries(S.findings)
-      .filter(([id,f])=>S.includedFns.includes(id.split('.')[0])&&(f.cmmi_score||0)>=3.5)
+      .filter(([id,f])=>S.includedFns.includes(id.split('.')[0])&&!_exclStr.has(id)&&(f.cmmi_score||0)>=3.5)
       .sort((a,b)=>(b[1].cmmi_score||0)-(a[1].cmmi_score||0)).slice(0,8);
     // ── 30/60/90-day roadmap from risk data ──────────────────
+    const _exclRisk=new Set(S.excludedSubcategories||[]);
     const byRisk=Object.entries(S.findings)
-      .filter(([id])=>S.includedFns.includes(id.split('.')[0]))
+      .filter(([id])=>S.includedFns.includes(id.split('.')[0])&&!_exclRisk.has(id))
       .sort((a,b)=>{
         const rs=f=>(f.likelihood||2)*(f.impact||2);
         const loO={low:0,medium:1,high:2};
@@ -1976,7 +1982,8 @@ async function generateQuestionnaire(){
 }
 
 async function fetchFindingsForFunction(fn,answersStructured){
-  const scs=SC_BY_FN[fn.id]||[];
+  const _excl=new Set(S.excludedSubcategories||[]);
+  const scs=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl.has(id));
   if(!scs.length)return{};
   const fnScSet=new Set(scs);
   const scDetails=scs.map(id=>{
@@ -2019,7 +2026,8 @@ Return JSON — every subcategory in ${fn.id} must appear:
 }
 
 async function runCriticPassForFunction(fn){
-  const scs=SC_BY_FN[fn.id]||[];
+  const _excl=new Set(S.excludedSubcategories||[]);
+  const scs=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl.has(id));
   const maxByQuality={strong:5,adequate:3.5,weak:2.5,missing:1.5};
   let adjusted=0;
   scs.forEach(id=>{
@@ -2037,7 +2045,8 @@ async function runCriticPassForFunction(fn){
 }
 
 async function generateNarrativeForFunction(fn,fnScore){
-  const scs=SC_BY_FN[fn.id]||[];
+  const _excl=new Set(S.excludedSubcategories||[]);
+  const scs=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl.has(id));
   if(!scs.length)return;
   const sorted=[...scs].map(id=>({id,score:S.findings[id]?.cmmi_score})).filter(x=>x.score!=null).sort((a,b)=>b.score-a.score);
   const top=sorted.slice(0,3).map(x=>`${x.id} (${fmtScore(x.score)})`).join(', ');
@@ -2069,7 +2078,8 @@ async function runRiskEnrichmentPass(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   let enriched=0;
   await Promise.allSettled(fns.map(async fn=>{
-    const scs=SC_BY_FN[fn.id]||[];
+    const _excl2=new Set(S.excludedSubcategories||[]);
+    const scs=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl2.has(id));
     const needsEnrichment=scs.filter(id=>S.findings[id]&&(S.findings[id].likelihood==null||S.findings[id].impact==null||!S.findings[id].loe));
     if(!needsEnrichment.length)return;
     const scList=needsEnrichment.map(id=>{
@@ -2110,7 +2120,7 @@ Return JSON keyed by subcategory ID:
 
 function applyDemoFindingsSkipAi(){
   const prios=['high','medium','low'];
-  const inScope=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0]));
+  const inScope=inScopeSubs();
   S.findings={};
   S.demoFindings=true;
   inScope.forEach(([id,text],i)=>{
@@ -2170,7 +2180,7 @@ async function generateFindings(){
     // ── Phase 3: executive narratives (parallel, non-fatal) ──
     setLoading(`Step 3/3 — Writing executive narratives…`,`Generating one board-level paragraph per function.`);
     const fnScoresForNarr={};
-    fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScoresForNarr[fn.id]=avg(vals);});
+    const _excl3=new Set(S.excludedSubcategories||[]);fns.forEach(fn=>{const vals=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl3.has(id)).map(id=>S.findings[id]?.cmmi_score).filter(x=>x!=null);fnScoresForNarr[fn.id]=avg(vals);});
     await Promise.allSettled(fns.map(fn=>generateNarrativeForFunction(fn,fnScoresForNarr[fn.id])));
 
     S.activeReviewFn=S.includedFns[0]||'GV';S.step='findings_review';saveState();
@@ -2227,8 +2237,6 @@ const EMAILJS_PUBLIC_KEY  = _cfg.EMAILJS_PUBLIC_KEY  || 'YOUR_EMAILJS_PUBLIC_KEY
 const EMAILJS_SERVICE_ID  = _cfg.EMAILJS_SERVICE_ID  || 'YOUR_EMAILJS_SERVICE_ID';
 const EMAILJS_VERIFY_TPL  = _cfg.EMAILJS_VERIFY_TPL  || 'YOUR_VERIFY_TEMPLATE_ID';
 const EMAILJS_REPORT_TPL  = _cfg.EMAILJS_REPORT_TPL  || 'YOUR_REPORT_TEMPLATE_ID';
-const BENCHMARK_EMAIL     = _cfg.BENCHMARK_EMAIL     || 'jacobolstadlarsen@gmail.com';
-const BENCHMARK_WEBHOOK   = _cfg.BENCHMARK_WEBHOOK   || '';
 
 function isEJSConfigured(){
   return EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY';
@@ -2271,15 +2279,18 @@ async function sendBenchmarkData(){
     const vals = (SC_BY_FN[fn.id]||[]).map(id => S.findings[id]?.cmmi_score).filter(x => x != null);
     if(vals.length) fnScores[fn.id] = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
   });
+  const scScores={};
+  inScopeSubs().forEach(([id])=>{if(S.findings[id]?.cmmi_score!=null)scScores[id]=S.findings[id].cmmi_score;});
   const payload = {
-    industry:    S.org.industry,
-    org_size:    S.org.orgSize,
-    it_size:     S.org.itOrgSize,
-    cyber_size:  S.org.cyberOrgSize,
+    industry:       S.org.industry,
+    org_size:       S.org.orgSize,
+    it_size:        S.org.itOrgSize,
+    cyber_size:     S.org.cyberOrgSize,
     scoring_method: S.scoringMethod,
     in_scope_count: subcategoriesInScopeCount(),
-    fn_scores:   JSON.stringify(fnScores),
-    date:        S.org.date || new Date().toISOString().slice(0,10),
+    fn_scores:      JSON.stringify(fnScores),
+    sc_scores:      JSON.stringify(scScores),
+    date:           S.org.date || new Date().toISOString().slice(0,10),
   };
   if(!isEJSConfigured()){
     console.log('[DEV] Benchmark payload (not sent — EmailJS unconfigured):', payload);
@@ -2289,8 +2300,8 @@ async function sendBenchmarkData(){
   }
   if(!window.emailjs) return;
   await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REPORT_TPL, {
-    to_email: BENCHMARK_EMAIL,
-    benchmark_json: JSON.stringify(payload, null, 2),
+    to_email:        'email2me@dontsp.am',
+    benchmark_json:  JSON.stringify(payload, null, 2),
   });
   S.benchmarkSent = true;
   saveState();
@@ -2404,6 +2415,12 @@ document.addEventListener('click',e=>{
     S.demoEvidence=false;
     S.step='setup';saveState();render();
   }
+  else if(action==='welcome-reset'){
+    if(!confirm('Clear all saved assessment data and start fresh?\n\nThis cannot be undone.'))return;
+    localStorage.removeItem('csf_state');
+    S=Object.assign(S,{step:'welcome',org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},scoringMethod:'both',includedFns:['GV','ID','PR','DE','RS','RC'],excludedSubcategories:[],aiScopeRec:{},benchmarkSent:false,drlViewFns:null,demoEvidence:false,demoFindings:false,drl:{},drlValidationErrors:[],evidenceMap:{},docSummaries:[],questionnaire:null,answers:{},activeRole:0,findings:{},functionNarratives:{},activeReviewFn:'GV',reportPage:0,targetFnScores:{},execSummary:''});
+    render();
+  }
   else if(action==='welcome-resume'){
     loadState();
     const keyInput=document.getElementById('inp-apikey');
@@ -2420,6 +2437,10 @@ document.addEventListener('click',e=>{
   else if(action==='goto-analysis'){S.step='analysis';render();}
   else if(action==='goto-questionnaire'){S.step='questionnaire';render();}
   else if(action==='goto-findings-review'){S.step='findings_review';render();}
+  else if(action==='change-email'){
+    S.org.emailVerified=false;S.org.verificationSent=false;S.org.verificationCode='';
+    saveState();render();
+  }
   else if(action==='send-verify-email'){
     const emailEl=document.getElementById('inp-org-email');
     const email=(emailEl?.value||'').trim();
@@ -2447,7 +2468,7 @@ document.addEventListener('click',e=>{
       saveState();
       // Update button active states without full re-render
       const row=el.closest('.size-options');
-      if(row){row.querySelectorAll('.size-btn').forEach(b=>{b.classList.toggle('active',b.dataset.val===val);});}
+      if(row){row.querySelectorAll('.size-btn').forEach(b=>{b.classList.toggle('selected',b.dataset.val===val);});}
     }
   }
   else if(action==='setup-next'){
@@ -2642,7 +2663,9 @@ document.addEventListener('click',e=>{
     saveState();render();window.scrollTo(0,0);
   }
   else if(action==='export-json'){
-    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const exportS=JSON.parse(JSON.stringify(S));
+    delete exportS.apiKey;
+    const blob=new Blob([JSON.stringify(exportS,null,2)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download=`csf-assessment-${(S.org.name||'org').replace(/\s+/g,'-')}-${S.org.date||new Date().toISOString().slice(0,10)}.json`;a.click();
   }
@@ -2675,6 +2698,13 @@ document.addEventListener('change',e=>{
   if(t&&t.id==='inp-model'){
     S.model=t.value;
     persistAIPrefs();
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='inp-verify-code'){
+    e.preventDefault();
+    document.querySelector('[data-action="check-verify-code"]')?.click();
   }
 });
 
