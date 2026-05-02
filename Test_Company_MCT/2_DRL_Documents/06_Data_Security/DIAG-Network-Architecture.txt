@@ -1,0 +1,171 @@
+Network Architecture Diagram
+
+Document ID: DIAG-NET-01 Version: 4.0 Effective date: January 1, 2026 Last reviewed: December 9, 2025 Next review: December 2026 (or upon material architectural change) Approver: David Mehta, CTO; Sarah Yoon, CISO Owner: Alicia Reyes, Security Engineer (Cloud/AppSec); Tomás Reyes, VP Engineering Distribution: Internal — Engineering, Security, GRC; included in HITRUST and SOC 2 evidence packets
+
+1. Purpose
+
+This document provides a logical view of the MCT production and corporate network architecture. It identifies trust zones, ingress and egress controls, identity boundaries, and the legacy on-premises footprint. It is referenced from POL-001 §3.9 and STD-ENC-01, and supports the HITRUST control narratives for 09.m, 09.n, and 01.j. It is intended as a logical reference, not a complete physical or VPC-level diagram; the latter are maintained in the infra-diagrams repository (auto-generated weekly from Terraform state and Wiz inventory).
+
+2. Logical Diagram
+
+flowchart TB
+    classDef internet fill:#e8e8e8,stroke:#666,color:#000
+    classDef edge fill:#ffe8c4,stroke:#b06c00,color:#000
+    classDef app fill:#cfe9ff,stroke:#0a5fae,color:#000
+    classDef data fill:#d6f5d6,stroke:#246b24,color:#000
+    classDef corp fill:#f5d6f5,stroke:#7a2c7a,color:#000
+    classDef legacy fill:#f5cfcf,stroke:#9c2a2a,color:#000
+
+    Pat[Patient / Clinician users]:::internet
+    Cust[Customer admin users]:::internet
+    EHR[EHR systems<br/>FHIR R4 / HL7 v2 / Direct Trust]:::internet
+
+    CF[AWS CloudFront<br/>TLS 1.2+ termination<br/>geo and rate controls]:::edge
+    WAF[AWS WAF v2<br/>OWASP CRS + custom rules]:::edge
+    ALB[Application Load Balancer<br/>per-environment]:::edge
+
+    subgraph EKS [Amazon EKS  -  us-east-1 production VPC]
+        IC[NGINX ingress controllers<br/>cert-manager  -  ACM private]:::app
+        SVC[Microservices<br/>Node.js / Python / Go<br/>envoy mesh - mTLS east-west]:::app
+    end
+
+    subgraph DATA [Data tier  -  KMS-CMK encrypted]
+        AUR[Aurora PostgreSQL<br/>multi-AZ - PITR 35d<br/>cross-region snapshots]:::data
+        SNO[Snowflake<br/>per-env accounts<br/>Fivetran ingest from Aurora]:::data
+        S3[S3 attachments<br/>versioned - CRR to us-west-2<br/>Glacier transition 365d]:::data
+        EC[ElastiCache Redis<br/>AWS-managed key<br/>NO PHI persisted]:::data
+    end
+
+    DR[us-west-2 warm DR<br/>Aurora cross-region read replica<br/>S3 CRR target<br/>Snowflake replication]:::data
+
+    subgraph CORP [Corporate access plane]
+        Emp[MCT personnel - 30 percent remote]:::corp
+        WARP[Cloudflare WARP VPN<br/>device posture - Jamf - Intune]:::corp
+        OKTA[Okta IDP - SSO - MFA<br/>FIDO2 mandatory for prod-access]:::corp
+        AWSSSO[AWS IAM Identity Center<br/>session-bounded role assumption]:::corp
+    end
+
+    LEG[Legacy on-prem ETL cluster<br/>Raleigh HQ - decommission Q4 2026<br/>2 long-tenured customers]:::legacy
+    SITE[Site-to-site IPsec VPN<br/>Raleigh -> us-east-1 VPC]:::edge
+
+    Pat --> CF
+    Cust --> CF
+    EHR --> CF
+    CF --> WAF
+    WAF --> ALB
+    ALB --> IC
+    IC --> SVC
+    SVC --> AUR
+    SVC --> S3
+    SVC --> EC
+    AUR --> SNO
+    AUR -.cross-region replica.-> DR
+    S3 -.CRR.-> DR
+    SNO -.replication.-> DR
+
+    Emp --> WARP
+    WARP --> OKTA
+    OKTA --> AWSSSO
+    AWSSSO --> SVC
+    AWSSSO --> AUR
+    AWSSSO --> SNO
+
+    LEG --> SITE
+    SITE --> AUR
+
+3. Trust Zones
+
+MCT recognizes five logical trust zones. The intent is that all traffic crossing a trust-zone boundary be authenticated, authorized, encrypted, and logged.
+
+3.1 Honest acknowledgement — Z5 partial exception
+
+Z5 is a known control gap acknowledged in POL-001 §3.9 and tracked as part of the FY26 strategy theme to decommission the legacy ETL cluster by Q4 2026. The cluster is excluded from full asset-inventory automation; patching is manual; and host-based detection coverage was extended to Wiz agent only in late 2025. Compensating controls are documented in CRA-LegacyETL-2025 (network segmentation, IPsec encryption, restricted egress, access via a single bastion path).
+
+4. Ingress Controls
+
+4.1 Customer-facing ingress (Patient, Clinician, Customer admin → MeridianCare)
+
+DNS resolution to CloudFront edge (geo-fenced where customer contracts permit).
+
+TLS 1.2+ termination at CloudFront. ECDSA certificates issued via AWS Certificate Manager with public ACM CA. HSTS enforced with 12-month max-age and preload.
+
+AWS WAF v2 with the AWS Managed Rules Common Rule Set, the SQLi rule set, the Bot Control managed rule set (low-sensitivity for customer admin paths, higher-sensitivity for unauthenticated paths), and three custom MCT rules covering: (a) FHIR endpoint anomaly patterns, (b) high-volume read-only enumeration, (c) known-bad ASN list maintained by Arctic Wolf.
+
+AWS Shield Standard. Shield Advanced is approved in the FY26 budget and pending Q2 2026 procurement.
+
+ALB performs second TLS termination into the VPC; ALB is target-group restricted to ingress controllers in EKS; cross-zone load balancing enabled.
+
+NGINX ingress controllers in EKS terminate the third TLS hop using cert-manager-issued certificates from a private ACM PCA. They route to namespaced Services within the cluster.
+
+envoy sidecars enforce mTLS for east-west traffic between services where supported. Authorization is enforced via service-mesh policies sourced from SPIFFE identities.
+
+4.2 EHR ingress (Direct Trust, FHIR R4, HL7 v2 from customers' EHRs)
+
+Direct Trust messaging arrives at a dedicated ingestion service via an inbound DirectTrust HISP path (TLS + S/MIME). Path certificates are pinned.
+
+FHIR R4 endpoints sit behind the same CloudFront / WAF / ALB chain as the customer-facing app, but on dedicated paths with stricter rate limits and per-customer mTLS where contractually agreed.
+
+HL7 v2 feeds use AWS PrivateLink / VPN endpoints negotiated per customer; legacy v2 connections via the Raleigh on-prem cluster (Z5) are documented in §3.1.
+
+All inbound clinical messages are persisted with sender/receiver metadata in Aurora; the message payload is parsed and stored encrypted, with the raw envelope retained for audit purposes.
+
+4.3 Workforce ingress (MCT employees → corporate and production)
+
+All workforce traffic to MCT systems traverses Cloudflare WARP. Device posture (Jamf for macOS, Intune for Windows) is checked at every connection.
+
+Authentication via Okta. MFA is enforced; FIDO2/WebAuthn is mandatory for all production-access roles, security personnel, and engineers (full enforcement Q4 2025).
+
+AWS access via IAM Identity Center; engineers and admins assume short-lived (1- to 4-hour) roles. No long-lived AWS access keys exist for human accounts; audited quarterly.
+
+Production access additionally requires Okta-enforced step-up for sensitive role assumptions (e.g., prod-admin).
+
+5. Egress Controls
+
+6. Logging and Monitoring
+
+All ingress and egress events are logged. Specifically:
+
+CloudFront and WAF logs delivered to S3 and ingested into Datadog.
+
+VPC Flow Logs at the production VPC, retained 90 days hot and 7 years cold.
+
+ALB access logs in S3.
+
+Aurora pgAudit, Snowflake access history, S3 server access + CloudTrail data events.
+
+Okta system log streamed to Datadog.
+
+envoy mesh access logs in Datadog.
+
+Datadog Cloud SIEM is the primary alerting surface; Arctic Wolf operates 24x7 escalation. Alert tuning remains an active area of investment (cyber risk register entry R3 — alert-tuning debt; not all detections are at production-grade fidelity).
+
+7. Related Documents
+
+POL-001 Information Security Policy (§3.9)
+
+STD-ENC-01 Encryption Standard
+
+DIAG-PHI-Data-Flow (PHI-specific data flows)
+
+CRA-LegacyETL-2025 Compensating Controls — Legacy ETL
+
+POL-BCP-01 Business Continuity Policy
+
+8. Document Control
+Zone | Description | Examples | Boundary controls into the zone
+Z0 — Public Internet | Anything not under MCT control. | Patient devices, customer admin browsers, customer EHR endpoints, public DNS. | n/a
+Z1 — Edge | MCT's externally addressable surface. | CloudFront, WAF v2, ALB, ACM public certificates. | TLS 1.2+, WAF rule set, geo and rate controls, AWS Shield Standard.
+Z2 — Application | EKS workloads in production VPC. | Ingress controllers, microservices, envoy mesh. | mTLS east-west service mesh; pod-to-pod NetworkPolicies; SPIFFE identities; egress through controlled NAT.
+Z3 — Data | Stateful systems holding PHI or PHI-derived data. | Aurora, Snowflake, S3 attachment buckets, ElastiCache (no PHI). | KMS-CMK at rest; private endpoints / VPC interface endpoints; IAM with least-privilege; query-level audit logging (Aurora pgAudit, Snowflake access history, S3 server-access + CloudTrail data events).
+Z4 — Corporate | Workforce identity, devices, and SaaS. | Okta, Microsoft 365, Workday, Slack, Datadog, GitHub. | SSO via Okta with FIDO2 enforcement for production-access roles; device-posture checks (Jamf / Intune compliance); conditional access.
+Z5 — Legacy | The Raleigh on-premises ETL cluster supporting two long-tenured EHR integrations. | The legacy cluster itself. | Site-to-site IPsec VPN to a private subnet pair in us-east-1; explicit-allow-only ingress; egress only to defined Aurora endpoints; Wiz agent recently deployed (Q4 2025).
+Source | Egress path | Control
+EKS workloads | NAT Gateway per AZ → public internet | Egress allowlist enforced at Cilium NetworkPolicy and at a dedicated egress proxy (used for outbound HTTP from services that must reach external APIs). All egress logged to Datadog.
+Aurora / Snowflake / S3 | VPC endpoints (interface / gateway) | Direct-to-AWS-service traffic does not traverse the public internet.
+Corporate endpoints | Cloudflare WARP | DNS filtering (Cloudflare Gateway), category controls, DLP egress inspection (Microsoft Purview pilot).
+Legacy ETL (Z5) | Site-to-site IPsec → private VPC subnets | Outbound IP allowlist; only Aurora endpoints reachable; Wiz agent reports egress flow.
+Version | Date | Author | Change summary
+1.0 | 2022-09 | A. Reyes | Initial logical diagram
+2.0 | 2024-02 | A. Reyes, S. Yoon | Added envoy mesh; introduced trust-zone model
+3.0 | 2025-04 | A. Reyes | Added Z5 (legacy ETL) compensating controls; updated egress controls
+4.0 | 2025-12 | A. Reyes | Refresh for FIDO2 enforcement, Cilium NetworkPolicy adoption, FHIR-path WAF rules, Wiz agent on Z5; mermaid diagram update

@@ -1,0 +1,265 @@
+# Internal Audit Report — Cybersecurity Program 2025
+
+**Document ID:** RPT-IA-CYBER-2025
+**Version:** 1.0 (final)
+**Audit period:** January 1, 2025 – December 31, 2025
+**Fieldwork dates:** December 1–19, 2025
+**Report issued:** January 23, 2026
+**Lead auditor:** Jordan Park, GRC Manager (audit owner)
+**Independence review:** External contractor — Hartwell Cohen LLP (5-finding sample re-tested independently for independence assurance)
+**Reviewed by:** Sarah Yoon, CISO (auditee leadership); David Mehta, CTO; Marcus Holbrook, GC
+**Approver:** Helena Park, CEO; Audit & Risk Committee
+**Distribution:** Audit & Risk Committee; Steering Committee; CISO leadership; HITRUST assessor (Coalfire) under NDA
+**Classification:** Internal — Distribution Limited
+
+---
+
+## 1. Purpose
+
+This is the annual internal audit of the MCT cybersecurity program covering calendar year 2025. The audit is performed under the authority of POL-001 §3.17 (Continuous improvement) and the Internal Audit Charter. Findings are reported to the Audit & Risk Committee and tracked to closure.
+
+The audit complements monthly mini-audits performed by the GRC team during the year (12 mini-audits completed in 2025) and quarterly KPI reviews. Where this annual audit relies on monthly mini-audit results, those are referenced explicitly.
+
+## 2. Scope
+
+Audit scope was set in collaboration with the CISO and approved by the Audit & Risk Committee in November 2025 (MINUTES-Audit-Risk-Committee-Q4-2025). The scope covered:
+
+- Identity and access management (POL-IAM-01) — control operation in 2025.
+- Vulnerability and patch management (POL-PM-01) — patching SLA adherence.
+- Detection and response operation (PLN-IR-01, the SIEM/EDR stack, and the Arctic Wolf integration).
+- Recovery program (PLN-DRP-01, PLN-BCP-01) — testing depth and outcomes.
+- Vendor / third-party risk (POL-TPRM-01) — reassessment cadence and continuous-monitoring posture.
+- Logging and audit-trail integrity (against HIPAA §164.316(b)(2) retention).
+- Awareness and training (PLN-SA-01) — phishing simulation results.
+- Policy hierarchy currency.
+
+**Out of scope:** financial controls (covered by the SOX-style finance audit, separate engagement); customer-side controls; clinical content review.
+
+## 3. Methodology
+
+The audit followed a standard control-testing methodology adapted for MCT's size and operating model:
+
+1. **Documentation review.** Sampling of the 2025 control evidence in Hyperproof and Vanta.
+2. **Inquiry and walkthrough.** Interviews with control owners (CISO, GRC Manager, Sec Engineering, IAM Specialist, VP Engineering, VP Customer Success).
+3. **Re-performance.** GRC re-performed a sample of access reviews, patch SLAs, vendor reassessments, and DR runbook steps.
+4. **Observation.** GRC observed a Q4 2025 phishing simulation and the Q4 2025 IR tabletop in-person.
+5. **Independence sample.** Hartwell Cohen LLP independently re-tested 5 controls (selected by lottery from the 23 controls tested) to provide assurance that the GRC-led test outcomes were not tainted by inherent self-assessment bias.
+
+Sampling sizes: minimum 25 items per population for population-based controls (e.g., access reviews); 100% for low-population controls (e.g., critical-vulnerability remediation events).
+
+## 4. Summary of Conclusions
+
+The cybersecurity program is operating effectively against most tested control objectives. Three medium-severity findings and five low-severity findings were issued. None constitute a material weakness. Findings are summarized in §5 and detailed in §6.
+
+The program shows clear improvement over the 2024 internal CSF self-assessment baseline (RPT-Prior-CSF-Self-Assessment-2024). Areas of meaningful progress include FIDO2 enforcement (closed in scope per POL-IAM-01), phishing susceptibility (R10 closed), and SBOM coverage (R9 closed). Areas where the program remains less mature than peers are recovery testing depth (R2), supplier continuous monitoring (R1), and detection alert tuning (R3) — all already on the cyber risk register and all on the FY26 plan.
+
+| Severity | Count | Linked risk register entries |
+|---|---|---|
+| High | 0 | — |
+| Medium | 3 | R1, R2, R3 |
+| Low | 5 | R5, R7, R4, R8, observational |
+| Informational | 2 | — |
+
+## 5. Findings Overview
+
+| ID | Severity | Title | Linked CSF | Linked risk |
+|---|---|---|---|---|
+| IA-2025-01 | Medium | Vendor reassessment cadence below target | GV.SC-04, GV.SC-05, GV.SC-07 | R1 |
+| IA-2025-02 | Medium | Recovery test depth limited to a single service | RC.RP-01, RC.RP-04, RC.RP-05, RC.CO-03 | R2 |
+| IA-2025-03 | Medium | Detection alert tuning gap — composite Snowflake correlation rule missing | DE.AE-02, DE.AE-03 | R3 |
+| IA-2025-04 | Low | Service-account access reviews inconsistently performed | PR.AA-01, PR.AA-05 | R5 |
+| IA-2025-05 | Low | Insider-threat program in design only; no UEBA tuning yet | PR.AT-02, DE.CM-03 | R7 |
+| IA-2025-06 | Low | Legacy ETL cluster patching still manual; remains in scope | PR.PS-01, PR.PS-05 | R4 |
+| IA-2025-07 | Low | Patient-portal CIAM does not require MFA on legacy customer tenants | PR.AA-01, PR.AA-03 | R8 |
+| IA-2025-08 | Low | Documentation gap — three runbooks referenced in PLN-IR-01 had not been refreshed in >12 months | ID.IM-04, RS.MA-04 | observational |
+| IA-2025-INF-01 | Informational | Quarterly KPI dashboard format would benefit from visual consistency | — | — |
+| IA-2025-INF-02 | Informational | Tabletop after-action documentation is consistent and high quality | — | — |
+
+## 6. Detailed Findings
+
+### IA-2025-01 — Vendor reassessment cadence below target (Medium; R1)
+
+**Observation.** As of Q4 2025, vendor reassessment completion against the annual target was 60% (current state KPI). Of the 47 in-scope third-party vendors, 28 had completed their FY25 reassessment within the FY25 cycle. Of the 19 outstanding, 12 were Tier-3 vendors (low-criticality) where the cadence delay is within accepted policy; 7 were Tier-2 vendors (Surescripts, Datadog, Arctic Wolf, Direct Trust, two minor analytics vendors, one billing-related vendor) where the cadence is below the FY26 target of ≥90%.
+
+**Criteria.** POL-TPRM-01 §6 requires annual reassessment for Tier-1 and Tier-2 vendors. POL-001 §3.14 references the third-party risk program.
+
+**Cause.** The vendor program is centered on annual reassessments without continuous-monitoring feeds beyond AWS, Okta, and Snowflake (which feed Vanta automatically). Reassessment is manual and resource-constrained.
+
+**Effect.** Increased latency between a third-party security event and MCT's awareness of changes in vendor posture. The Change Healthcare ALPHV/BlackCat event (Feb–Mar 2024) is a clear illustrative case of the value of continuous monitoring.
+
+**Management response.** Accepted. The supplier continuous-monitoring expansion is FY26 Priority 7 and is risk register entry R1, funded for FY26. Target closure: 2026-09-30. Vanta continuous attestation feeds will extend to Tier-2 vendors; reassessment cadence target reset to ≥90% by Q4 2026.
+
+**Status.** Open; on track per FY26 plan.
+
+---
+
+### IA-2025-02 — Recovery test depth limited to a single service (Medium; R2)
+
+**Observation.** The April 2025 full-failover test (RPT-Recovery-Test-Results-2025) covered the Transitions of Care service only. Referral Lifecycle Management, Chronic Care Management, and Population Insights have not been failover-tested at full-region scope. The end-to-end ToC RTO observed (5h12m) exceeded the P1 target (4h).
+
+**Criteria.** POL-001 §3.13 references the recovery program. PLN-DRP-01 §11 commits to testing cadence. RAS-2025-12 establishes availability tolerance below 99.0% as Board-notification trigger.
+
+**Cause.** Recovery testing capacity is a single SRE-team initiative scheduled annually; broader scope requires program investment that is in the FY26 / FY27 roadmap.
+
+**Effect.** Capability against P1 RTO commitments is partially demonstrated for ToC only and is over target on end-to-end timing. Other P1 and P2 services are inferred from architecture but not exercised.
+
+**Management response.** Accepted. The recovery testing maturity initiative is FY26 Priority 6 and is risk register entry R2, funded for FY26. FY26 adds one additional full-failover test (Referral, target Q3 2026) and two recovery tabletops distinct from IR tabletops. FY27 plan extends scope further. Target closure: 2026-12-31 (interim milestones).
+
+**Status.** Open; on track per FY26 plan.
+
+---
+
+### IA-2025-03 — Detection alert tuning gap (Medium; R3)
+
+**Observation.** The Q4 2025 IR tabletop (RPT-IR-Tabletop-Q4-2025) surfaced that a composite correlation rule for "Snowflake new-geolocation login + sensitive query within 60 minutes" is not present in the Datadog rule pack. Manual correlation by the IC during the exercise added approximately 50 minutes to severity declaration.
+
+This is a concrete example of the broader detection alert-tuning debt captured as R3 (28% false-positive rate on tier-1 alerts; legacy ETL detection use cases incomplete; alert response runbooks for Snowflake compute anomalies still draft).
+
+**Criteria.** POL-001 §3.11 (logging and continuous monitoring); CSF DE.AE-02, DE.AE-03.
+
+**Cause.** Detection engineering capacity has been one engineer half-allocated to tuning since Q4 2024 (Marcus Tan, with parallel responsibilities for IR program and Q4 2025 tabletop facilitation). Tuning has been event-driven rather than continuous.
+
+**Effect.** Slower detection and response for scenarios that span identity (Okta), data (Snowflake), and behavioral signals.
+
+**Management response.** Accepted. Q1 2026 dedicated alert-tuning sprint is approved (one engineer half-allocated). The composite rule called out in the Q4 tabletop will be deployed by 2026-02-28 (action item TT-Q4-2025-01). Risk register R3 target closure: 2026-06-30.
+
+**Status.** Open; tuning sprint scheduled.
+
+---
+
+### IA-2025-04 — Service-account access reviews inconsistently performed (Low; R5)
+
+**Observation.** Quarterly human-account access reviews are reliable (Q1–Q4 2025 KPI 98% completion). Service-account / non-human-identity access reviews are inconsistent: there is no automated discovery for OAuth-style access grants, and SCIM-provisioned service accounts in some SaaS apps are reviewed only on an ad-hoc basis.
+
+**Criteria.** POL-IAM-01 §5 (access reviews); CSF PR.AA-01, PR.AA-05.
+
+**Cause.** Tooling gap — Vanta access governance pilot is planned Q2 2026. The IAM Specialist (Ben Olafsson) is sole-allocated to this domain.
+
+**Effect.** Risk of stale or over-privileged service-account access grants persisting beyond business need.
+
+**Management response.** Accepted. R5 treatment is funded FY26 H1; Vanta access governance pilot Q2 2026; SCIM cleanup project in design. Target closure: 2026-09-30.
+
+**Status.** Open.
+
+---
+
+### IA-2025-05 — Insider-threat program in design only (Low; R7)
+
+**Observation.** No formal insider-threat program. Background-check refresh on a 5-year cycle for engineers and security staff is in design. UEBA capabilities exist in Datadog but rules are not tuned for insider-threat use cases.
+
+**Criteria.** POL-001 §3.16 (personnel security); CSF PR.AT-02, DE.CM-03.
+
+**Cause.** Program-maturity sequencing; insider-threat is a scheduled FY26 H2 initiative. Legal review of monitoring scope (GC + CPO partnership) is ongoing.
+
+**Effect.** Limited detection coverage for insider-threat scenarios.
+
+**Management response.** Accepted. R7 treatment is FY26 H2; UEBA tuning Q3 2026; insider-threat policy POL-IT-01 in draft. Target closure: 2026-12-31.
+
+**Status.** Open.
+
+---
+
+### IA-2025-06 — Legacy ETL cluster patching still manual (Low; R4)
+
+**Observation.** The legacy on-premises ETL cluster at Raleigh HQ is not in central asset inventory automation, and patching is manual. Compensating controls per CRA-LegacyETL-2025 are documented and operative.
+
+**Criteria.** POL-PM-01 (patching SLAs); CSF PR.PS-01, PR.PS-05.
+
+**Cause.** The cluster is scheduled for decommission Q4 2026; investing in automation now would not return value before decommission. Two long-tenured customers are mid-migration to the modern integration (60% complete as of Q4 2025).
+
+**Effect.** Manual patching introduces variability; cluster remains a known control gap.
+
+**Management response.** Accepted. R4 treatment is **avoid** (decommission). On track for Q4 2026 cluster retirement.
+
+**Status.** Open; on track to avoidance.
+
+---
+
+### IA-2025-07 — Patient-portal CIAM does not require MFA on legacy tenants (Low; R8)
+
+**Observation.** Patient-facing portal CIAM is on Auth0 (separate from workforce Okta). Some legacy customers permit username+password without MFA on patient-facing logins; rationale is the patient population includes low-tech users for whom MFA enrollment friction reduces care-coordination engagement.
+
+**Criteria.** POL-IAM-01 §4; CSF PR.AA-01, PR.AA-03.
+
+**Effect.** Patient-account compromise risk; lower clinical-impact than provider-account compromise but in scope.
+
+**Management response.** Accepted. R8 treatment is risk-based step-up authentication rollout Q3 2026; new-customer contracts will require MFA. Target closure: 2026-09-30.
+
+**Status.** Open.
+
+---
+
+### IA-2025-08 — Three IR runbooks not refreshed in >12 months (Low; observational)
+
+**Observation.** The IR runbook repository contains 23 runbooks. Review of last-modified metadata identified three runbooks not refreshed in over 12 months: `RB-AURORA-COMPROMISE` (last review Sep 2024), `RB-S3-PUBLIC-EXPOSURE` (Aug 2024), `RB-EKS-RANSOMWARE` (Oct 2024). All three are operative and were last validated by use in tabletops in 2024.
+
+**Criteria.** Internal standard — runbook annual review.
+
+**Effect.** Risk of runbook drift relative to evolving infrastructure.
+
+**Management response.** Accepted. M. Tan to refresh all three by Q1 2026. Going forward, runbook annual review will be tracked as an explicit control with KPI.
+
+**Status.** Open; refresh in progress.
+
+---
+
+### IA-2025-INF-01 — KPI dashboard format consistency
+
+**Observation.** Quarterly KPI dashboards presented to the Audit & Risk Committee vary in chart format and color scheme. No control significance; observation only. Suggest GRC publish a templated dashboard format.
+
+**Status.** Informational.
+
+---
+
+### IA-2025-INF-02 — Tabletop after-action documentation quality
+
+**Observation.** The 2025 IR tabletop after-action reports (Q1–Q4) are well-structured and traceable, with clear action items and sign-off. This is a positive observation and should be retained as program practice.
+
+**Status.** Informational.
+
+## 7. Independence Review (Hartwell Cohen LLP)
+
+Hartwell Cohen LLP independently re-tested 5 of the 23 controls covered in this audit (selected by lottery): vendor reassessment, FIDO2 enforcement, quarterly access reviews, audit log retention, and the April 2025 DR test review. Hartwell's conclusions concur with GRC-led results in all five cases. Hartwell's letter is filed with this report.
+
+## 8. Comparison to 2024 Baseline (Trajectory)
+
+The 2024 internal CSF self-assessment (RPT-Prior-CSF-Self-Assessment-2024) reported aggregate maturity of approximately 2.4 with weaker scores in GV.SC, RC.RP, and DE. The 2025 program has produced demonstrable progress in these dimensions:
+
+- GV.SC: vendor program redesign is underway (R1 funded FY26); Vanta continuous attestation extended to Tier-1 vendors during 2025.
+- RC.RP: April 2025 full-failover test was the first end-to-end exercise of the modern architecture, with documented honest reporting (5h12m over target).
+- DE: Arctic Wolf integration matured throughout 2025; alert-tuning sprint scheduled Q1 2026.
+
+Aggregate maturity for the assessed 2026 cycle is expected to be approximately 2.65, with deliberate trailing in RC (~2.05) and RS (~2.70) where the program is honestly less mature than the rest. This is consistent with the FY26 program plan.
+
+## 9. Sign-Off
+
+| Role | Name | Date |
+|---|---|---|
+| Lead auditor | Jordan Park, GRC Manager | 2026-01-23 |
+| Independence reviewer | Hartwell Cohen LLP (signed letter on file) | 2026-01-22 |
+| CISO (auditee) | Sarah Yoon | 2026-01-23 |
+| CTO | David Mehta | 2026-01-23 |
+| GC | Marcus Holbrook | 2026-01-23 |
+| CEO | Helena Park | 2026-01-29 |
+| Audit & Risk Committee endorsement | Chair: K. Chen | 2026-02-05 (Q1 meeting) |
+
+## 10. Linked Documents
+
+- POL-001 Information Security Policy
+- RAS-2025-12 Risk Appetite Statement
+- RISK-Cyber-Risk-Register
+- PLN-IR-01 Incident Response Plan
+- PLN-DRP-01 Disaster Recovery Plan
+- RPT-Recovery-Test-Results-2025
+- RPT-IR-Tabletop-Q4-2025
+- RPT-Prior-CSF-Self-Assessment-2024
+- RPT-SOC-2-Type-II-Excerpt-2025
+- MINUTES-Audit-Risk-Committee-Q4-2025
+
+## 11. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 0.5 | 2026-01-08 | J. Park | Draft after fieldwork |
+| 0.9 | 2026-01-15 | J. Park | Auditee review incorporated |
+| **1.0** | **2026-01-23** | **J. Park** | **Final issue; pending Audit & Risk Committee endorsement Feb 2026** |

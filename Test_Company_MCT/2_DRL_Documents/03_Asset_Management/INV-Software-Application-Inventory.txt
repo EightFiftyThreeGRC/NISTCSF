@@ -1,0 +1,49 @@
+ApplicationName,Owner,Tier,Hosted,DataClass,EHR/PHI,License,Notes
+MeridianCare ToC Service,Tomás Reyes (VP Eng),Critical,AWS EKS us-east-1 (warm DR us-west-2),Restricted,Y,Proprietary,P1; Aurora-backed; Transitions of Care core service
+MeridianCare Referral Service,Tomás Reyes (VP Eng),Critical,AWS EKS us-east-1 (warm DR us-west-2),Restricted,Y,Proprietary,P1; Referral Lifecycle Management
+MeridianCare CCM Service,Tomás Reyes (VP Eng),High,AWS EKS us-east-1 (warm DR us-west-2),Restricted,Y,Proprietary,P2; Chronic Care Management billing logs
+MeridianCare Population Insights,Tomás Reyes (VP Eng) / Pittsburgh team,High,AWS EKS us-east-1 + Snowflake,Restricted,Y,Proprietary,P2; analytical layer; warm-DR maturity gap (R6)
+MeridianCare API Gateway,Alicia Reyes (Sec Eng Cloud),Critical,AWS API Gateway + Envoy mesh,Restricted,Y (in transit),Proprietary,All north-south traffic terminates here; mTLS east-west
+MeridianCare FHIR R4 Adapter,Tomás Reyes (VP Eng),Critical,AWS EKS us-east-1,Restricted,Y,Proprietary,Epic/Cerner/Meditech/athena integrations
+MeridianCare HL7v2 Listener,Tomás Reyes (VP Eng),High,AWS EKS us-east-1,Restricted,Y,Proprietary,Customer-pushed HL7 feeds; legacy interface
+MeridianCare Direct Trust Adapter,Tomás Reyes (VP Eng),High,AWS EKS us-east-1,Restricted,Y,Proprietary,DirectTrust message exchange for ToC handoffs
+MeridianCare Patient Portal (CIAM),Tomás Reyes (VP Eng) / Auth0,High,AWS + Auth0 tenant,Restricted,Y,Proprietary + Auth0 SaaS,Patient-facing portal; risk-based MFA only (R8)
+MeridianCare Customer Admin Console,Lauren Pham (VP CS),High,AWS EKS us-east-1,Confidential,Y (admin metadata only),Proprietary,Customer-side admin; MFA mandatory
+Aurora PostgreSQL (Prod cluster),Tomás Reyes (VP Eng),Critical,AWS Aurora us-east-1 multi-AZ + cross-region read replica,Restricted,Y,AWS managed,KMS-CMK encryption; pgAudit on
+Aurora PostgreSQL (Staging),Tomás Reyes (VP Eng),Moderate,AWS Aurora us-east-1,Confidential,N (synthetic),AWS managed,Synthetic and de-identified test data only
+Snowflake (Production analytics),Pittsburgh analytics team,High,Snowflake AWS us-east-1,Restricted,Y (de-identified for most views),Snowflake SaaS,Population Insights backbone; row-access policies
+S3 (Attachment buckets),Alicia Reyes (Sec Eng Cloud),Critical,AWS S3 us-east-1 + cross-region replication,Restricted,Y,AWS managed,KMS-CMK; SSE-KMS; bucket-policy least privilege
+ElastiCache (Redis session store),Tomás Reyes (VP Eng),High,AWS ElastiCache us-east-1,Internal,N (no PHI in payload),AWS managed,Opaque session IDs only; TLS in transit
+AWS WAF v2 + CloudFront,Alicia Reyes (Sec Eng Cloud),Critical,AWS edge,Restricted (in transit),Y (in transit),AWS managed,Public ingress; managed rule groups + custom rules
+Okta Workforce IDP,Ben Olafsson (IAM),Critical,Okta SaaS,Confidential,N,Okta SaaS,SSO/MFA for all employees; SCIM from Workday
+Okta AWS IAM Identity Center,Ben Olafsson (IAM),Critical,AWS IAM Identity Center + Okta,Confidential,N,AWS + Okta,Just-in-time elevation for cloud roles (PROC-PAM-01)
+Auth0 Patient CIAM,Ben Olafsson (IAM),High,Auth0 SaaS (Okta-owned),Restricted,Y (PII at minimum),Auth0 SaaS,Patient-portal authentication; per-tenant MFA configurable
+Microsoft 365 (Email/Office/Teams),IT Operations,High,Microsoft SaaS,Confidential,Limited (DLP-controlled),Microsoft 365 E5,Purview DLP planned Q3 2026 for PHI egress
+Microsoft Intune,IT Operations,High,Microsoft SaaS,Internal,N,Microsoft 365 E5,Windows endpoint management
+Jamf Pro,IT Operations,High,Jamf SaaS,Internal,N,Jamf SaaS,macOS endpoint management
+CrowdStrike Falcon,Marcus Tan (Sec Eng D&R),Critical,CrowdStrike SaaS,Internal (telemetry),N (no PHI in EDR),CrowdStrike SaaS,EDR on all 380 endpoints; central console
+Datadog Cloud SIEM,Marcus Tan (Sec Eng D&R),Critical,Datadog SaaS,Confidential (sec events),N (no PHI by policy),Datadog SaaS,SIEM + observability; 90-day hot retention
+Wiz CSPM,Alicia Reyes (Sec Eng Cloud),High,Wiz SaaS,Internal,N,Wiz SaaS,Cloud security posture; metadata only
+Vanta,Jordan Park (GRC),Moderate,Vanta SaaS,Internal,N,Vanta SaaS,Compliance automation; SOC 2 evidence
+Hyperproof,Jordan Park (GRC),Moderate,Hyperproof SaaS,Internal,N,Hyperproof SaaS,HITRUST evidence repository
+ServiceNow GRC,Jordan Park (GRC),High,ServiceNow SaaS,Confidential,N,ServiceNow SaaS,Risk register + supplier inventory + ITSM
+Workday HRIS,Linda Chao (CPO),High,Workday SaaS,Confidential,N,Workday SaaS,Source of truth for joiner/mover/leaver; SCIM to Okta
+Slack,IT Operations,Moderate,Slack SaaS,Confidential,N (PHI prohibited),Slack Enterprise Grid,DLP via Microsoft Purview planned
+Zoom,IT Operations,Moderate,Zoom SaaS,Confidential,Y (clinical calls only; BAA),Zoom for Healthcare,Recording disabled by default
+Notion,IT Operations,Low,Notion SaaS,Internal,N (PHI prohibited),Notion SaaS,Internal documentation; non-production
+GitHub Enterprise + Advanced Security,Tomás Reyes (VP Eng),High,GitHub SaaS,Confidential,N (PHI prohibited; secret scanning),GitHub Enterprise,Source code; GHAS findings feed Snyk
+Snyk,Alicia Reyes (Sec Eng Cloud),High,Snyk SaaS,Internal,N,Snyk SaaS,SCA + SAST; integrated with GHAS
+Fivetran,Pittsburgh analytics team,High,Fivetran SaaS,Restricted (in transit),Y,Fivetran SaaS,Aurora -> Snowflake replication
+Stripe,Greg Hartman (CFO) / Finance,Moderate,Stripe SaaS,Confidential,N (PCI tokenized),Stripe SaaS,Payment tokenization; MCT does not store PAN
+Surescripts gateway client,Tomás Reyes (VP Eng),High,On-AWS client + Surescripts,Restricted,Y,Surescripts contract,Medication history; PHI in transit
+Change Healthcare connector,Tomás Reyes (VP Eng),Moderate (pilot),AWS + CHC,Restricted (planned),Y (planned),CHC contract,Pilot only; production deferred pending Waystar backup
+Informatica PowerCenter (Legacy),Tomás Reyes (VP Eng),High (legacy),Raleigh HQ on-prem ETL cluster,Restricted,Y,Informatica perpetual,Legacy ETL; decommission Q4 2026; manual patching
+Arctic Wolf MDR portal,Marcus Tan (Sec Eng D&R),High,Arctic Wolf SaaS,Confidential (alerts),N,Arctic Wolf service,24x7 MDR; tier-1 expansion under negotiation Q2 2026
+,,,,,,,
+COLUMN DEFINITIONS,,,,,,,
+Tier,"Critical=P1-supporting; High=P2-supporting or production-adjacent; Moderate=back-office or non-prod; Low=convenience tools",,,,,,
+DataClass,"Restricted/Confidential/Internal/Public per POL-DC-01",,,,,,
+EHR/PHI,"Y if the application processes or stores PHI in scope of HIPAA BAA; (in transit) means PHI passes through but is not persisted",,,,,,
+License,"Vendor SaaS contract or proprietary",,,,,,
+Source of truth,"ServiceNow GRC Application Catalog; reconciled monthly against Wiz cloud-asset graph and Vanta vendor feed",,,,,,
+Owner,"Named accountable individual; functional team identified where individual is delegated",,,,,,

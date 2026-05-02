@@ -1,0 +1,66 @@
+Enterprise Risk Management Policy
+
+Document ID: POL-ERM-01 Version: 3.2 Effective date: January 1, 2026 Approver: Helena Park, CEO; Greg Hartman, CFO; Audit & Risk Committee Owner: Greg Hartman, CFO (with co-ownership by Sarah Yoon, CISO, for cybersecurity risks) Distribution: Senior leadership; risk owners; Audit & Risk Committee
+
+1. Purpose
+
+This Enterprise Risk Management ("ERM") Policy establishes the framework within which Meridian Care Technologies, Inc. ("MCT") identifies, analyzes, treats, monitors, and reports on enterprise risks — including cybersecurity, financial, operational, regulatory, strategic, reputational, and clinical-product risks. It provides the integration layer ensuring that cybersecurity risk decisions made under POL-001 are visible in, and consistent with, MCT's broader enterprise risk posture.
+
+2. Scope
+
+This Policy applies to risks affecting MCT's ability to achieve its mission and strategic objectives. It governs all risks regardless of source — internal or external, intentional or accidental — and regardless of risk type. It is integrated with the Cybersecurity Risk Appetite Statement (RAS-2025-12), the Information Security Policy (POL-001), and the operational risk processes maintained by the CFO's office.
+
+3. Risk Categories
+
+MCT recognizes the following risk categories, each with a designated executive owner:
+
+4. Risk Lifecycle
+
+4.1 Identification. Risks may be identified through any of: continuous monitoring, control testing, internal audit, third-party assessments, threat intelligence, post-incident review, employee escalation, customer feedback, regulator inquiry, or strategic planning. Any employee may submit a risk observation via the GRC intake form.
+
+4.2 Analysis. Identified risks are analyzed for likelihood, impact, velocity (how quickly impact would manifest), and detectability. Cybersecurity risks use the 5×5 likelihood/impact scale defined in PROC-RM-01 and produce inherent and residual scores. FAIR (Factor Analysis of Information Risk) is used to estimate annualized loss expectancy where the data supports a quantitative estimate.
+
+4.3 Treatment. Each open risk has a defined treatment strategy: Mitigate (reduce likelihood and/or impact via controls), Avoid (eliminate the activity giving rise to the risk), Transfer (e.g., insurance, contractual indemnity), or Accept (knowingly bear). Risk acceptance is approved by the Audit & Risk Committee for residual scores above the Risk Appetite Statement thresholds; below appetite, acceptance may be approved by the relevant executive owner with notification to the GRC Manager.
+
+4.4 Monitoring. Open risks are reviewed monthly by the Steering Committee for the relevant risk category, and quarterly by the Audit & Risk Committee. Treatment progress is tracked against committed milestones.
+
+4.5 Closure. A risk is closed when its residual likelihood × impact falls to ≤2, or when the underlying activity is decommissioned, or upon successful completion of treatment milestones with sustained evidence of effectiveness across two consecutive review periods.
+
+5. Integration with Cybersecurity
+
+Cybersecurity is treated as a category of enterprise risk, not a separate discipline. The Cybersecurity Risk Register is a sub-ledger of the enterprise risk view. Material cybersecurity risks (residual score ≥10 or High severity) are surfaced into the enterprise risk view reviewed by the Audit & Risk Committee. The CISO and CFO meet monthly to reconcile cybersecurity risk register entries against the broader enterprise view.
+
+Aggregate annualized cyber loss expectancy (ALE) is the primary quantitative bridge between the cybersecurity register and the enterprise view. As of Q1 2026, aggregate ALE across the open cyber risk register is approximately $1.62M, against a Board-approved appetite of $2M.
+
+6. Reporting
+
+7. Approval Authorities
+
+8. Document Control
+Category | Executive owner | Subsidiary register
+Cybersecurity | CISO | Cyber Risk Register (RISK-Cyber-Risk-Register)
+Privacy and regulatory | GC | Privacy Risk Register
+Financial / liquidity | CFO | Financial Risk Schedule
+Clinical / product safety | CMO | Clinical Risk Log
+Operational / availability | CTO | Operational Risk Tracker
+Strategic | CEO | Strategic Risk Memo (semi-annual)
+Supply chain / third party | CISO + CFO (joint) | Supplier Risk Register
+People / personnel | CPO | Personnel Risk Schedule
+Forum | Cadence | Risk content
+Steering Committee (per category) | Monthly | Open risks within the category
+Cross-functional Risk Review | Monthly | Material risks across categories; integration questions
+Audit & Risk Committee | Quarterly | Top-of-house enterprise risk view; aggregate ALE; risk-acceptance requests above appetite
+Full Board | Annually (and ad-hoc on material events) | Strategic risk memo
+Decision | Authority
+Risk identification (entry to register) | Risk owner; GRC Manager review
+Treatment-vs-acceptance for residual within appetite | Executive risk owner
+Risk acceptance for residual above appetite | Audit & Risk Committee
+Material change to ERM Policy | Audit & Risk Committee + Board approval
+Material change to Risk Appetite Statement | Board approval
+Treatment funding within annual budget | Executive risk owner
+Treatment funding outside annual budget | CFO; >$500K to Audit & Risk Committee
+Version | Date | Change summary
+2.0 | 2024-01 | Major rewrite to integrate Cybersecurity Register as a sub-ledger; FAIR adoption
+3.0 | 2025-01 | Aligned to NIST CSF 2.0 GOVERN function; expanded risk categories
+3.1 | 2025-06 | Mid-year update — supplier risk co-ownership clarified
+3.2 | 2025-12 | Annual review; reflects updated Risk Appetite Statement v2.0 quantitative thresholds; clarifies escalation paths

@@ -1,0 +1,186 @@
+Patch Management Policy
+
+Document ID: POL-PM-01 Version: 4.2 Effective date: February 1, 2026 Last reviewed: January 18, 2026 Next review: January 2027 (annual) Approver: Sarah Yoon, CISO; David Mehta, CTO Owner: Alicia Reyes, Security Engineer (Cloud/AppSec) Distribution: All engineering, IT operations, Information Security; published on internal wiki
+
+1. Purpose
+
+This Policy establishes MCT's requirements for the timely identification, evaluation, and remediation of vulnerabilities in MCT-owned and operated information systems through patching, upgrade, configuration change, or compensating control. It implements POL-001 §3.10 (Vulnerability and Patch Management).
+
+2. Scope
+
+This Policy applies to:
+
+The production MeridianCare platform (EKS workloads, container images, IaC-managed infrastructure in AWS us-east-1 and us-west-2).
+
+Vendor-managed services where MCT has joint or shared patching responsibility (Aurora PostgreSQL, Snowflake — see §4.3).
+
+Managed endpoints (laptops) running macOS or Windows 11.
+
+The legacy on-premises ETL cluster at Raleigh HQ, which is in scope under a documented exception covering manual patching (RISK R4; exception EX-2024-007).
+
+Source-code dependencies (OSS) consumed by MCT-built services.
+
+This Policy excludes vendor-fully-managed SaaS (Microsoft 365, Okta, Datadog, GitHub, Salesforce, etc.), which are governed by Third-Party Risk (POL-TPRM-01).
+
+3. Roles and Responsibilities
+
+4. Patching SLAs
+
+4.1 Severity-based SLAs
+
+KEV-listed CVEs auto-promote to Critical regardless of base CVSS.
+
+4.2 SLA scope and definition of "patched"
+
+A finding is "patched" when one of the following is true:
+
+Affected component upgraded to a fixed version.
+
+Configuration change applied that removes the vulnerability condition.
+
+Affected component removed.
+
+Compensating controls accepted under §6 with documented residual risk; SLA clock paused under formal exception.
+
+The SLA clock starts at the earliest disclosure event MCT can reasonably observe and stops only when patched as defined above.
+
+4.3 Vendor-managed services
+
+For Aurora PostgreSQL and Snowflake, vendor-managed minor-version and security patches are accepted on the vendor's published cadence. MCT is responsible for accepting vendor-scheduled maintenance windows promptly (target: within one published maintenance cycle for security-class releases) and for verifying post-patch.
+
+5. Tooling and Automation
+
+5.1 Identification
+
+5.2 Prioritization
+
+Wiz is the system of record for prioritization on the cloud asset side. Wiz "toxic combinations" (e.g., publicly exposed + KEV CVE + IAM privilege) override raw CVSS and elevate findings to Critical operationally regardless of SLA tier.
+
+5.3 Remediation automation
+
+Container images: automated rebuild via GitHub Actions on a scheduled cadence (weekly base image rebuild) and on dependency advisories. Renovate Bot opens PRs for upstream version bumps; CI runs Snyk and CodeQL; passing PRs are auto-merged for low/medium severity. Critical and high require explicit reviewer approval before merge.
+
+OSS dependencies: Renovate (Node, Python, Go modules) and Dependabot (security advisories) generate PRs. Auto-merge enabled for low/medium severity once CI passes.
+
+Endpoints: Jamf Pro (macOS) and Microsoft Intune (Windows) push updates with phased rollouts (10% pilot ring, then full fleet within 7 days for security updates).
+
+AWS infrastructure: all changes via Terraform; Wiz feedback loops into the IaC repository (Wiz Code) where applicable.
+
+5.4 Validation
+
+Post-patch validation is performed by:
+
+Re-scan in Wiz / Snyk / GHAS to confirm closure within 24 hours.
+
+For endpoints: Falcon Spotlight re-evaluation.
+
+For Aurora and Snowflake: vendor maintenance event acknowledgement plus post-patch smoke test.
+
+For legacy ETL: manual Nessus rescan within 7 days of patch application.
+
+A finding is closed in Hyperproof only after a re-scan confirms it is no longer detected, or the compensating-control exception is approved.
+
+6. Exceptions and Compensating Controls
+
+6.1 Process
+
+Exceptions are governed by POL-001 §6 and recorded in REG-EX-01. A patch exception requires:
+
+Description of the vulnerability and the remediation barrier (e.g., upstream maintainer not yet released).
+
+Compensating controls applied (e.g., WAF rule, runtime detection, network restriction).
+
+Residual risk evaluation, signed by the engineering owner.
+
+Target closure date.
+
+CISO approval.
+
+Exceptions exceeding 90 days require Security Steering Committee endorsement; exceptions exceeding 180 days require Audit & Risk Committee notification.
+
+6.2 Standing exceptions
+
+7. Legacy ETL Cluster — Manual Patching Provisions
+
+The legacy on-premises ETL cluster at Raleigh HQ is patched manually under the following provisions, which differ from the production-platform standard and reflect the realities of the legacy environment:
+
+Cadence: quarterly Nessus Professional scan; ad-hoc patch application within the relevant SLA tier from scan date (not from vendor advisory release date — this is a documented, reduced posture).
+
+Owner: A. Reyes, with operational support from the Raleigh facilities engineering team.
+
+Compensating controls per CRA-LegacyETL-2025: edge-firewall egress allowlist with logging; CrowdStrike Falcon on hosts; restricted service accounts; quarterly manual log review.
+
+Visibility: legacy ETL findings are reported separately in the quarterly vulnerability summary (see RPT-Vulnerability-Scan-Summary-*).
+
+Closure path: decommission Q4 2026. The Company has not invested in modernized vulnerability management on this cluster because the remaining service life does not justify the work.
+
+This is the operational manifestation of RISK R4 and is honestly captured here for assessor visibility. It is not a hidden gap.
+
+8. KPIs and Reporting
+
+The following KPIs are reported quarterly to the Security Steering Committee and at least annually to the Audit & Risk Committee:
+
+9. Compliance and Enforcement
+
+Compliance with this Policy is mandatory. Engineering managers are accountable for their team's SLA compliance. Sustained non-compliance is escalated through Engineering leadership to the Security Steering Committee.
+
+10. References
+
+POL-001 Information Security Policy
+
+RISK-Cyber-Risk-Register (R4)
+
+CRA-LegacyETL-2025 Compensating Risk Acceptance for legacy ETL
+
+REG-EX-01 Exceptions Register
+
+STD-LOG-01 SIEM and Central Logging Configuration Standard
+
+RPT-Vulnerability-Scan-Summary-Q1-2026
+
+RPT-Annual-Penetration-Test-Executive-Summary-2025
+
+POL-TPRM-01 Third-Party Risk Management Policy
+
+45 CFR §164.308(a)(5)(ii)(B) HIPAA — protection from malicious software
+
+11. Document Control
+Role | Responsibility
+Security Engineer (Cloud/AppSec) — A. Reyes | Owns this Policy; owns Wiz and Snyk operation; runs the weekly remediation triage
+Engineering teams (service owners) | Execute remediation for their services; own the remediation SLA clock
+Security Engineer (D&R) — M. Tan | Owns endpoint Falcon Spotlight and IT-coordination patching for endpoint fleet
+GRC Manager — J. Park | Owns exception process and audit evidence
+CISO — S. Yoon | Approves exceptions, accepts residual risk
+Severity | SLA from earliest of: (a) vendor advisory release, (b) MCT first-detection scan, (c) inclusion in CISA KEV | Examples
+Critical | 14 calendar days | KEV-listed CVE; CVSS 9.0+; remote unauthenticated RCE
+High | 30 calendar days | CVSS 7.0–8.9
+Medium | 90 calendar days | CVSS 4.0–6.9
+Low | 180 calendar days | CVSS < 4.0
+Asset class | Primary tool | Cadence
+AWS posture | Wiz CSPM | Continuous
+Container images at runtime | Wiz | Continuous
+Container images on build | Snyk Container | Per build
+Source code | Snyk Code | Per PR
+OSS dependencies | Snyk Open Source + Dependabot | Per PR + nightly
+GitHub repo health | GHAS (CodeQL, Secret Scanning) | Continuous
+Endpoints | CrowdStrike Falcon Spotlight + Jamf Pro / Microsoft Intune | Continuous
+Legacy ETL cluster | Manual Nessus Professional | Quarterly
+Exception | Asset | Risk | Target closure
+EX-2024-007 | Legacy on-premises ETL cluster — manual patching | RISK R4 | Decommission Q4 2026
+EX-2026-014 | Two container base images awaiting upstream release (high severity) | Two findings past 30-day high SLA | Closure on next upstream maintainer release; tracked weekly
+KPI | Target | Q1 2026 actual | Source
+Critical patch SLA compliance (rolling 90d) | 100% | 97% | Hyperproof
+High patch SLA compliance (rolling 90d) | 95% | 92% | Hyperproof
+Medium patch SLA compliance | 90% | 97% | Hyperproof
+Mean time to remediate critical | < 7 days | 4.8 days | Hyperproof
+% production images rebuilt in last 30 days | > 95% | 96% | GitHub Actions
+Renovate auto-merge rate (low/medium) | > 70% | 73% | GitHub
+Endpoint compliance (security update within 7d) | > 95% | 96.4% | Jamf / Intune
+Open exceptions, count | < 10 | 4 | REG-EX-01
+Version | Date | Author | Change summary
+1.0 | 2019-09 | M. Chen (former CTO) | Initial policy
+2.0 | 2022-11 | A. Reyes (predecessor) | AWS-native rewrite; introduced container patching
+3.0 | 2024-03 | A. Reyes | Snyk/Wiz/GHAS unified workflow; added Renovate auto-merge
+4.0 | 2025-02 | A. Reyes | Added KEV uplift; legacy ETL §7 explicit; CRA-LegacyETL-2025 referenced
+4.1 | 2025-08 | A. Reyes | Added Wiz "toxic combinations" override; minor cleanup
+4.2 | 2026-01 | A. Reyes | Annual review; Q1 2026 KPI snapshot; EX-2026-014 added; clarified vendor-managed scope

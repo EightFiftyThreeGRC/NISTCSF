@@ -1,0 +1,30 @@
+Supplier,Service,Tier,Annual Spend ($K),BAA Executed,Most Recent SOC 2 Type II,Most Recent Pentest,Continuous Attestation Feed,Last Reassessment,Next Reassessment,Risk Score (Residual),Subprocessors Reviewed,Notes
+AWS,Cloud infrastructure (us-east-1 us-west-2),1,1840,Y (master signed 2018; renewed 2024),Available continuous,Q1 2025 industry pentest report,Y (Vanta — operational since 2024),2025-08-12,2026-08,8,Y,"P1 backbone; multi-region active-passive; concentration risk accepted by CFO"
+Okta,Workforce IDP / SSO / MFA,1,425,Y (signed 2023),Q4 2024,Q3 2025 (NCC Group),Y (Vanta — operational since 2024),2025-09-04,2026-09,7,Y,"Auth0 acquisition by Okta noted; combined assurance reviewed"
+Snowflake,Cloud data warehouse,1,2320,Y (signed 2022; refreshed 2024),Q2 2025,Q3 2025 (Bishop Fox),Y (Vanta — operational since Q3 2024),2025-09-18,2026-09,10,Y,"Population Insights backbone; Nov 2024 industry credential-stuffing event did not impact MCT"
+Surescripts,Medication history (Rx data exchange),1,180,Y (signed 2019; refreshed 2024),Q3 2024,Not provided publicly,Planned Q3 2026,2025-08-22,2026-08,9,Y,"Healthcare clearing-house-equivalent; Tier 1 because PHI in transit"
+Change Healthcare,Clearinghouse (claims processing),1,0 (pilot only as of 2025-09),Y (signed 2023; under review post-Optum acquisition),Q4 2024 (post-event),Q1 2025 (post-event ALPHV remediation pentest),Planned Q3 2026,2025-10-30,2026-04 (accelerated due to Tier 1 + post-event review),12,Y,"FEB-MAR 2024 ALPHV ransomware event; MCT in pilot only; production activation deferred to FY26 contingent on Waystar backup path"
+Microsoft,M365 (Email Identity-secondary Endpoint mgmt - Intune),2,520,Y (signed 2018; refreshed periodically),Continuous via portal,N/A (vendor-internal),Y (Vanta — partial),2025-07-15,2026-07,5,Y,"Identity management for Windows endpoints; Office 365 message routing"
+Datadog,SIEM / observability,2,640,Y (signed 2023),Q4 2024,Q2 2025 (Datadog third-party),Planned Q3 2026,2025-09-08,2026-09,6,Y,"Primary SIEM; concentration risk reviewed and accepted; backup logging to S3 cold archive maintained"
+CrowdStrike,EDR (Falcon),2,310,Y (signed 2022),Q3 2025,N/A (vendor-internal),Planned Q3 2026,2025-08-19,2026-08,5,Y,"July 2024 outage event documented in vendor file; remediation reviewed"
+Arctic Wolf,24x7 MDR,2,420,Y (signed May 2024),Q1 2025,Q4 2024 (Arctic Wolf Concierge),Planned Q3 2026,2025-09-30,2026-09,7,Y,"Contracted post-Pebble Phish; expansion to tier-1 alert handoff under negotiation Q2 2026"
+Wiz,CSPM / IaC scanning,2,180,N (no PHI in scope),Q3 2025,N/A (vendor-internal),Y (Vanta partial),2025-09-12,2026-09,4,Y,"Cloud security posture management; metadata only no customer data"
+Vanta,Compliance automation / continuous attestation,2,140,N (no PHI in scope),Q4 2024,N/A,N/A (Vanta is a feed source not a sink),2025-09-15,2026-09,4,Y,"Compliance evidence collector; aggregator role"
+Hyperproof,Control evidence repository,2,90,N (no PHI in scope),Q3 2025,N/A,N/A,2025-09-10,2026-09,4,Y,"HITRUST workpaper repository"
+Auth0 (Okta CIAM),Patient-facing CIAM,2,160,Y (under master Okta agreement),Q4 2024,via Okta,via Okta,2025-09-04,2026-09,6,Y,"Patient portal authentication; not all customer-tenant configurations enforce MFA on patient logins (R8 in cyber risk register)"
+Stripe,Payment processing tokenization,3,42,N (out of HIPAA scope; PCI not directly held),Q4 2024,Continuous published,N/A,2025-06-08,2026-06,3,Y,"Payment tokenization only; MCT does not handle cardholder data directly"
+GitHub,Code hosting + Advanced Security,3,180,N (no PHI in repos by policy),Q3 2024,N/A,Planned 2027,2025-04-22,2026-04,4,Y,"GHAS findings feed Snyk; PHI prohibition enforced via secret scanning"
+Slack,Team messaging,3,210,N (no PHI per policy),Q4 2024,N/A,Planned 2027,2025-04-08,2026-04,4,Y,"PHI prohibition; DLP via Microsoft Purview"
+Zoom,Video conferencing,3,140,Y (signed 2021),Q4 2024,N/A,N/A,2025-04-15,2026-04,3,Y,"BAA executed for clinical-team video calls; recording disabled by default"
+Notion,Internal docs (non-production),3,52,N,Q4 2024,N/A,N/A,2025-05-12,2026-05,3,Y,"Internal docs only; PHI prohibition"
+Workday,HRIS,3,310,N,Q4 2024,N/A,N/A,2025-06-22,2026-06,4,Y,"HR system; no MCT-customer data"
+ServiceNow,GRC + ITSM workflows,3,140,N,Q4 2024,N/A,N/A,2025-07-08,2026-07,4,Y,"GRC workflows; no PHI"
+Coalfire,External assessor (HITRUST and prospective CSF),3,Project-based,N (no system access),N/A (services firm),N/A,N/A,N/A — engagement-by-engagement,N/A,3,N/A,"Independent assessor for HITRUST r2; NDA executed; physical evidence transfer only"
+Schellman,External SOC 2 auditor,3,Project-based,N,N/A (services firm),N/A,N/A,N/A — engagement-by-engagement,N/A,3,N/A,"SOC 2 Type II auditor; excluded from CSF assessor selection per independence"
+Beazley,Cyber insurance,3,310 (annual premium),N (no system access),N/A,N/A,N/A,Annual renewal Jan 1 2026,2027-01,3,N/A,"$20M policy ($5M breach + $10M liability + $5M BI)"
+,,,,,,,,,,,,,
+COLUMN DEFINITIONS,,,,,,,,,,,,,
+Tier,"1=Critical 2=High 3=Moderate 4=Low (per POL-TPRM-01 §3)",,,,,,,,,,,
+Risk Score (Residual),"Likelihood × Impact after current controls; lower is better",,,,,,,,,,,
+BAA Executed,"Y/N — required for any vendor with PHI in scope under HIPAA Privacy Rule",,,,,,,,,,,
+Continuous Attestation Feed,"Y if Vanta or equivalent integration is live; Planned if integration is on the FY26 roadmap; N if not applicable",,,,,,,,,,,

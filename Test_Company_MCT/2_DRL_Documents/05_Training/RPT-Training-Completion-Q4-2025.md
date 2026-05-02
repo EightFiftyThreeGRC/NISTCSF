@@ -1,0 +1,89 @@
+# Training Completion Report — Q4 2025
+
+**Document ID:** RPT-TRN-2025Q4
+**Reporting period:** October 1 – December 31, 2025
+**Issued:** January 14, 2026
+**Author:** Priya Iyer, Security Analyst
+**Reviewer / Approver:** Sarah Yoon, CISO; Jordan Park, GRC Manager
+**Distribution:** Security Steering Committee; Audit & Risk Committee (consent agenda); HITRUST evidence repository (Hyperproof)
+
+---
+
+## 1. Executive Summary
+
+For the quarter ending December 31, 2025, MCT achieved 100% completion of annual security awareness training across the entire 348-person workforce, meeting the corporate target. Role-based training completion stood at 96% (336/350 in-role assignments), one point above Q3 2025 (95%) and continuing the eight-quarter improving trend. Eight personnel had outstanding role-based assignments at quarter end; corrective action plans were assigned and seven of the eight have completed remediation as of the January 14, 2026 reporting cutoff.
+
+No in-quarter exceptions to baseline completion were granted. One short-term medical-leave exception is in place for Q1 2026 and will be tracked through that quarter's report.
+
+## 2. Annual Security Awareness — Completion Detail
+
+### 2.1 Headline numbers
+
+| Metric | Q4 2025 | Q3 2025 | Q4 2024 | Target | Status |
+|---|---|---|---|---|---|
+| Annual completion (in deadline) | 100% (348/348) | 100% (343/343) | 99% | 100% | On target |
+| Mean days to completion (from assignment) | 11.4 | 12.1 | 18.6 | n/a | Improving |
+| New-hire baseline (within 30 days) | 100% (22/22) | 100% (19/19) | 96% | 100% | On target |
+| Acknowledgement of POL-001 (annual Workday) | 100% | 100% | 99% | 100% | On target |
+
+The trailing-twelve-month full completion record is now seven consecutive quarters, the longest stretch on record.
+
+### 2.2 Departmental view
+
+All seven functional groups achieved 100% baseline completion in Q4. No department was an outlier in time-to-complete. The Pittsburgh site (Population Insights team, 38 FTE) completed at the same rate as Raleigh and the remote workforce.
+
+## 3. Role-Based Training — Completion Detail
+
+Role-based assignments are tracked at the role-attribute level. Total in-role assignments at quarter end: 350 (some personnel hold more than one role attribute, e.g., engineer + security on-call).
+
+### 3.1 Headline numbers
+
+| Track | Completed / Assigned | % Complete | Q3 2025 | Q4 2024 | Target |
+|---|---|---|---|---|---|
+| Engineering (SecureCodeWarrior) | 142 / 148 | 96% | 95% | 88% | 100% |
+| Administrators (Pluralsight) | 28 / 30 | 93% | 90% | 78% | 100% |
+| Security team (SANS / conf.) | 6 / 6 | 100% | 100% | 100% | 100% |
+| Customer Success (HIPAA refresher) | 60 / 62 | 97% | 96% | 90% | 100% |
+| Finance (BEC awareness) | 16 / 16 | 100% | 100% | 92% | 100% |
+| Executive briefing | 12 / 12 | 100% | 100% | 75% | 100% |
+| Implementation (PHI-handling) | 72 / 76 | 95% | 95% | 87% | 100% |
+| **Total / weighted** | **336 / 350** | **96%** | **95%** | **88%** | **100%** |
+
+### 3.2 Outstanding assignments at Q4 close
+
+Eight in-role assignments were past due at the December 31 cutoff. Detail (anonymized):
+
+| Track | Count | Reason | Status as of 2026-01-14 |
+|---|---|---|---|
+| Engineering (SecureCodeWarrior) | 6 | 4 capacity (sprint pressure); 2 missed assignment notification due to email-rule misconfiguration | 5 completed; 1 in progress, due 2026-01-20 |
+| Administrators (Pluralsight) | 2 | 1 medical leave (formal exception); 1 onboarding misalignment | 1 completed; 1 covered by approved exception (returns Q1) |
+
+Corrective actions:
+
+1. The two missed-notification cases prompted a Workday-KnowBe4 SCIM audit; a stale email-rule template in the Engineering org was retired and the deduplication of assignment reminders was re-tuned. Implemented 2026-01-09.
+2. The onboarding misalignment case (admin role attribute not synced from Workday on role change) prompted an integration review; a daily reconciliation report between Workday job profile and KnowBe4 enrollment is now run by Priya Iyer and reviewed weekly. Implemented 2026-01-12.
+
+## 4. Phishing Simulation — Reference Summary
+
+Detailed phishing-simulation results are in RPT-PSIM-2025Q4. Headline numbers are reproduced here for context:
+
+| Metric | Q4 2025 | Q3 2025 | Q4 2024 | Target |
+|---|---|---|---|---|
+| Click rate | 2.4% | 2.7% | 3.6% | <3% |
+| Report rate | 48% | 44% | 33% | >40% |
+| Credentials submitted | 0 | 0 | 0 | 0 |
+
+## 5. Trend Commentary
+
+The Q4 2025 results extend the positive trend that began with the program restructuring after the March 2024 Pebble Phish incident. The most material change since the restructuring has been role-based training completion, which moved from 88% in Q4 2024 to 96% in Q4 2025 and is on track to reach the 100% target during 2026.
+
+Two factors are driving the gradual closure of the gap. First, the Workday-KnowBe4 SCIM integration has matured and is now the authoritative source of role-attribute changes; manual misalignments — historically the largest cause of late assignments — are now caught by the daily reconciliation introduced in early January 2026. Second, the role-attribute-level escalation pattern (manager notification at 7 days past due, CISO notification at 14 days) has compressed time-to-complete. Mean days-to-complete for role-based assignments dropped from 22 days in Q4 2024 to 14 days in Q4 2025.
+
+The remaining residual gap is dominated by capacity pressure during release-heavy sprints in Engineering. Mitigations under consideration for 2026 include (a) blocking pre-merge access for engineers more than 30 days past due on SecureCodeWarrior, and (b) crediting completion against the engineering "ops-time" budget rather than counting it as out-of-sprint work. A decision is expected from VP Engineering in Q2 2026.
+
+## 6. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2026-01-14 | P. Iyer | Initial issue |
+| 1.1 | 2026-01-15 | P. Iyer | Added remediation status update through 2026-01-14 cutoff |

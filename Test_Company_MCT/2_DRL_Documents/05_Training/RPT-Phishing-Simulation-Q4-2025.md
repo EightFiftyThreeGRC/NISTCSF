@@ -1,0 +1,102 @@
+# Phishing Simulation Report — Q4 2025
+
+**Document ID:** RPT-PSIM-2025Q4
+**Reporting period:** Campaign delivered November 18, 2025; results window through December 9, 2025
+**Issued:** December 18, 2025
+**Author:** Priya Iyer, Security Analyst
+**Reviewer / Approver:** Sarah Yoon, CISO
+**Distribution:** Security Steering Committee; Audit & Risk Committee (consent agenda); HITRUST evidence repository (Hyperproof)
+
+---
+
+## 1. Executive Summary
+
+The Q4 2025 simulation, "QuotaWarn-O365," delivered a Microsoft 365 storage-quota credential-harvesting lure to all 348 personnel and 11 long-tenured contractors (359 recipients total). Click rate was 2.4% (8 of 359), within the corporate target of <3% and the lowest result on record. Report rate was 48% (174 of 359), comfortably above the >40% target and the highest on record. Zero personnel submitted credentials to the simulated harvesting page.
+
+The Q4 2025 result extends an eight-quarter improving trend that began with the Q3 2024 program restructuring following the March 2024 Pebble Phish incident. Click rate has fallen from 7.2% (Q1 2024) to 2.4% (Q4 2025); report rate has risen from 18% to 48% over the same period.
+
+## 2. Scenario
+
+### 2.1 Lure design
+
+| Element | Detail |
+|---|---|
+| Sender (spoofed) | `Microsoft 365 Storage <quota-alert@msft-storage-notice.com>` |
+| Subject | "Your mailbox is at 98% capacity — action required to avoid send failure" |
+| Body | Branded Microsoft-style HTML with an unbranded "Reclaim space" CTA leading to a credential-harvesting page mimicking the Microsoft sign-in screen at `msft-storage-notice.com/auth` |
+| Difficulty | Medium-high (KnowBe4 difficulty rating 4 of 5) |
+| Indicators (recognizable cues) | Domain not on M365 allowlist; sender display name uses unusual hyphenation; CTA URL on hover does not match Microsoft; slight typography mismatch on the M365 logo |
+| Selected because | Storage-quota lures rose to the second-most-common credential-harvesting pattern observed in Arctic Wolf MDR feeds in Q3 2025; the previous quarter's Okta-impersonation scenario was now familiar to the workforce |
+
+### 2.2 Audience
+
+| Group | Recipients |
+|---|---|
+| Engineering & Product | 148 |
+| Customer Success & Implementation | 62 |
+| Sales & Marketing | 54 |
+| Clinical Operations | 36 |
+| G&A (Finance, Legal, HR, Facilities) | 36 |
+| Information Security | 6 |
+| Executive Leadership | 6 |
+| Long-tenured contractors | 11 |
+| **Total** | **359** |
+
+Delivery was randomized across a 4-hour window on November 18, 2025 (a Tuesday), to avoid concentrating delivery during one team's standup window.
+
+## 3. Headline Results
+
+| Metric | Q4 2025 | Q3 2025 | Q2 2025 | Q1 2025 | Q4 2024 | Q1 2024 (pre-restructure) | Target |
+|---|---|---|---|---|---|---|---|
+| Click rate | 2.4% (8) | 2.7% | 2.9% | 3.1% | 3.6% | 7.2% | <3% |
+| Report rate | 48% (174) | 44% | 41% | 37% | 33% | 18% | >40% |
+| Credentials submitted | 0 | 0 | 0 | 1 | 1 | n/a | 0 |
+| MFA prompts attempted (post-credential) | 0 | 0 | 0 | 1 | 1 | n/a | 0 |
+| Mean time to first report (minutes) | 9 | 11 | 14 | 17 | 28 | not tracked | <60 |
+| Repeat clickers (12-mo rolling) | 4 | 5 | 7 | 9 | n/a | n/a | <2% |
+
+The Q4 result was the first quarter to break below the 3% target line for click rate while simultaneously breaking above the 40% report-rate target, hitting both objectives in the same quarter for the first time. The mean time to first report fell to 9 minutes — a strong leading indicator that the in-channel reinforcement (Slack `#security-tips`, the Phish Alert button) is producing fast, instinctive reporting behavior rather than passive recognition.
+
+## 4. Click-by-Department Breakdown
+
+| Department | Recipients | Clicks | Click rate | Reports | Report rate |
+|---|---|---|---|---|---|
+| Engineering & Product | 148 | 1 | 0.7% | 92 | 62% |
+| Customer Success & Implementation | 62 | 3 | 4.8% | 24 | 39% |
+| Sales & Marketing | 54 | 2 | 3.7% | 23 | 43% |
+| Clinical Operations | 36 | 1 | 2.8% | 17 | 47% |
+| G&A | 36 | 1 | 2.8% | 14 | 39% |
+| Information Security | 6 | 0 | 0% | 6 | 100% |
+| Executive Leadership | 6 | 0 | 0% | 4 | 67% |
+| Contractors | 11 | 0 | 0% | 4 | 36% |
+| **Total** | **359** | **8** | **2.4%** | **174** | **48%** |
+
+### 4.1 Departmental observations
+
+- **Engineering** posted the lowest click rate and the second-highest report rate after Information Security. The track record is consistent with consistently improving SecureCodeWarrior completion and high familiarity with M365 sign-in patterns.
+- **Customer Success & Implementation** carries the highest click rate (4.8%) for the second consecutive quarter, and report rate sits below the corporate average (39% vs 48%). This is the same group that owned the Pebble Phish click event. Continuing pattern: CS personnel handle high volumes of inbound support email and are most likely to act quickly on quota / capacity / "send failure" lures. Targeted follow-up is documented in §6.
+- **Sales & Marketing** click rate (3.7%) is the second-highest. A targeted re-up of the BEC and credential-harvesting modules is scheduled for Q1 2026 (CRO Sara Whitfield endorsed in writing on December 3, 2025).
+- **Information Security** reported at 100%, a non-trivial signal because the lure was delivered to all six analysts and engineers without prior notice (the campaign owner — Priya — was excluded from the recipient list).
+- **Executive Leadership** had zero clicks and a 67% report rate, up from 50% the prior quarter. This is the second consecutive quarter without an exec click; meaningful given the Q4 2023 baseline was a 17% exec click rate.
+
+## 5. Repeat Clickers
+
+Four personnel had two or more click events in the trailing 12 months (down from 5 in Q3 2025). Each has been escalated per the program's repeat-clicker procedure (PLN-SA-01 §4.3): 1:1 coaching with Priya Iyer, an additional 30-minute KnowBe4 module, and a manager conversation. None had three or more events in the rolling window; no HR escalation was required.
+
+## 6. Follow-up Training Assigned
+
+Per the just-in-time pattern, every clicker (8 personnel) was auto-enrolled within 30 minutes of click in a 5-minute "What just happened?" module covering quota-lure recognition. All eight completed the module within 24 hours.
+
+A targeted Q1 2026 follow-up session for Customer Success & Implementation is scheduled for January 22, 2026, focused on credential-harvesting in customer-support workflow contexts. This session was scoped jointly with VP Customer Success Lauren Pham and is delivered as a 45-minute live workshop rather than an LMS module.
+
+## 7. Trend Commentary — Pebble Phish to Present
+
+The March 14, 2024 Pebble Phish incident exposed two structural weaknesses in the pre-2024 awareness program: (a) once-yearly training was not durable against ongoing credential-harvesting pressure, and (b) MFA hygiene (in particular, resistance to push-bombing and prompt-fatigue) was not being practiced. The program changes that followed — quarterly simulations beginning Q3 2024, the FIDO2 mandate for production-access roles (achieved fully Q4 2025), the Slack `#security-tips` channel, the MeridianSec Monthly newsletter, and the just-in-time training pattern — together drove the eight-quarter improvement curve seen in §3.
+
+The Q4 2025 result is the first quarter to clear both targets simultaneously. The program is not yet at "best-in-class" levels for healthcare technology peers (industry benchmarks place top-decile click rates near 1.5%), but the gap is closing and the trajectory is on plan. Continued risk areas: Customer Success click rates and the durability of high report rates as scenario novelty wears off (the Q1 2026 scenario will deliberately move away from M365-style lures to test).
+
+## 8. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2025-12-18 | P. Iyer | Initial issue |

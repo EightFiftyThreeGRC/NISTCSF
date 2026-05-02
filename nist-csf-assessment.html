@@ -6,8 +6,6 @@
 <title>NIST CSF 2.0 Guided Assessment</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
@@ -404,7 +402,7 @@ const INDUSTRY_BENCHMARKS={
   'Other':                  {GV:2.0,ID:2.2,PR:2.4,DE:2.0,RS:2.1,RC:2.0,overall:2.1},
 };
 // Most frequently underdeveloped CSF categories by sector — from CISA CPG adoption
-// data, Verizon DBIR root-cause analysis, and Big 4 assessment trend reports.
+// data, Verizon DBIR root-cause analysis, and published industry assessment trend reports.
 const INDUSTRY_COMMON_GAPS={
   'Technology':             ['GV.SC','DE.AE','ID.RA'],
   'Financial Services':     ['GV.SC','ID.IM','RS.CO'],
@@ -491,18 +489,15 @@ const DRL_CATS=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-const _savedProv=localStorage.getItem('csf_provider');
+// Anthropic is the only supported provider. Older saves with 'gemini' or
+// 'openai' get migrated in loadState; this initializer coerces to anthropic
+// up-front so first-paint state is always coherent.
 const _savedModel=localStorage.getItem('csf_model');
-const _initialProvider=_savedProv==='anthropic'||_savedProv==='gemini'||_savedProv==='openai'?_savedProv:'gemini';
-function defaultModelForProvider(p){
-  if(p==='gemini')return'gemini-2.0-flash';
-  if(p==='openai')return'gpt-4o-mini';
-  return'claude-haiku-4-5-20251001';
-}
-const _initialModel=_savedModel||defaultModelForProvider(_initialProvider);
+const _validClaudeModels=new Set(['claude-haiku-4-5-20251001','claude-sonnet-4-6','claude-opus-4-6']);
+const _initialModel=_validClaudeModels.has(_savedModel)?_savedModel:'claude-sonnet-4-6';
 let S={
   step:'welcome',
-  provider:_initialProvider,   // 'gemini' | 'anthropic' | 'openai'
+  provider:'anthropic',
   apiKey:localStorage.getItem('csf_apiKey')||'',
   model:_initialModel,
   org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},
@@ -535,7 +530,11 @@ function loadState(){
   if(r){
     try{
       Object.assign(S,JSON.parse(r));
-      if(S.provider!=='gemini'&&S.provider!=='anthropic'&&S.provider!=='openai')S.provider='gemini';
+      // Anthropic is the only supported provider — coerce older saves.
+      if(S.provider!=='anthropic'){
+        S.provider='anthropic';
+        if(S.model&&!/^claude-/.test(S.model))S.model='claude-sonnet-4-6';
+      }
       if(S.reportPage==null||typeof S.reportPage!=='number')S.reportPage=0;
       // Migrate missing new fields
       if(!S.org.email)S.org.email='';
@@ -714,61 +713,72 @@ function drlCategoryContextHtml(cat,viewFns){
 }
 
 // ════════════════════════════════════════════════════════════
-// AI API — routes to Gemini or Anthropic based on provider
+// AI API — Anthropic only
 // ════════════════════════════════════════════════════════════
-/** Google often retires bare gemini-1.5-pro on v1beta; map to a model that supports generateContent. */
-function normalizeGeminiModelId(model){
-  const m=String(model||'gemini-2.0-flash').trim();
-  if(m==='gemini-1.5-pro'||m==='gemini-1.5-pro-latest'||m==='gemini-1.5-pro-001'||m==='gemini-1.5-pro-002')return'gemini-2.0-flash';
-  return m;
+// Anthropic doesn't accept response_format/jsonMime — left as a function so
+// older callsites that pass it continue to work as a no-op.
+function providerSupportsJsonMime(){return false;}
+
+// Two pools so short calls (doc analysis) don't get serialized behind long
+// calls (findings/narratives). Tier-1 Anthropic caps at ~8k OTPM, so we
+// keep the long pool tight and let short calls (smaller max_tokens) fan out
+// more aggressively.
+const _aiPools={
+  long:{limit:2,active:0,q:[]},
+  short:{limit:4,active:0,q:[]},
+};
+function _aiSlotAcquire(poolName){
+  const p=_aiPools[poolName]||_aiPools.long;
+  return new Promise(resolve=>{
+    if(p.active<p.limit){p.active++;resolve();}
+    else p.q.push(resolve);
+  });
 }
-/** @param callOpts {{outputTokens?:number,jsonMime?:boolean}} Gemini/OpenAI: JSON mode when jsonMime; Anthropic: max_tokens only */
-function providerSupportsJsonMime(){return S.provider==='gemini'||S.provider==='openai';}
+function _aiSlotRelease(poolName){
+  const p=_aiPools[poolName]||_aiPools.long;
+  p.active--;
+  const next=p.q.shift();
+  if(next){p.active++;next();}
+}
+function _sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
 async function callAI(system, userMsg, qualityCall=false, callOpts={}){
-  const outTok=callOpts.outputTokens!=null?callOpts.outputTokens:(qualityCall?8192:4096);
-  if(S.provider==='gemini'){
-    return callGemini(system,userMsg,normalizeGeminiModelId(S.model),{
-      maxOutputTokens:outTok,
-      jsonMime:!!callOpts.jsonMime,
-    });
-  }
-  if(S.provider==='openai'){
-    const maxTok=Math.max(outTok,qualityCall?8192:4096);
-    return callOpenAI(system,userMsg,S.model||'gpt-4o-mini',{maxTokens:maxTok,jsonObject:!!callOpts.jsonMime});
-  }
-  const model=qualityCall?'claude-sonnet-4-6':S.model;
-  const maxTok=Math.max(outTok,qualityCall?8192:4096);
-  return callAnthropic(system,userMsg,model,{maxTokens:maxTok});
+  const pool=callOpts.bandwidth==='short'?'short':'long';
+  await _aiSlotAcquire(pool);
+  try{
+    const maxAttempts=5;
+    let lastErr;
+    for(let attempt=0;attempt<maxAttempts;attempt++){
+      try{
+        return await _callAIDispatch(system,userMsg,qualityCall,callOpts);
+      }catch(e){
+        lastErr=e;
+        const status=e&&e.status;
+        const msg=String(e&&e.message||'');
+        const isRateLimit=status===429||/\b429\b|rate.?limit|rate_limit_error/i.test(msg);
+        const isOverloaded=status===529||status===503||/overloaded/i.test(msg);
+        if(!(isRateLimit||isOverloaded)||attempt===maxAttempts-1)throw e;
+        const ra=Number(e&&e.retryAfter);
+        const wait=Number.isFinite(ra)&&ra>0
+          ? Math.min(90000,Math.max(2000,ra*1000+500))
+          : Math.min(60000,(2**attempt)*4000+Math.floor(Math.random()*1500));
+        console.warn(`[callAI] ${isRateLimit?'rate limit':'overloaded'} — waiting ${Math.round(wait/1000)}s before retry ${attempt+2}/${maxAttempts}`);
+        await _sleep(wait);
+      }
+    }
+    throw lastErr;
+  }finally{_aiSlotRelease(pool);}
 }
 
-async function callGemini(system, userMsg, model='gemini-2.0-flash', opts={}){
-  model=normalizeGeminiModelId(model);
-  const maxOutputTokens=opts.maxOutputTokens!=null?opts.maxOutputTokens:4096;
-  const generationConfig={maxOutputTokens,temperature:0.2};
-  if(opts.jsonMime)generationConfig.responseMimeType='application/json';
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${S.apiKey}`;
-  const resp=await fetch(url,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      systemInstruction:{parts:[{text:system}]},
-      contents:[{parts:[{text:userMsg}]}],
-      generationConfig,
-    }),
-  });
-  if(!resp.ok){const e=await resp.text();throw new Error(`Gemini error ${resp.status}: ${e}`);}
-  const d=await resp.json();
-  const c=d.candidates&&d.candidates[0];
-  if(!c)throw new Error('Gemini returned no candidates (content may be blocked). '+(d.promptFeedback?JSON.stringify(d.promptFeedback):''));
-  const reason=c.finishReason;
-  if(reason==='MAX_TOKENS')throw new Error('Gemini hit the output token limit (truncated JSON). Use a shorter questionnaire scope or try again.');
-  if(reason==='OTHER')throw new Error('Gemini stopped with an incomplete response (finishReason OTHER). Try again or narrow the assessment scope.');
-  if(reason&&reason!=='STOP')console.warn('Gemini finishReason:',reason);
-  const parts=c.content&&c.content.parts;
-  if(!parts||!parts.length)throw new Error('Gemini response had no content parts.');
-  const t=parts.map(p=>p.text||'').join('');
-  if(!t.trim())throw new Error('Gemini returned empty text.');
-  return t;
+async function _callAIDispatch(system, userMsg, qualityCall=false, callOpts={}){
+  const outTok=callOpts.outputTokens!=null?callOpts.outputTokens:(qualityCall?8192:4096);
+  // User-selected model is honored everywhere — except Haiku auto-upgrades
+  // to Sonnet for quality calls (findings/narratives) so a cheap default
+  // doesn't degrade scoring.
+  const userModel=S.model||'claude-sonnet-4-6';
+  const isHaiku=userModel==='claude-haiku-4-5-20251001';
+  const model=qualityCall&&isHaiku?'claude-sonnet-4-6':userModel;
+  return callAnthropic(system,userMsg,model,{maxTokens:outTok});
 }
 
 async function callAnthropic(system, userMsg, model, opts={}){
@@ -779,31 +789,16 @@ async function callAnthropic(system, userMsg, model, opts={}){
     headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model,max_tokens,system,messages:[{role:'user',content:userMsg}]}),
   });
-  if(!resp.ok){const e=await resp.text();throw new Error(`Anthropic error ${resp.status}: ${e}`);}
+  if(!resp.ok){
+    const e=await resp.text();
+    const err=new Error(`Anthropic error ${resp.status}: ${e}`);
+    err.status=resp.status;
+    const ra=resp.headers.get('retry-after');
+    if(ra)err.retryAfter=parseFloat(ra)||30;
+    throw err;
+  }
   const d=await resp.json();
   return d.content[0].text;
-}
-
-async function callOpenAI(system,userMsg,model,opts={}){
-  const max_tokens=opts.maxTokens!=null?opts.maxTokens:4096;
-  const body={
-    model:model||'gpt-4o-mini',
-    messages:[{role:'system',content:system},{role:'user',content:userMsg}],
-    max_tokens,
-    temperature:0.2,
-  };
-  if(opts.jsonObject)body.response_format={type:'json_object'};
-  const resp=await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.apiKey},
-    body:JSON.stringify(body),
-  });
-  if(!resp.ok){const e=await resp.text();throw new Error(`OpenAI error ${resp.status}: ${e}`);}
-  const d=await resp.json();
-  const msg=d.choices&&d.choices[0]&&d.choices[0].message;
-  const t=(msg&&msg.content)||'';
-  if(!String(t).trim())throw new Error('OpenAI returned empty content.');
-  return t;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -856,65 +851,11 @@ function renderWelcome(){
     <p class="sub">Choose your AI provider and enter your API key. The AI analyzes your documents, generates a targeted questionnaire, and produces draft findings for your review.</p>
 
     <div class="section-label" style="margin-top:0">AI Provider</div>
-    <div class="row" style="margin-bottom:8px;align-items:stretch">
-      <label class="provider-card ${prov==='gemini'?'selected':''}" style="margin:0;flex:1;min-width:200px">
-        <input type="radio" name="provider" value="gemini" ${prov==='gemini'?'checked':''} data-action="set-provider">
-        <div>
-          <div style="font-weight:700;font-size:.9rem;color:#1a2332">Google Gemini <span style="background:#e8f5e9;color:#2e7d32;font-size:.7rem;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:4px">FREE TIER</span></div>
-          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">Gemini 2.0 Flash is free with generous daily limits — ideal for development and assessments. Get a key at <a href="https://aistudio.google.com" target="_blank" style="color:#1e88e5">aistudio.google.com</a>.</div>
-        </div>
-      </label>
-      <label class="provider-card ${prov==='anthropic'?'selected':''}" style="margin:0;flex:1;min-width:200px">
-        <input type="radio" name="provider" value="anthropic" ${prov==='anthropic'?'checked':''} data-action="set-provider">
-        <div>
-          <div style="font-weight:700;font-size:.9rem;color:#1a2332">Anthropic Claude</div>
-          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">Claude Haiku or Sonnet. Pay-as-you-go via the Anthropic API. Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a>.</div>
-        </div>
-      </label>
-      <label class="provider-card ${prov==='openai'?'selected':''}" style="margin:0;flex:1;min-width:200px">
-        <input type="radio" name="provider" value="openai" ${prov==='openai'?'checked':''} data-action="set-provider">
-        <div>
-          <div style="font-weight:700;font-size:.9rem;color:#1a2332">OpenAI</div>
-          <div style="font-size:.78rem;color:#5a7a96;margin-top:2px">GPT-4o family via the OpenAI API. Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#1e88e5">platform.openai.com</a>.</div>
-        </div>
-      </label>
+    <div style="margin-bottom:14px;padding:14px 16px;background:#f0f7ff;border:1.5px solid #1e88e5;border-radius:10px">
+      <div style="font-weight:700;font-size:.9rem;color:#0d2137">Anthropic Claude</div>
+      <div style="font-size:.78rem;color:#2c4a6a;margin-top:2px;line-height:1.5">Pay-as-you-go via the Anthropic API. Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5;font-weight:600">console.anthropic.com</a>. Pick your model below — Haiku for speed/cost, Sonnet for balanced assessments, Opus for the highest-quality findings.</div>
     </div>
 
-    ${prov==='gemini'?`
-    <div id="api-help" class="info-box" style="display:none">
-      <strong style="color:#1565c0">How to get a free Gemini API key</strong>
-      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
-        <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1e88e5">aistudio.google.com/apikey</a> and sign in with your Google account.</li>
-        <li>Click <strong>Create API key</strong>.</li>
-        <li>Copy the key and paste it below. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">AIza</code>.</li>
-      </ol>
-      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is never sent anywhere except Google's API.</div>
-    </div>
-    <div style="margin-bottom:4px"></div>
-    <label>Gemini API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
-    <input type="password" id="inp-apikey" placeholder="AIza..." value="${escHtml(S.apiKey)}">
-    <label>Model</label>
-    <select id="inp-model">
-      <option value="gemini-2.0-flash" ${S.model==='gemini-2.0-flash'?'selected':''}>Gemini 2.0 Flash (free, fast — recommended)</option>
-      <option value="gemini-1.5-flash" ${S.model==='gemini-1.5-flash'?'selected':''}>Gemini 1.5 Flash (free, slightly older)</option>
-      <option value="gemini-1.5-pro" ${S.model==='gemini-1.5-pro'?'selected':''}>Gemini 1.5 Pro (higher quality, limited free tier)</option>
-    </select>`:prov==='openai'?`
-    <div id="api-help" class="info-box" style="display:none">
-      <strong style="color:#1565c0">How to get an OpenAI API key</strong>
-      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
-        <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#1e88e5">platform.openai.com/api-keys</a> and sign in.</li>
-        <li>Create a new secret key and copy it (often starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-</code> or <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-proj-</code>).</li>
-      </ol>
-      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is sent only to OpenAI's API from this page.</div>
-    </div>
-    <div style="margin-bottom:4px"></div>
-    <label>OpenAI API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
-    <input type="password" id="inp-apikey" placeholder="sk-..." value="${escHtml(S.apiKey)}">
-    <label>Model</label>
-    <select id="inp-model">
-      <option value="gpt-4o-mini" ${S.model==='gpt-4o-mini'?'selected':''}>GPT-4o mini (lower cost)</option>
-      <option value="gpt-4o" ${S.model==='gpt-4o'?'selected':''}>GPT-4o (higher quality)</option>
-    </select>`:`
     <div id="api-help" class="info-box" style="display:none">
       <strong style="color:#1565c0">How to get an Anthropic API key</strong>
       <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
@@ -929,9 +870,10 @@ function renderWelcome(){
     <input type="password" id="inp-apikey" placeholder="sk-ant-..." value="${escHtml(S.apiKey)}">
     <label>Model</label>
     <select id="inp-model">
-      <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku (faster, lower cost)</option>
-      <option value="claude-sonnet-4-6" ${S.model==='claude-sonnet-4-6'?'selected':''}>Claude Sonnet (higher quality)</option>
-    </select>`}
+      <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku 4.5 (fastest, lowest cost)</option>
+      <option value="claude-sonnet-4-6" ${(!S.model||S.model==='claude-sonnet-4-6')?'selected':''}>Claude Sonnet 4.6 (balanced — recommended)</option>
+      <option value="claude-opus-4-6" ${S.model==='claude-opus-4-6'?'selected':''}>Claude Opus 4.6 (highest quality, slowest, most expensive)</option>
+    </select>
 
     <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
       <button class="btn btn-primary" data-action="welcome-start">Start New Assessment →</button>
@@ -961,7 +903,7 @@ function renderSetup(){
   const itSizes=['0–5','6–25','26–100','101–500','501–2,000','2,001+'];
   const cyberSizes=['0–2','3–10','11–30','31–100','101–500','500+'];
   const o=S.org;
-  const provName=S.provider==='gemini'?'Google Gemini (Generative Language API)':S.provider==='anthropic'?'Anthropic (Claude API)':'OpenAI API';
+  const provName='Anthropic (Claude API)';
   return`
 ${topBar(1)}
 <div class="container">
@@ -992,30 +934,6 @@ ${topBar(1)}
   </div>
 
   <div class="card">
-    <div class="section-label">Contact Email & Verification</div>
-    <p style="font-size:.83rem;color:#5a7a96;margin-bottom:12px">Enter the email address associated with your organization. We'll send a one-time verification code to confirm it. This email is also used for assessment continuity.</p>
-    <label>Email Address <span style="color:#e53935">*</span></label>
-    <div class="verify-row">
-      <input type="text" id="inp-org-email" value="${escHtml(o.email)}" placeholder="you@yourorg.com"${o.emailVerified?' disabled style="background:#f0fff4;border-color:#66bb6a"':''}>
-      ${o.emailVerified
-        ?`<span class="chip chip-green" style="padding:9px 14px;font-size:.8rem;white-space:nowrap">✓ Verified</span>`
-        :`<button type="button" class="btn btn-secondary" data-action="send-verify-email">${o.verificationSent?'Resend code':'Send verification code'}</button>`
-      }
-    </div>
-    ${o.emailVerified?`<p style="font-size:.75rem;color:#2e7d32;margin-top:6px">✓ Email verified — you're good to go. <span style="color:#1e88e5;cursor:pointer;text-decoration:underline;font-size:.73rem" data-action="change-email">Change email</span></p>`:
-      o.verificationSent?`
-    <div style="margin-top:12px">
-      <label>Enter Verification Code</label>
-      <div class="verify-row">
-        <input type="text" id="inp-verify-code" placeholder="6-digit code" maxlength="6" style="max-width:180px">
-        <button type="button" class="btn btn-primary" data-action="check-verify-code">Verify →</button>
-      </div>
-      <p style="font-size:.75rem;color:#5a7a96;margin-top:6px">Check your inbox (and spam folder). The code expires in 30 minutes. <span style="color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="send-verify-email">Resend code</span></p>
-    </div>`:`<p style="font-size:.75rem;color:#5a7a96;margin-top:6px">Click "Send verification code" after entering your email.</p>`
-    }
-  </div>
-
-  <div class="card">
     <div class="section-label">Scoring Methodology</div>
     <p style="font-size:.83rem;color:#5a7a96;margin-bottom:16px">Choose how findings will be scored.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
@@ -1031,17 +949,12 @@ ${topBar(1)}
   </div>
 
   <div class="consent-card">
-    <div class="section-label" style="margin-bottom:10px">Data &amp; Privacy Acknowledgment</div>
-    <div style="font-size:.84rem;color:#1a2332;line-height:1.7;margin-bottom:14px">
-      <p style="margin-bottom:8px">📁 <strong>Your uploaded documents</strong> are never stored on any server and are never seen by the assessment tool creator. They are processed locally in your browser and sent only to <strong>${escHtml(provName)}</strong> for AI analysis — the same API you've already configured.</p>
-      <p style="margin-bottom:8px">💾 <strong>Your assessment data</strong> (findings, answers, scores) is stored only in your browser's local storage. It is not transmitted to or retained by the assessment tool creator.</p>
-      <p style="margin-bottom:8px">📊 <strong>Benchmarking data</strong> — when your report is finalized, the following anonymized data will be shared with the assessment tool creator for research and benchmarking: your industry sector, organization size bands (total / IT / cyber), and numerical CMMI scores per CSF subcategory. No organization name, documents, or identifying information is included.</p>
-      <p>📋 This anonymized benchmark data may be used in aggregate form to publish sector peer comparisons and improve the tool's recommendations.</p>
+    <div class="section-label" style="margin-bottom:10px">Data &amp; Privacy</div>
+    <div style="font-size:.84rem;color:#1a2332;line-height:1.7">
+      <p style="margin-bottom:8px">📁 <strong>Your uploaded documents</strong> stay in your browser. They are sent only to <strong>${escHtml(provName)}</strong> for AI analysis using the API key you provided. Nothing is stored on any third-party server by this tool.</p>
+      <p style="margin-bottom:8px">💾 <strong>Your assessment data</strong> (findings, answers, scores) is saved only in your browser's <code>localStorage</code>. Closing the tab keeps your progress; clearing browser data wipes it.</p>
+      <p>🔑 <strong>Your API key</strong> stays in your browser too. It's sent directly to Anthropic's API from this page — no proxy, no backend.</p>
     </div>
-    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0">
-      <input type="checkbox" id="inp-consent" ${o.dataConsentAcknowledged?'checked':''} style="margin-top:3px;flex-shrink:0;width:16px;height:16px">
-      <span style="font-size:.85rem;color:#1a2332;font-weight:600;line-height:1.5">I understand and acknowledge the above. I agree to the assessment creator receiving anonymized scoring data for benchmarking purposes.</span>
-    </label>
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-bottom:32px">
@@ -2226,87 +2139,6 @@ async function processFiles(catId,reqId,files){
 function handleFileInput(e,catId,reqId){processFiles(catId,reqId,Array.from(e.target.files));}
 function handleDrop(e,catId,reqId){e.preventDefault();document.querySelector(`[data-dropzone][data-cat="${catId}"][data-req="${reqId}"]`)?.classList.remove('drag-over');processFiles(catId,reqId,Array.from(e.dataTransfer.files));}
 
-// ════════════════════════════════════════════════════════════
-// EMAIL / BENCHMARK — EmailJS (works from static HTML, no backend)
-// Sign up free at emailjs.com, create two templates, fill in the
-// four constants below. Until you do, dev-mode shows the code in
-// an alert() so the full flow works locally without any setup.
-// ════════════════════════════════════════════════════════════
-const _cfg = window.CSF_CONFIG || {};
-const EMAILJS_PUBLIC_KEY  = _cfg.EMAILJS_PUBLIC_KEY  || 'YOUR_EMAILJS_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID  = _cfg.EMAILJS_SERVICE_ID  || 'YOUR_EMAILJS_SERVICE_ID';
-const EMAILJS_VERIFY_TPL  = _cfg.EMAILJS_VERIFY_TPL  || 'YOUR_VERIFY_TEMPLATE_ID';
-const EMAILJS_REPORT_TPL  = _cfg.EMAILJS_REPORT_TPL  || 'YOUR_REPORT_TEMPLATE_ID';
-
-function isEJSConfigured(){
-  return EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY';
-}
-function initEJS(){
-  if(isEJSConfigured() && window.emailjs){
-    window.emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
-  }
-}
-initEJS();
-
-function genCode(){
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-async function sendVerificationEmail(email){
-  const code = genCode();
-  S.org.verificationCode = code;
-  S.org.verificationSent = true;
-  S.org.emailVerified = false;
-  saveState();
-  if(!isEJSConfigured()){
-    // Dev / local mode: show code in alert so flow is fully testable
-    alert(`[DEV MODE — EmailJS not configured]\n\nYour verification code is:\n\n${code}\n\nIn production, this would be emailed to ${email}.`);
-    return;
-  }
-  if(!window.emailjs) throw new Error('EmailJS SDK not loaded. Check your internet connection.');
-  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_VERIFY_TPL, {
-    to_email: email,
-    verification_code: code,
-    org_name: S.org.name || 'Your organization',
-  });
-}
-
-async function sendBenchmarkData(){
-  // Only send if consent was given and we haven't sent yet
-  if(!S.org.dataConsentAcknowledged || S.benchmarkSent) return;
-  const fnScores = {};
-  FUNCTIONS.forEach(fn => {
-    const vals = (SC_BY_FN[fn.id]||[]).map(id => S.findings[id]?.cmmi_score).filter(x => x != null);
-    if(vals.length) fnScores[fn.id] = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
-  });
-  const scScores={};
-  inScopeSubs().forEach(([id])=>{if(S.findings[id]?.cmmi_score!=null)scScores[id]=S.findings[id].cmmi_score;});
-  const payload = {
-    industry:       S.org.industry,
-    org_size:       S.org.orgSize,
-    it_size:        S.org.itOrgSize,
-    cyber_size:     S.org.cyberOrgSize,
-    scoring_method: S.scoringMethod,
-    in_scope_count: subcategoriesInScopeCount(),
-    fn_scores:      JSON.stringify(fnScores),
-    sc_scores:      JSON.stringify(scScores),
-    date:           S.org.date || new Date().toISOString().slice(0,10),
-  };
-  if(!isEJSConfigured()){
-    console.log('[DEV] Benchmark payload (not sent — EmailJS unconfigured):', payload);
-    S.benchmarkSent = true;
-    saveState();
-    return;
-  }
-  if(!window.emailjs) return;
-  await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REPORT_TPL, {
-    to_email:        'email2me@dontsp.am',
-    benchmark_json:  JSON.stringify(payload, null, 2),
-  });
-  S.benchmarkSent = true;
-  saveState();
-}
-
 async function analyzeScopeWithAI(){
   setLoading('Analyzing scope with AI…','Reviewing your organization profile and recommending which CSF subcategories are most relevant. Usually takes 30–60 seconds.');
   try{
@@ -2393,20 +2225,12 @@ document.addEventListener('click',e=>{
   if(!el)return;
   const action=el.dataset.action;
 
-  if(action==='set-provider'){
-    const prov=el.value||el.dataset.val;
-    S.provider=prov;
-    S.model=defaultModelForProvider(prov==='gemini'||prov==='anthropic'||prov==='openai'?prov:'gemini');
-    S.apiKey=localStorage.getItem('csf_apiKey')||'';
-    persistAIPrefs();
-    render();
-  }
-  else if(action==='toggle-api-help'){
+  if(action==='toggle-api-help'){
     const box=document.getElementById('api-help');
     if(box){const shown=box.style.display==='none';box.style.display=shown?'block':'none';el.textContent=shown?'Hide':'How do I get this?';}
   }
   else if(action==='welcome-start'){
-    S.provider=document.querySelector('input[name="provider"]:checked')?.value||S.provider;
+    S.provider='anthropic';
     S.apiKey=document.getElementById('inp-apikey').value.trim();
     S.model=document.getElementById('inp-model').value;
     if(!S.apiKey){alert('Please enter your API key.');return;}
@@ -2437,29 +2261,6 @@ document.addEventListener('click',e=>{
   else if(action==='goto-analysis'){S.step='analysis';render();}
   else if(action==='goto-questionnaire'){S.step='questionnaire';render();}
   else if(action==='goto-findings-review'){S.step='findings_review';render();}
-  else if(action==='change-email'){
-    S.org.emailVerified=false;S.org.verificationSent=false;S.org.verificationCode='';
-    saveState();render();
-  }
-  else if(action==='send-verify-email'){
-    const emailEl=document.getElementById('inp-org-email');
-    const email=(emailEl?.value||'').trim();
-    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Please enter a valid email address first.');return;}
-    S.org.email=email;
-    saveState();
-    sendVerificationEmail(email).then(()=>{saveState();render();}).catch(err=>{alert('Failed to send verification email: '+err.message);});
-  }
-  else if(action==='check-verify-code'){
-    const inputEl=document.getElementById('inp-verify-code');
-    const entered=(inputEl?.value||'').trim();
-    if(!entered){alert('Please enter the verification code.');return;}
-    if(entered===S.org.verificationCode){
-      S.org.emailVerified=true;
-      saveState();render();
-    }else{
-      alert('Incorrect code. Please check your email and try again, or click "Resend code".');
-    }
-  }
   else if(action==='set-size'){
     const field=el.dataset.field;
     const val=el.dataset.val;
@@ -2474,19 +2275,15 @@ document.addEventListener('click',e=>{
   else if(action==='setup-next'){
     const name=(document.getElementById('inp-org-name')?.value||'').trim();
     if(!name){alert('Organization name is required.');return;}
-    if(!S.org.emailVerified){alert('Please verify your email address before continuing.');return;}
     const orgSize=S.org.orgSize;
     const itSize=S.org.itOrgSize;
     const cyberSize=S.org.cyberOrgSize;
     if(!orgSize||!itSize||!cyberSize){alert('Please select organization, IT, and cybersecurity team sizes before continuing.');return;}
-    const consentCb=document.getElementById('inp-consent');
-    if(!consentCb?.checked){alert('Please acknowledge the data consent statement before continuing.');return;}
     S.org.name=name;
     S.org.industry=document.getElementById('inp-org-industry')?.value||S.org.industry;
     S.org.assessorName=(document.getElementById('inp-org-assessor')?.value||'').trim();
     S.org.date=document.getElementById('inp-org-date')?.value||S.org.date;
     S.org.scope=(document.getElementById('inp-org-scope')?.value||'').trim();
-    S.org.dataConsentAcknowledged=true;
     S.scoringMethod=document.querySelector('input[name="scoring"]:checked')?.value||'both';
     saveState();
     analyzeScopeWithAI();
@@ -2647,7 +2444,6 @@ document.addEventListener('click',e=>{
   }
   else if(action==='gen-report'){
     S.step='report';S.reportPage=0;saveState();render();
-    sendBenchmarkData().catch(err=>console.warn('[Benchmark] send failed:',err.message));
   }
   else if(action==='report-page-prev'){S.reportPage=Math.max(0,(S.reportPage||0)-1);saveState();render();window.scrollTo(0,0);}
   else if(action==='report-page-next'){
@@ -2698,13 +2494,6 @@ document.addEventListener('change',e=>{
   if(t&&t.id==='inp-model'){
     S.model=t.value;
     persistAIPrefs();
-  }
-});
-
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&e.target.id==='inp-verify-code'){
-    e.preventDefault();
-    document.querySelector('[data-action="check-verify-code"]')?.click();
   }
 });
 

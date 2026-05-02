@@ -1,0 +1,201 @@
+# Business Continuity Plan
+
+**Document ID:** PLN-BCP-01
+**Version:** 3.1
+**Effective date:** January 1, 2026
+**Last reviewed:** December 12, 2025 (annual review)
+**Next review:** December 2026
+**Approver:** Helena Park, CEO; David Mehta, CTO; Sarah Yoon, CISO
+**Owner:** Jordan Park, GRC Manager
+**Distribution:** All MCT personnel; published on internal wiki; redacted version available to customers under NDA on request
+
+---
+
+## 1. Purpose
+
+This Business Continuity Plan ("BCP" or "Plan") establishes Meridian Care Technologies, Inc.'s ("MCT") approach to maintaining critical business functions during and after a disruptive event. It is the companion document to the Disaster Recovery Plan (PLN-DRP-01), which addresses technical restoration of MeridianCare platform services. This Plan addresses **business** continuity — workforce, premises, communications, customer relationships, and supplier dependencies.
+
+This Plan derives its priorities from the Business Impact Analysis (BIA-2025-12) and is the operational expression of POL-001 §3.13.
+
+## 2. Scope
+
+This Plan applies to:
+
+- All MCT business operations, including the Raleigh HQ, the Pittsburgh secondary site, and the distributed remote workforce.
+- All critical business functions identified in BIA-2025-12 §3 and §4.
+- Disruption scenarios in scope: full or partial loss of the Raleigh HQ; full or partial loss of the Pittsburgh site; sustained loss of a critical supplier (AWS, Okta, Snowflake); pandemic or comparable workforce-availability event; major cybersecurity incident with operational consequences.
+
+Disruptions limited to platform availability without business-process impact are governed by PLN-DRP-01.
+
+## 3. Authorities
+
+| Authority | Holder | Notes |
+|---|---|---|
+| BCP activation | CEO (Helena Park); designated alternate: CTO (David Mehta) | Activation declared in writing (email or Slack `#bcp-activation`) with timestamp. |
+| BCP coordinator | GRC Manager (Jordan Park); designated alternate: VP Customer Success (Lauren Pham) | Operational lead during activation. |
+| Communications lead | VP Customer Success (Lauren Pham) for customer communications; CPO (Linda Chao) for workforce communications | Authorized by CEO. |
+| Workforce continuity decisions (remote-only mandate, site closure) | CPO + CEO | Joint authority. |
+
+## 4. Service Tiering and Continuity Priorities
+
+Service tiering is inherited from BIA-2025-12 §3 and remains authoritative. The continuity priorities below are the **business-side** priorities that complement the technical RTO/RPO commitments.
+
+| Tier | Services | Continuity priority | Maximum Tolerable Period of Disruption (MTPD) |
+|---|---|---|---|
+| **P1** | Transitions of Care; Referral Lifecycle Management | Highest. Customer-facing care coordination; clinical workflow. | 24 hours before customer escalation; 72 hours before existential reputational risk. |
+| **P2** | Chronic Care Management; Population Insights | High. Customer-facing operational and analytical workflows. | 72 hours before material customer revenue / SLA exposure. |
+| **P3** | Internal reporting; corporate IT (M365); marketing site | Standard. Internal operations. | 1 week before material internal-operations impact. |
+
+## 5. Critical Business Functions
+
+| Function | Owner | P-tier impact | Continuity strategy |
+|---|---|---|---|
+| Customer-facing platform operations (production engineering on-call; customer support tier-1) | VP Engineering; VP Customer Success | P1 | Distributed engineering on-call (no single-site dependency); customer support tier-1 staffed across Raleigh, Pittsburgh, and remote |
+| Incident response | CISO | P1 | IR team is mostly remote-first; no physical-site dependency for IR command |
+| Customer communications | VP Customer Success | P1/P2 | Lauren Pham + her team across Raleigh and remote; primary channel is the customer portal (cloud-hosted, not site-dependent) |
+| Customer Success Implementation | VP Customer Success | P2 | Some customer implementation work is in-person at customer sites; rescheduling fallback is documented |
+| Finance close, AR, payroll | CFO | P2/P3 | Greg Hartman's team is hybrid Raleigh/remote; payroll processed by ADP (cloud) |
+| HR / People operations | CPO | P3 | Linda Chao's team is hybrid Raleigh/remote; Workday is cloud |
+| Sales, marketing | CRO | P3 | Distributed; Salesforce, HubSpot are cloud |
+| Legal | GC | P1 (during incidents) / P3 (otherwise) | Marcus Holbrook + outside counsel retainer (Crowell & Moring) |
+| Clinical Operations | CMO | P2 | Distributed clinically licensed advisors; primarily remote |
+| Information Security operations | CISO | P1 | All 6 FTE remote-capable; on-call rotation |
+
+## 6. Premises and Alternate Sites
+
+### 6.1 Primary site — Raleigh HQ
+
+- 210 FTE on-site or hybrid.
+- No production systems run at Raleigh; the legacy ETL cluster is **not** P1 (it serves a deprecating EHR integration for two long-tenured customers and is scheduled for decommission Q4 2026).
+- Loss of the Raleigh HQ would not block production response; it would block in-person all-hands gatherings, in-person workshops with customers visiting Raleigh, and routine in-office collaboration.
+
+### 6.2 Secondary site — Pittsburgh
+
+- 38 FTE on-site or hybrid (acquired October 2022 with the Population Insights analytics technology from Caduceus Analytics).
+- Pittsburgh is a viable secondary site for in-person operations if Raleigh is lost. It is not a hot data-center failover; the platform is cloud-native (AWS).
+
+### 6.3 Distributed remote workforce
+
+- ~30% of the workforce is fully remote; the remainder is hybrid with significant remote capability.
+- All employees are equipped with managed laptops (Jamf for macOS, Intune for Windows), Okta, Microsoft 365, conferencing (Zoom), and VPN where needed (production access requires Okta + FIDO2 — no VPN dependency).
+- A loss of both physical sites simultaneously would still allow the workforce to operate remote-first within hours.
+
+### 6.4 Site loss recovery sequence
+
+| Trigger | Action | Owner | SLA |
+|---|---|---|---|
+| Site evacuation event (any cause) | Account for personnel via Workday emergency check-in | CPO | 4 hours |
+| Site inaccessibility >24h | Activate remote-first operating posture; cancel/reschedule in-person meetings | CPO + CEO | 24 hours |
+| Site inaccessibility >7 days | Pittsburgh becomes interim primary for in-person needs; Raleigh lease and IT-equipment recovery planning begins | CFO + CPO | 7 days |
+| Permanent or long-duration loss of primary site | Board-level decision on lease replacement | CEO + Board | Per Board cadence |
+
+## 7. Workforce Continuity
+
+### 7.1 Critical role coverage
+
+| Role | Primary | Backup | Notes |
+|---|---|---|---|
+| CEO | Helena Park | CTO (David Mehta) per Board succession | Approved by Board Dec 2025 |
+| CISO | Sarah Yoon | Marcus Tan (Sec Eng D&R) | Cross-trained in IR |
+| GC / Privacy Officer | Marcus Holbrook | Outside counsel (Crowell & Moring); deputy assignment under review | **Single-point-of-failure noted** — see §11 gaps |
+| CTO | David Mehta | VP Engineering (Tomás Reyes) | Production-access continuity |
+| Incident Commander (IR) | M. Tan | A. Reyes; J. Park | Cross-trained per IR program |
+| Customer Communication Lead | Lauren Pham | CISO + GC joint | Established |
+
+### 7.2 Pandemic and workforce-availability scenarios
+
+- The Company operated successfully fully remote during 2020–2022. The current operating model assumes that a pandemic-style remote-only mandate would be operationally absorbable.
+- Critical-role minimums in BIA-2025-12 §6 (1 IC, 2 engineering on-call, 1 comms lead, 1 GC) are achievable with sustained absences up to ~30% workforce reduction.
+- Workforce reduction beyond 50% would require Board notification and prioritization triage; CCM clinical advisors are the most critical clinically licensed staff and their backups are documented in a clinical-operations playbook (CLN-PLAYBOOK-01).
+
+## 8. Customer Continuity Expectations
+
+### 8.1 During a continuity event
+
+- Customers receive proactive communication via the TSC customer portal advisory and emailed letter to security and legal contacts.
+- Customer Success Managers are the primary relationship channel and are briefed by VP CS at activation and at every status checkpoint.
+- Customers under contractual MTPD commitments (none currently <24h on the business-continuity dimension; this differs from technical RTOs which are tighter) are tracked in a customer-impact roster maintained in Salesforce.
+
+### 8.2 Customer-side continuity
+
+- Customers are expected under their BAA to maintain their own contingency procedures for clinical workflows when MCT is unavailable. MeridianCare is a coordination layer; customers retain longitudinal medical records in their EHRs.
+- The customer onboarding playbook (CS-ONB-01) covers clinical workflow fallback procedures (paper hand-off forms; EHR-direct workflows) for use during platform unavailability.
+
+## 9. Supplier Continuity
+
+### 9.1 Critical suppliers
+
+| Supplier | Function | Continuity strategy |
+|---|---|---|
+| AWS (us-east-1 primary; us-west-2 cross-region) | Compute, storage, network, identity (IAM), database (Aurora, S3, EKS) | Cross-region failover (PLN-DRP-01); AWS supports multi-region by design |
+| Okta | Workforce identity, SSO, MFA | Okta is multi-region by Okta's own architecture; MCT cannot independently failover. **Single-supplier dependency** — accepted risk |
+| Snowflake | Population Insights analytics warehouse | Account replication to a secondary region planned (R6); current posture is async replication only |
+| Datadog | SIEM, observability | Multi-region by Datadog's architecture; MCT cannot independently failover |
+| CrowdStrike | EDR | Multi-region by CrowdStrike's architecture |
+| Microsoft 365 | Email, productivity | Multi-region by Microsoft's architecture |
+| Change Healthcare (clearinghouse — pilot only) | Claims clearinghouse | Backup path Waystar in FY26 roadmap (post Feb–Mar 2024 ALPHV event) |
+| Surescripts | Medication history | Workflow degrades gracefully without medication history feed |
+| Direct Trust | HIPAA-compliant Direct Secure Messaging | Backup is paper / fax fallback |
+
+### 9.2 Supplier loss scenarios
+
+- Sustained AWS us-east-1 loss: failover to us-west-2 per PLN-DRP-01. P1 RTO 4h is the commitment; current capability is partially tested (April 2025 test achieved 5h12m end-to-end for ToC service; the rest of the platform has not been failover-tested).
+- Sustained Okta loss: workforce login is broken. There is no in-platform fallback. MCT's contingency is to wait out the Okta event with elevated communications cadence; this scenario is rare historically (Okta SLA 99.99%) but is an accepted concentrated dependency.
+- Sustained Snowflake loss: P2 service Population Insights becomes unavailable. P1 services not affected. Customer impact is analytical not operational.
+- Loss of Change Healthcare: pilot only currently; backup path Waystar to be in production FY26.
+
+The Third-Party Risk Management Policy (POL-TPRM-01) governs supplier reassessment; the Supplier Continuous Monitoring expansion (FY26 Priority 7) addresses the supplier-monitoring gap captured as risk register entry R1.
+
+## 10. Communications
+
+### 10.1 Internal
+
+- Slack `#bcp-activation` (private to leadership + GRC) — primary command channel.
+- Email distribution list `bcp-leadership@meridiancare.com` — leadership backup.
+- Workday emergency check-in for personnel accountability.
+- Zoom war room — standing room ID published in the BCP Quick-Reference card.
+
+### 10.2 External
+
+- Customer TSC portal advisory (cloud-hosted, multi-region by provider).
+- Status page (`status.meridiancare.com`) — Statuspage.io, multi-region.
+- Emailed letter to customer security and legal contacts (template in playbook).
+- Beazley insurer contact within 72h if cyber-driven.
+- Regulatory notification per PLN-IR-01 §8 if applicable.
+
+## 11. Honest Gap Acknowledgment
+
+This BCP is operative and is exercised, but the Company acknowledges the following gaps relative to a fully mature continuity program:
+
+1. **Continuity exercise cadence is annual.** A single full-site-loss continuity exercise is conducted per year. Discrete tabletop scenarios are exercised more frequently (the IR program runs quarterly tabletops per PLN-IR-01 §6.1 — Q1 ransomware, Q2 internal-account compromise, Q3 third-party vendor, Q4 Snowflake credential), but those tabletops focus on incident response, not on full business continuity. **The continuity-specific exercise dimension is below the cadence the Steering Committee would like and is on the FY26 roadmap to expand.**
+
+2. **GC succession.** Marcus Holbrook is the designated HIPAA Privacy Officer and breach-notification authority; the deputy GC role is currently filled by outside counsel only. A staff deputy is a Q3 2026 hiring priority.
+
+3. **Supplier continuous monitoring** beyond AWS, Okta, and Snowflake is not yet in place; this is captured as risk register entry R1 and is FY26 Priority 7.
+
+4. **Recovery testing depth** for the platform itself is limited to a single full-failover test per year, scope-limited to one critical service. This is captured as risk register entry R2 and is the principal weakness in the technical recovery program (PLN-DRP-01 §11).
+
+These gaps are deliberately documented to support honest assessment rather than claim a maturity the Company has not yet achieved.
+
+## 12. Plan Maintenance
+
+This Plan is reviewed at least annually and after any continuity-event activation. Reviews are coordinated by the GRC Manager and approved by the CEO, CTO, and CISO.
+
+## 13. Linked Documents
+
+- POL-001 Information Security Policy
+- BIA-2025-12 Business Impact Analysis
+- PLN-IR-01 Incident Response Plan
+- PLN-DRP-01 Disaster Recovery Plan
+- POL-TPRM-01 Third-Party Risk Management Policy
+- RPT-Recovery-Test-Results-2025
+- RISK-Cyber-Risk-Register (R1, R2, R6)
+
+## 14. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2022-09 | (predecessor) | Original BCP |
+| 2.0 | 2024-03 | J. Park | Post-Pebble Phish refresh; added IR linkage |
+| 3.0 | 2024-12 | J. Park | Aligned to BIA v3.0 service tiering |
+| **3.1** | **2025-12** | **J. Park** | **Annual review; added supplier continuous-monitoring gap acknowledgment; clarified continuity-vs-IR exercise cadence** |

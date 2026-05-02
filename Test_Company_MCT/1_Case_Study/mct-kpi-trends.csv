@@ -1,0 +1,22 @@
+Metric,Definition,Target,2024-Q1,2024-Q2,2024-Q3,2024-Q4,2025-Q1,2025-Q2,2025-Q3,2025-Q4,2026-Q1,Trend
+TTD (minutes),"Mean time to detect a security-relevant alert (from event to triage start), measured across CrowdStrike + Datadog + Okta",<10,42,28,19,14,12,11,9,8,8,Improving
+TTI (hours),"Mean time to investigate (from triage start to verdict)",<2,4.8,3.9,3.1,2.6,2.2,1.9,1.8,1.7,1.6,Improving
+TTR critical (hours),"Mean time to remediate critical-severity findings (CVSS >=9.0 or confirmed compromise)",<24,72,48,36,30,28,26,22,20,18,Improving
+TTR high (days),"Mean time to remediate high-severity findings (CVSS 7-8.9)",<7,21,18,15,12,10,9,8,7,7,On target
+Phishing click rate,"% of recipients who click the lure in quarterly simulated phishing campaign",<3%,7.2%,5.8%,4.4%,3.6%,3.1%,2.9%,2.7%,2.4%,2.2%,Improving
+Phishing report rate,"% of recipients who report the lure to the security team",>40%,18%,24%,29%,33%,37%,41%,44%,48%,51%,Improving
+Patch SLA compliance critical,"% of critical patches applied within 14 days",>95%,82%,86%,89%,91%,93%,94%,96%,97%,97%,On target
+Patch SLA compliance high,"% of high patches applied within 30 days",>90%,71%,75%,80%,84%,87%,89%,91%,92%,92%,On target
+Training completion (annual),"% of employees who completed annual security awareness within deadline",100%,94%,96%,98%,99%,99%,99%,100%,100%,100%,On target
+Role-based training completion,"% of in-role personnel (engineers/admins) who completed role-based training",100%,68%,74%,82%,88%,91%,93%,95%,96%,97%,Approaching target
+MFA coverage,"% of human accounts with MFA enrolled",100%,87%,94%,98%,100%,100%,100%,100%,100%,100%,On target
+Phishing-resistant MFA coverage (privileged),"% of production-access roles using FIDO2",100%,0%,0%,0%,42%,78%,94%,98%,100%,100%,On target (full enforcement achieved Q4 2025)
+Open critical vulnerabilities,"Count of unresolved critical CVEs in production older than the 14-day SLA threshold",<=2,18,11,7,4,3,3,4,2,2,On target since Q4 2025
+Open high vulnerabilities,"Count of unresolved high CVEs in production",<25,84,67,52,41,35,32,29,28,26,Approaching target
+IR tabletop exercises completed (TTM),"Trailing 12-month count of incident-response tabletop exercises",>=4,1,2,2,3,3,3,4,4,4,On target
+DR/recovery tabletops completed (TTM),"Trailing 12-month count of recovery-focused tabletops (separate from IR)",>=2,0,0,0,0,0,0,1,1,1,Below target — known gap (R2)
+Full recovery / DR failover tests completed (TTM),"Trailing 12-month count of full recovery / DR failover exercises",>=2,0,0,0,1,1,1,1,1,1,Below target — known gap (R2)
+Vendor reassessment cadence,"% of critical vendors reassessed within 12 months",>=90%,38%,42%,46%,50%,53%,55%,58%,60%,62%,"Below target — known gap (R1); reassessment program redesigned Q1 2026 with continuous-monitoring expectations not yet operationalized"
+Access reviews completed on time,"% of quarterly access certifications completed by due date",>=95%,76%,82%,87%,91%,93%,95%,96%,97%,98%,On target
+SOC 2 exceptions,"Count of exceptions noted in latest SOC 2 Type II",0,3,3,3,2,2,2,2,1,1,Improving
+Security spend as % of ARR,"Total InfoSec budget / ARR",4-6%,3.8%,3.9%,4.1%,4.4%,4.6%,4.7%,4.8%,4.9%,5.0%,On target

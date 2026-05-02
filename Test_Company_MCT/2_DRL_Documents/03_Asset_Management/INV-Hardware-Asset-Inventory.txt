@@ -1,0 +1,34 @@
+AssetClass,Model,OS,Count,Department,Location,Owner,ManagementTool,EncryptedAtRest,LastInventoryRefresh,Notes
+Laptop,Apple MacBook Pro 14" M3 Pro,macOS 14 Sonoma,118,Engineering & Product,Distributed (Raleigh/Pittsburgh/Remote),IT Operations,Jamf Pro,Y (FileVault2),2026-04-22,Standard engineering build; CrowdStrike Falcon enrolled
+Laptop,Apple MacBook Pro 14" M2 Pro,macOS 14 Sonoma,28,Engineering & Product,Distributed (Raleigh/Pittsburgh/Remote),IT Operations,Jamf Pro,Y (FileVault2),2026-04-22,Older engineering refresh wave; replacement scheduled FY27
+Laptop,Apple MacBook Pro 14" M3 Pro,macOS 14 Sonoma,6,Information Security,Distributed,IT Operations,Jamf Pro,Y (FileVault2),2026-04-22,InfoSec team standard; FIDO2 hardware key paired
+Laptop,Apple MacBook Air M3,macOS 14 Sonoma,12,Clinical Operations,Distributed,IT Operations,Jamf Pro,Y (FileVault2),2026-04-22,Clinical Ops standard for licensed staff
+Laptop,Apple MacBook Air M3,macOS 14 Sonoma,6,Office of CEO,Raleigh HQ,IT Operations,Jamf Pro,Y (FileVault2),2026-04-22,Executive leadership team
+Laptop,Dell Latitude 7440,Windows 11 Pro 23H2,42,Sales & Marketing,Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Standard Sales build; Intune compliance enforced
+Laptop,Dell Latitude 7440,Windows 11 Pro 23H2,12,Sales & Marketing,Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Marketing sub-fleet; identical baseline
+Laptop,Dell Latitude 7440,Windows 11 Pro 23H2,52,Customer Success & Implementation,Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,CS standard; restricted from PHI download per AUP
+Laptop,Lenovo ThinkPad T14 Gen 4,Windows 11 Pro 23H2,10,Customer Success & Implementation,Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Implementation engineers (Pittsburgh-heavy)
+Laptop,Dell Latitude 7440,Windows 11 Pro 23H2,18,Clinical Operations,Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Non-licensed Clinical Ops staff; Windows fleet
+Laptop,Dell Latitude 7440,Windows 11 Pro 23H2,24,G&A (Finance/Legal/HR/Facilities),Raleigh HQ + Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Finance/Legal/HR/Facilities; SoX-relevant subset segmented via Intune compliance policy
+Laptop,Lenovo ThinkPad T14 Gen 4,Windows 11 Pro 23H2,12,G&A (Finance/Legal/HR/Facilities),Distributed,IT Operations,Microsoft Intune,Y (BitLocker),2026-04-22,Mixed G&A; identical baseline
+Laptop,Hot-spare pool (mixed Dell/Lenovo),Windows 11 Pro 23H2,30,IT Operations,Raleigh HQ secure storage,IT Operations,Microsoft Intune (staged),Y (BitLocker pre-staged),2026-04-22,Inventoried but unassigned; deployed within 24h on hire/termination cycle
+Laptop,Hot-spare pool (Apple MacBook Pro/Air),macOS 14 Sonoma,10,IT Operations,Raleigh HQ secure storage,IT Operations,Jamf Pro (staged),Y (FileVault2 pre-staged),2026-04-22,Inventoried but unassigned; deployed within 24h on hire/termination cycle
+Server (Legacy),Dell PowerEdge R740 (ETL Node 1),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,"Legacy ETL cluster; partial inventory exception per CRA-LegacyETL-2025; decommission Q4 2026"
+Server (Legacy),Dell PowerEdge R740 (ETL Node 2),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,Same as Node 1; pair runs Informatica PowerCenter
+Server (Legacy),Dell PowerEdge R740 (ETL Node 3),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,Same as Node 1
+Server (Legacy),Dell PowerEdge R640 (ETL Mgmt),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,Cluster management / scheduler node
+Server (Legacy),Dell PowerEdge R640 (ETL DB),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,Local PostgreSQL staging DB; replicates to Aurora during cutover windows
+Server (Legacy),HPE ProLiant DL360 Gen10 (Bastion/Jump),Red Hat Enterprise Linux 8.6,1,Engineering (Legacy ETL),Raleigh HQ on-prem rack,Tomás Reyes (VP Engineering),Manual / Ansible (out of central automation),Y (LUKS),2026-03-17,Jump host for legacy ETL; only ingress is via Okta-fronted bastion service
+Network,Cisco Meraki MX/MS (HQ + Pittsburgh),N/A (firmware),11,IT Operations,Raleigh HQ + Pittsburgh,IT Operations,Meraki Dashboard,N/A,2026-04-22,Office-only; no PHI in transit beyond TLS-encrypted egress
+,,,,,,,,,,
+COLUMN DEFINITIONS,,,,,,,,,,
+AssetClass,"Laptop / Server (Legacy) / Network",,,,,,,,,
+Count,"Aggregate active count by configuration; unassigned-pool counted separately",,,,,,,,,
+ManagementTool,"Jamf Pro for macOS; Microsoft Intune for Windows 11; Manual/Ansible only for legacy ETL nodes per documented exception",,,,,,,,,
+EncryptedAtRest,"Y/N — full-disk encryption status (FileVault2 macOS; BitLocker Windows; LUKS legacy Linux)",,,,,,,,,
+LastInventoryRefresh,"Date of last automated reconciliation against Jamf/Intune/Wiz feeds; legacy ETL is manual quarterly",,,,,,,,,
+Notes,"Free-text; reference document IDs (CRA-LegacyETL-2025 etc.) where relevant",,,,,,,,,
+Total Laptops,380,,,,,,,,,
+Total Servers (Legacy ETL),6,,,,,,,,,
+Source of truth,"Jamf Pro (macOS) + Microsoft Intune (Windows) + Wiz (cloud-side asset graph) + manual register for legacy ETL (Excel: HW-LEGACY-ETL.xlsx)",,,,,,,,,
+Owner,"Jordan Park (GRC Manager) reconciles quarterly; IT Operations (reports to CTO) maintains source feeds",,,,,,,,,

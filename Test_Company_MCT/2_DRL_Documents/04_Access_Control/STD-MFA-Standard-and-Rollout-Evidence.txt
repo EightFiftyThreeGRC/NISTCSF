@@ -1,0 +1,244 @@
+Multi-Factor Authentication Standard and Rollout Evidence
+
+Document ID: STD-MFA-01 Version: 3.1 Effective date: January 1, 2026 Last reviewed: December 11, 2025 Next review: December 2026 Approver: Sarah Yoon, CISO Owner: Ben Olafsson, IAM Specialist (delegated by CISO) Distribution: All employees, contractors, and authorized third parties; published on internal wiki and Hyperproof; rollout evidence section refreshed quarterly
+
+1. Purpose
+
+This Standard specifies the technical requirements for multi-factor authentication ("MFA") at Meridian Care Technologies, Inc. ("MCT"), implements the authentication intent of POL-001 §3.6 and POL-IAM-01 §4, and provides the rollout evidence package supporting MCT's stated KPI: 100% workforce MFA coverage; 100% phishing-resistant MFA on privileged populations achieved Q4 2025.
+
+Sections 1–8 establish the standing standard. Section 9 is the rolling rollout evidence package, refreshed quarterly to support SOC 2 Type II testing, HITRUST CSF r2 evidence, and HIPAA Security Rule compliance under 45 CFR §164.312(d).
+
+2. Scope
+
+This Standard applies to:
+
+All MCT workforce authentication events through Okta.
+
+All MCT cloud workforce access via AWS IAM Identity Center.
+
+All customer-administrative authentication through the MeridianCare customer admin console.
+
+All patient-facing authentication through Auth0 patient CIAM (subject to per-tenant configuration).
+
+Break-glass authentication paths covered as documented exceptions per PROC-PAM-01.
+
+3. Workforce MFA Standard
+
+3.1 Universal requirement
+
+MFA is mandatory for 100% of human workforce accounts (employees, contractors, interns) at every authentication event to MCT-managed systems. The default workforce MFA factor is Okta Verify with push and number-matching enabled (number-matching enforced as of October 2024 to mitigate MFA fatigue).
+
+3.2 Permitted factors
+
+The following factors are permitted for workforce authentication, in priority order:
+
+FIDO2 / WebAuthn — required for in-scope populations per §4.
+
+Okta Verify push (with number-matching).
+
+Okta Verify TOTP (offline / backup).
+
+3.3 Prohibited factors
+
+SMS / voice OTP (prohibited as primary or secondary; not configured in Okta).
+
+Knowledge-based "security questions."
+
+Email OTP for routine authentication.
+
+3.4 Recovery factors
+
+Account recovery is mediated through (a) IT Operations via ticket with two-factor identity verification, or (b) self-service recovery using a paired FIDO2 backup key for in-scope populations. The IAM Specialist verifies a sample of recovery events monthly.
+
+4. Phishing-Resistant MFA (FIDO2 / WebAuthn)
+
+4.1 Mandatory populations
+
+FIDO2 / WebAuthn is mandatory for the following populations. Full enforcement was achieved Q4 2025 (KPI: 100%; see §9).
+
+All Information Security personnel (n=6).
+
+All engineers and SREs with production access (n≈50 in Q4 2025; population varies with engineering hiring).
+
+All IAM administrators and IT administrators (n=5).
+
+All members of the Office of the CEO (n=6).
+
+Any role with an entitlement to read or modify PHI in production (n≈70 inclusive of overlaps with the above; reconciled monthly against INV-Data-Classification-Inventory).
+
+4.2 Approved authenticators
+
+Each in-scope user is required to enroll at least two FIDO2 authenticators (one roaming + one platform, or two roaming) so that single-key loss does not lock the user out.
+
+4.3 Enforcement
+
+Okta authentication policy enforces FIDO2-only for in-scope populations. Non-FIDO2 factors are blocked at policy for these users. Policy logic (simplified):
+
+IF user is member of Okta group "fido2-required"
+  AND application is in catalog "in-scope-applications"
+THEN allowed factor = WebAuthn ONLY
+
+The fido2-required group is sourced from (a) Workday job-role attributes mapped to in-scope roles, (b) overlay groups for cross-functional roles (e.g., on-call rotation members), and (c) explicit additions for any role granted PHI production access via PROC-PAM-01 elevations.
+
+4.4 PAM separation
+
+Privileged identities (<user>.adm) are subject to the same FIDO2 requirement and require FIDO2 authentication within the prior 5 minutes of a JIT elevation request (per PROC-PAM-01 §5).
+
+5. Customer-Administrative MFA Standard
+
+MFA is mandatory for all customer-administrative accounts. Two paths:
+
+Federated customers (37 of 47 customers as of Q1 2026): contractually required to enforce MFA at the customer IDP. MCT validates the SAML/OIDC assertion includes an MFA claim (amr value of mfa, pwd+otp, pwd+mfa, or phr).
+
+Okta-hosted customer admins (10 of 47 customers): MCT-managed Okta authentication policy enforces Okta Verify minimum + FIDO2 recommended; FIDO2 will become mandatory for customer admins in Q3 2026 per the FY26 IAM roadmap.
+
+6. Patient-Portal MFA Standard
+
+Patient-portal MFA is configured per customer tenant in Auth0. The MCT default tenant template recommends:
+
+MFA on first login from a new device (mandatory).
+
+Risk-based step-up MFA (Auth0 attack-protection signals: impossible travel, suspicious IP, breached credentials).
+
+TOTP and email OTP supported; SMS deprecated (still permitted in legacy tenants pending uplift).
+
+Known coverage gap: A subset of customer tenants do not enforce step-up MFA on every patient login by tenant configuration choice. This is documented as risk register entry R8 ("Patient-portal MFA inconsistent across customer tenants"). The FY26 IAM roadmap includes a tenant-by-tenant uplift program targeting full step-up MFA by Q3 2026 for all customer tenants where the customer has not opted out in writing.
+
+7. Exception Handling
+
+7.1 Exception scenarios
+
+Common exceptions:
+
+New-hire pre-FIDO2-enrollment window (first 24 hours): Okta Verify acceptable; FIDO2 enrollment required as condition of in-scope access.
+
+Hardware loss: emergency Okta Verify acceptable for 24 hours; new FIDO2 issued within 24 hours; security incident treatment if loss circumstances are unclear.
+
+Travel without FIDO2: must request a temporary device-bound platform authenticator pre-trip.
+
+Vendor / break-glass: covered in PROC-PAM-01 §6.
+
+7.2 Exception process
+
+All exceptions are requested via ServiceNow GRC, evaluated by the IAM Specialist, and approved by the CISO for any exception >24 hours. Exceptions >7 days require Security Steering Committee endorsement. All exceptions are logged in REG-EX-01.
+
+7.3 Current standing exceptions
+
+As of Q1 2026:
+
+8. Logging, Monitoring, and Reporting
+
+8.1 Logging
+
+All authentication events (success and failure) are logged in the Okta system log and aggregated to Datadog Cloud SIEM. Retention is 90 days hot in Datadog and 7 years cold in S3 per HIPAA §164.316(b)(2).
+
+8.2 Monitored signals
+
+MFA-fatigue patterns (≥3 push prompts within 5 minutes — alerted post-Pebble Phish).
+
+Failed MFA attempts ≥5 within 10 minutes.
+
+Authentication from unusual geography (Datadog GeoIP enrichment + Okta ThreatInsight).
+
+FIDO2 fallback attempts on fido2-required users (should be zero by policy; any non-zero = P2 alert).
+
+8.3 KPI reporting
+
+The IAM Specialist publishes a monthly KPI dashboard to the Security Steering Committee:
+
+Workforce MFA enrollment %.
+
+FIDO2 enrollment % for in-scope populations.
+
+Mean time to FIDO2 enrollment for new in-scope hires.
+
+Exception count and aging.
+
+9. Rollout Evidence Package (Refreshed Quarterly)
+
+9.1 FIDO2 rollout history
+
+9.2 Q1 2026 enrollment statistics (snapshot Jan 31, 2026)
+
+9.3 Q1 2026 exception roster
+
+3 standing exceptions per §7.3 above; 7 quarterly access-review exceptions per RPT-Quarterly-Access-Review-Q4-2025 §4.4. No exceptions exceed Risk Appetite Statement (RAS-2025-12) thresholds.
+
+9.4 SOC 2 Type II evidence cross-reference
+
+The 2025 SOC 2 Type II audit (Schellman & Co., issued February 2026) tested the following MFA-related criteria with no exceptions:
+
+CC6.1 / CC6.2 — Logical access controls and authentication.
+
+CC6.6 — Logical access related to threats from outside boundaries.
+
+CC6.7 — Restriction and monitoring of access to data.
+
+9.5 HITRUST r2 evidence cross-reference
+
+This Standard, the rollout evidence in §9.1–9.3, and the Q4 2025 access review (RPT-Quarterly-Access-Review-Q4-2025) are loaded to Hyperproof against the following HITRUST controls (illustrative):
+
+01.b (User registration) — POL-IAM-01 + Workday SCIM evidence.
+
+01.q (User authentication for external connections) — this Standard §4 + Okta authentication policy export.
+
+01.r (Equipment identification in networks) — INV-Hardware-Asset-Inventory + Jamf/Intune evidence.
+
+01.s (Remote diagnostic and configuration port protection) — break-glass procedure (PROC-PAM-01 §6).
+
+10. Roles and Responsibilities
+
+11. Related Documents
+
+POL-001 Information Security Policy
+
+POL-IAM-01 Identity and Access Management Policy
+
+PROC-PAM-01 Privileged Access Management Procedure
+
+RPT-Quarterly-Access-Review-Q4-2025
+
+STD-ENC-01 Cryptographic Key Management Standard
+
+RAS-2025-12 Risk Appetite Statement
+
+CRA-LegacyETL-2025 Legacy ETL Cluster Compensating Controls
+
+Cyber Risk Register (R8 — patient-portal MFA gap)
+
+12. Document Control
+Authenticator type | Models | Notes
+Roaming hardware key | YubiKey 5C NFC, YubiKey 5 Nano, YubiKey Bio Series | IT-issued; serial-numbered; tracked in ServiceNow asset register
+Platform authenticator (macOS) | Touch ID on Apple silicon MacBook Pro / Air | Bound to Jamf-managed device
+Platform authenticator (Windows) | Windows Hello (PIN + biometric) | Bound to Intune-managed device
+# | Description | Approved by | Compensating control | Closure
+1 | Legacy ETL bastion local-account auth (CRA-LegacyETL-2025) | CISO | Bastion-only SSH; MFA at bastion; quarterly local-account review | Decommission Q4 2026
+2 | Patient-portal step-up MFA gap (R8) | CISO | Risk-based detection at Auth0; quarterly review | Tenant uplift program — full coverage Q3 2026
+3 | One Okta-hosted customer-admin account (small customer; no IDP) using Okta Verify only | CISO | Mandatory MFA; reviewed annually | Migrate to FIDO2 by Q3 2026
+Phase | Period | Population | Result
+Phase 0 — Policy adoption | Q4 2024 | Policy approved; FIDO2 SKUs procured | YubiKey 5 series purchased and inventoried
+Phase 1 — Pilot | Q1 2025 | InfoSec team (n=6); IT admins (n=5); Office of CEO (n=6) | 100% enrolled by Mar 31, 2025
+Phase 2 — Engineering | Q2 2025 | All engineers and SREs with production access (n≈48) | 96% enrolled by Jun 30, 2025; remainder enrolled within 14 days
+Phase 3 — Cross-functional roles | Q3 2025 | Roles with PHI production access via JIT (overlay group; n≈22 unique additions beyond Phase 2) | 100% enrolled by Sep 30, 2025
+Phase 4 — Enforcement | Q4 2025 | Okta authentication policy switched from "FIDO2 preferred" to "FIDO2 only" for in-scope populations | Enforcement live Oct 14, 2025; 100% maintained through year-end
+Metric | Result | Target
+Workforce MFA enrollment (any factor) | 348 / 348 (100%) | 100%
+FIDO2 enrollment among fido2-required group | 70 / 70 (100%) | 100%
+In-scope users with ≥2 FIDO2 authenticators (resilience target) | 67 / 70 (95.7%) | 100% (gap: 3 users in onboarding period; second key in shipment)
+Mean time to first FIDO2 enrollment for new in-scope hires (Q4 2025 cohort) | 1.7 days | ≤7 days
+Authentication failures attributed to FIDO2 misuse | 0.04 / user / month | n/a (informational)
+Customer-admin MFA enforcement | 47 / 47 customers (100%) | 100%
+Patient-portal step-up MFA — customer tenants meeting baseline | 31 / 47 (66.0%) | 100% by Q3 2026 (R8 in flight)
+Role | MFA responsibilities
+CISO (Sarah Yoon) | Owner of standard; approves exceptions; HIPAA Security Official
+IAM Specialist (Ben Olafsson) | Operational owner; runs Okta authentication policy; quarterly KPI dashboard
+GRC Manager (Jordan Park) | Maintains evidence package in Hyperproof; SOC 2 / HITRUST liaison
+IT Operations | Issues YubiKeys; tracks asset register; supports recovery
+Security Engineer (D&R) (Marcus Tan) | Tunes SIEM detections (§8.2)
+All workforce | Enroll required factors; report lost authenticators promptly
+Customer Success | Enforces customer-admin MFA contract requirements
+Version | Date | Author | Change summary
+1.0 | 2023-09 | S. Yoon | Initial standard on Okta migration
+2.0 | 2024-11 | S. Yoon, B. Olafsson | Post-Pebble Phish; FIDO2 mandate added; number-matching required
+3.0 | 2025-08 | B. Olafsson, J. Park | Phase 4 enforcement language; rollout evidence section formalized
+3.1 | 2025-12 | B. Olafsson, J. Park | Annual review; refreshed Q1 2026 enrollment stats; HITRUST evidence cross-reference added; aligned with NIST CSF 2.0 PR.AA

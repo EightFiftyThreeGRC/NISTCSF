@@ -1,0 +1,42 @@
+Line Item,Q1 2026 ($000),Q1 2025 ($000),YoY % Change,Notes
+REVENUE,,,,
+Subscription revenue (ToC),8420,7110,18.4%,Core module
+Subscription revenue (Referral Lifecycle),5680,4520,25.7%,Fastest-growing module
+Subscription revenue (Chronic Care Mgmt),3980,3140,26.8%,Tied to Medicare CCM volume growth
+Subscription revenue (Population Insights),2240,1680,33.3%,Acquired tech now scaling
+Implementation & professional services,920,1020,-9.8%,Shift to packaged onboarding
+Total Revenue,21240,17470,21.6%,
+,,,,
+COST OF REVENUE,,,,
+AWS infrastructure & hosting,2120,1840,15.2%,Primarily us-east-1 EKS + Aurora
+Snowflake compute & storage,580,420,38.1%,Population Insights driving usage
+Other SaaS cost of revenue (Okta SCIM seats etc),310,260,19.2%,
+Customer Success & Implementation labor,1840,1620,13.6%,
+Total Cost of Revenue,4850,4140,17.1%,
+Gross Profit,16390,13330,23.0%,
+Gross Margin %,77.2%,76.3%,+90 bps,
+,,,,
+OPERATING EXPENSES,,,,
+Engineering & Product,5240,4380,19.6%,148 FTE
+Sales & Marketing,4920,4150,18.6%,54 FTE
+General & Administrative,1880,1720,9.3%,Includes Finance / Legal / HR / Facilities
+Information Security,1030,820,25.6%,5.0% of ARR; HITRUST + MDR investment
+Total Operating Expenses,13070,11070,18.1%,
+,,,,
+OPERATING INCOME / (LOSS),3320,2260,46.9%,
+Operating Margin %,15.6%,12.9%,+270 bps,
+,,,,
+KEY METRICS,,,,
+Subscription ARR (annualized Q1 run-rate),81280,66600,22.0%,Subscription revenue only; excludes implementation & PS — primary metric for security-spend-to-ARR ratio
+Total revenue run-rate (annualized Q1),84960,69880,21.6%,Includes implementation & PS; not used for ARR-based ratios
+Cash on hand (end of period),46200,28800,60.4%,Series C capital + operating cash generation
+Headcount (period end),348,304,14.5%,
+Net Revenue Retention (TTM),114%,109%,+500 bps,
+Customer count,47,42,11.9%,
+,,,,
+INFORMATION SECURITY BUDGET DETAIL,,,,
+Personnel,620,500,24.0%,"6 FTE Q1 2026 / ~5.3 avg FTE Q1 2025 (Analyst Iyer joined Feb 2025); CISO + GRC + 2 SecEng + Analyst + IAM"
+Tooling (Datadog/CrowdStrike/Okta/Wiz/Vanta/Hyperproof),215,180,19.4%,
+Third-party services (MDR / pentest / SOC 2 audit / HITRUST),155,110,40.9%,Arctic Wolf MDR contract Mar 2024 + HITRUST cycle
+Training & professional development,40,30,33.3%,Conferences + role-based training content
+Total Information Security,1030,820,25.6%,

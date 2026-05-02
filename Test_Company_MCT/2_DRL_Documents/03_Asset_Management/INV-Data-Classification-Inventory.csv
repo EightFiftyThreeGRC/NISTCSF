@@ -1,0 +1,37 @@
+DataAsset,Classification,PHI,Storage,Encryption,RetentionPolicy,AccessControl,Owner,Notes
+Patient demographics + problem lists,Restricted,Y,Aurora PostgreSQL (prod cluster),AES-256 KMS-CMK at rest; TLS 1.2+ in transit,Per BAA — match customer EHR retention; standard 7 years post-termination,RBAC via Okta + app-level row scoping by tenant; access logged in pgAudit + Datadog,Tomás Reyes (VP Eng),HIPAA-protected; 2.4M unique patient records across all tenants
+Medication lists + allergies,Restricted,Y,Aurora PostgreSQL (prod cluster),AES-256 KMS-CMK at rest; TLS 1.2+ in transit,Per BAA — match customer EHR retention,RBAC via Okta + tenant scoping; pgAudit,Tomás Reyes (VP Eng),Sourced from Surescripts and customer EHR FHIR feeds
+Care plan documents + clinical attachments,Restricted,Y,Amazon S3 (attachment buckets),SSE-KMS with KMS-CMK; TLS 1.2+ in transit,Per BAA — match customer policy; lifecycle tag-driven,RBAC via Okta; bucket policy least privilege; pre-signed URL TTL 5 min,Tomás Reyes (VP Eng),Cross-region replication for P1 buckets
+ToC structured tasks + SLA tracking,Restricted,Y,Aurora PostgreSQL,AES-256 KMS-CMK; TLS 1.2+,Per BAA,RBAC + tenant scoping,Tomás Reyes (VP Eng),Operational coordination data
+Referral records + loop-closure events,Restricted,Y,Aurora PostgreSQL,AES-256 KMS-CMK; TLS 1.2+,Per BAA,RBAC + tenant scoping,Tomás Reyes (VP Eng),Referral Lifecycle Management module
+CCM time logs (CPT 99490/99491/99487),Restricted,Y,Aurora PostgreSQL,AES-256 KMS-CMK; TLS 1.2+,Per BAA — minimum 6 years per CMS billing record retention,RBAC + tenant scoping,Tomás Reyes (VP Eng),Billing-grade records; immutable post-finalization
+Population Insights cohort views,Restricted,Y (de-identified for most queries),Snowflake production accounts,Snowflake-managed encryption; TLS 1.2+,Per BAA,Snowflake row-access policies + dynamic masking; Okta SAML SSO,Pittsburgh analytics lead,Population Insights module backbone
+Patient portal CIAM data,Restricted,Y (PII / contact),Auth0 (Okta-owned),Auth0 managed encryption,Per BAA,Auth0 tenant config; risk-based MFA (R8 partial coverage),Ben Olafsson (IAM),Patient-portal identity store
+FHIR R4 inbound integration cache,Restricted,Y (in transit and short-term cache),AWS ElastiCache (no persistence) + Aurora,KMS at rest; TLS in transit,Cache TTL <= 60 min; persistence in Aurora,App-level scoping; mTLS east-west,Tomás Reyes (VP Eng),No PHI persisted in ElastiCache by design
+HL7v2 message archive,Restricted,Y,S3 (HL7 archive bucket),SSE-KMS with KMS-CMK,7 years cold,Bucket policy least privilege; access logged,Tomás Reyes (VP Eng),HL7 v2 inbound feeds
+Legacy ETL staging data (on-prem),Restricted,Y,Local PostgreSQL on Raleigh ETL cluster,LUKS at rest; TLS in transit (post-cutover lift to Aurora),Purged within 7 days post-load,Local Linux ACL + bastion-only ingress; out of central IAM automation,Tomás Reyes (VP Eng),Legacy partial exception per CRA-LegacyETL-2025; decommission Q4 2026
+Audit logs (AWS CloudTrail / Okta system log / pgAudit / Datadog sec events),Confidential,N,Datadog Cloud SIEM (90 days hot) + S3 (7 years cold; Glacier transition at 365 days),KMS-CMK at rest; TLS 1.2+,90 days hot + 7 years cold per HIPAA §164.316(b)(2),RBAC via Okta; SIEM access limited to InfoSec + tier-2/3 MDR,Marcus Tan (Sec Eng D&R),Source of truth for audit / forensic / incident review
+Datadog observability data (non-security),Internal,N (no PHI by policy),Datadog SaaS,Datadog-managed,30 days standard; security events 90 days,RBAC by Datadog team scope,Tomás Reyes (VP Eng),APM/metrics/logs; PHI prohibition enforced via scrubbing rules
+Code repositories (source code),Confidential,N (PHI prohibited; secret scanning + GHAS),GitHub Enterprise,GitHub-managed,Indefinite; per repository,SSO via Okta; branch-protection + CODEOWNERS,Tomás Reyes (VP Eng),Secrets prohibited; Snyk + GHAS scanning
+IaC + deployment config,Confidential,N,GitHub Enterprise + AWS (deployed state),GitHub-managed; AWS KMS for state files,Indefinite,SSO via Okta; least-privilege CI/CD service identities,Alicia Reyes (Sec Eng Cloud),Includes Wiz IaC scanning gates
+HR records (employee files),Confidential,N,Workday SaaS + Microsoft 365 (HR SharePoint),Workday-managed; M365-managed,7 years post-separation,Workday role-based; SharePoint security group,Linda Chao (CPO),Background check artifacts retained per state law
+Training records (security awareness + role-based),Confidential,N,Vanta + Workday Learning,Vanta-managed; Workday-managed,7 years,RBAC; auditor read-only role,Jordan Park (GRC),HIPAA awareness completion evidence
+BAAs and customer contracts,Confidential,N,Microsoft 365 SharePoint (Legal),M365-managed; rights management on sensitive items,Indefinite,Legal team; CISO read-only,Marcus Holbrook (GC),BAA executed with all 47 customers
+Vendor contracts + DPAs + SOC 2 reports,Confidential,N,Microsoft 365 SharePoint (Legal/InfoSec),M365-managed,Indefinite,Legal + GRC,Jordan Park (GRC),Linked from ServiceNow GRC supplier records
+Risk register + control evidence,Confidential,N,ServiceNow GRC + Hyperproof,Vendor-managed,Indefinite,RBAC; auditor read-only role,Jordan Park (GRC),Cyber risk register R1-R10 maintained here
+Financial records (GL/AR/AP/expense),Confidential,N,NetSuite + Microsoft 365,Vendor-managed,7 years per IRS retention,Finance role-based; SoX-relevant subset segregated,Greg Hartman (CFO),Not SOX-filer; voluntarily aligned controls
+Marketing analytics + website telemetry,Internal,N,Marketing SaaS stack (HubSpot/Google Analytics 4),Vendor-managed,2 years rolling,Marketing team,Sara Whitfield (CRO),No PHI; consent-managed
+Public website + product marketing content,Public,N,Webflow + AWS CloudFront,TLS in transit,Indefinite (subject to refresh),Public,Sara Whitfield (CRO),Marketing site
+Internal wiki + non-prod docs,Internal,N,Notion + Microsoft 365 SharePoint,Vendor-managed,Indefinite,SSO via Okta,IT Operations,PHI prohibition enforced; spot-checked
+Slack workspace messages,Confidential,N (PHI prohibited),Slack Enterprise Grid,Slack-managed,1 year (workspace retention),SSO via Okta + per-channel ACL,IT Operations,DLP via Microsoft Purview planned Q3 2026
+Email + Teams chat,Confidential,Limited (DLP-controlled),Microsoft 365,M365-managed; rights management on labelled items,7 years (legal hold capable),SSO via Okta,IT Operations,Purview DLP rollout in design
+,,,,,,,,
+COLUMN DEFINITIONS,,,,,,,,
+Classification,"Restricted (PHI / regulated data) / Confidential (internal sensitive) / Internal (default) / Public — per POL-DC-01",,,,,,,
+PHI,"Y/N — under scope of HIPAA Business Associate Agreement",,,,,,,
+Storage,"Primary system of record; downstream copies tracked separately",,,,,,,
+Encryption,"At-rest method + in-transit method; KMS-CMK indicates AWS Customer-Managed Key",,,,,,,
+RetentionPolicy,"Default; subject to legal hold and customer BAA-specific overrides",,,,,,,
+AccessControl,"High-level model; detailed entitlements in Okta + ServiceNow GRC",,,,,,,
+Owner,"Named data owner; HIPAA Security Official (CISO) is overall accountable",,,,,,,
+Source of truth,"ServiceNow GRC Data Catalog; reconciled with Wiz DSPM (planned Q3 2026)",,,,,,,

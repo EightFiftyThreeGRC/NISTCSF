@@ -1,0 +1,250 @@
+# Incident Response Plan
+
+**Document ID:** PLN-IR-01
+**Version:** 5.2
+**Effective date:** January 1, 2026
+**Last reviewed:** December 11, 2025 (annual review)
+**Next review:** December 2026
+**Approver:** Sarah Yoon, CISO; Marcus Holbrook, GC
+**Owner:** Marcus Tan, Security Engineer (Detection & Response); GRC liaison: Jordan Park
+**Distribution:** All MCT personnel with incident-response responsibilities; published on internal wiki; redacted version available to customers under NDA on request
+
+---
+
+## 1. Purpose
+
+This Incident Response Plan ("IRP" or "Plan") establishes the methodology, authorities, roles, and procedures by which Meridian Care Technologies, Inc. ("MCT") detects, analyzes, contains, eradicates, recovers from, and learns from cybersecurity incidents affecting the MeridianCare platform, the corporate IT environment, and any system or data subject to MCT's HIPAA Business Associate obligations.
+
+This Plan is the operational expression of POL-001 §3.12 and is referenced in all customer Business Associate Agreements (BAAs).
+
+## 2. Scope
+
+This Plan applies to:
+
+- All cybersecurity incidents affecting MCT-owned, MCT-managed, or MCT-contracted information systems and data, including production MeridianCare in AWS us-east-1 / us-west-2, the corporate IT environment (Microsoft 365, Okta, the endpoint fleet), the legacy on-premises ETL cluster at the Raleigh HQ, and authorized third-party services that process MCT data.
+- Suspected or confirmed events involving Protected Health Information (PHI) under HIPAA Business Associate obligations.
+- Events reported by customers, vendors, or external researchers concerning MCT systems or data.
+
+Privacy-only incidents that do not involve a security control failure (e.g., misdirected fax of a deidentified report) are co-managed under the Privacy Incident Procedure (PROC-PRIV-01) led by the General Counsel and HIPAA Privacy Officer; this Plan governs the security-incident dimensions of any joint event.
+
+## 3. Definitions
+
+| Term | Definition |
+|---|---|
+| Event | An observable occurrence in a system or network. |
+| Security event | An event with potential security significance requiring triage. |
+| Incident | A confirmed adverse event, or a credible series of events, that has compromised or threatens to compromise the confidentiality, integrity, or availability of MCT information or systems, or that violates applicable security policy. |
+| PHI breach | An incident meeting the definition under 45 CFR §164.402 — an impermissible acquisition, access, use, or disclosure of unsecured PHI not falling within an exception, presumed to compromise the security or privacy of the PHI unless rebutted by the four-factor risk assessment. |
+| Severity | The classification of incident magnitude per §5 (SEV-1 through SEV-4). |
+| Incident Commander (IC) | The individual with operational authority for response decisions during the active phase of an incident. |
+
+## 4. Authorities
+
+| Authority | Holder | Notes |
+|---|---|---|
+| Declares incident severity (SEV-1/2/3/4) | CISO (Sarah Yoon); designated alternate: Marcus Tan | Initial severity may be assigned by the on-call security engineer at triage; CISO confirms or revises. |
+| Authorizes SEV-1 declaration externally | CEO (Helena Park) | A SEV-1 incident requires CEO sign-off before customer-facing notification. |
+| Owns breach assessment and notification decision under HIPAA Breach Notification Rule §§164.400–414 | General Counsel & HIPAA Privacy Officer (Marcus Holbrook) | GC has final authority on notification timing, content, and recipients; CISO advises on technical facts. |
+| Engages outside counsel | GC | Crowell & Moring on retainer for breach matters. |
+| Engages cyber insurer (Beazley) | GC + CISO jointly | Initial notice within 72 hours of suspected covered event per policy terms. |
+| Engages law enforcement (FBI / Secret Service) | CEO + GC jointly | Optional and case-specific. |
+| Authorizes containment actions that may disrupt service (network isolation, account revocation at scale, prod rollback) | Incident Commander, with CTO concurrence for changes touching customer-facing P1 services | Documented in the action log with timestamp. |
+
+## 5. Severity Model
+
+Severity is assigned at first triage and re-evaluated at every status update. Severity drives notification cadence, escalation, and resource allocation.
+
+| Severity | Definition | Concrete examples | Notification cadence |
+|---|---|---|---|
+| **SEV-1** | Confirmed or imminent PHI breach affecting >500 records, OR sustained P1 service unavailability beyond 1 hour, OR confirmed unauthorized administrative access to production, OR ransomware affecting any production system. | Mass exfiltration of patient records; Aurora primary database compromise; ransomware encrypting EKS workloads. | CEO immediate; Board within 4h; customers within 4–24h via VP CS + GC; HHS OCR within 60 days per §164.408 if breach confirmed. |
+| **SEV-2** | Credential compromise of a privileged or PHI-handling account without confirmed PHI access; targeted phishing campaign with at least one credential submission; sustained P2 service unavailability >2 hours; confirmed loss/theft of an unencrypted endpoint with PHI. | Pebble Phish (March 14, 2024) was a SEV-2. | CISO immediate; Steering Committee within 4h; customer notification only if §164.402 four-factor test concludes breach. |
+| **SEV-3** | Single-account credential exposure with timely user-driven response and no successful authentication; phishing simulation failure with subsequent training; minor service degradation; isolated endpoint malware contained by EDR. | A user reports clicking a phishing link before submitting credentials; CrowdStrike auto-quarantines a malicious download on a sales laptop. | CISO same-business-day; documented in incident tracker; no customer notification absent a §164.402 finding. |
+| **SEV-4** | Routine security event with no operational impact or compromise; informational. | Failed brute-force attempts blocked by WAF; expected anomalies during a planned change. | Logged only; reviewed in weekly tier-1 alert review. |
+
+Severity may be **upgraded or downgraded** during response based on new evidence; downgrades require documented rationale signed off by the IC.
+
+## 6. Incident Response Phases
+
+The Plan adopts the NIST SP 800-61r3 phase model adapted for MCT operating reality.
+
+### 6.1 Preparation
+
+Standing capabilities maintained between incidents:
+
+- **24x7 monitoring.** Datadog Cloud SIEM is the primary detection surface. CrowdStrike Falcon provides EDR coverage across the endpoint fleet. Okta system log feeds Datadog with MFA-fatigue, impossible-travel, and new-device rules tuned. Arctic Wolf MDR provides overnight (18:00–06:00 ET) and weekend tier-1 alert escalation; the contracted expansion to full tier-1 coverage is under negotiation as of February 2026.
+- **Runbooks.** Maintained in the runbook repository (`ir-runbooks` Git repo). Top-of-stack scenarios: phishing-credential, MFA fatigue, ransomware on EKS, Aurora compromise, S3 bucket misconfiguration disclosure, third-party (vendor) compromise, account takeover.
+- **Retainers.** Outside counsel (Crowell & Moring); DFIR retainer (Mandiant, $50K pre-purchased hours); cyber insurer (Beazley) breach-coach contact.
+- **Tabletops.** Quarterly IR tabletops (POL-001 §3.12). Most recent: Q4 2025 tabletop on Snowflake-side credential exposure with PHI-exfiltration attempt (RPT-IR-Tabletop-Q4-2025).
+- **Training.** All personnel complete annual security awareness training (PLN-SA-01); IR team completes additional role-based training annually.
+
+### 6.2 Detection and Triage
+
+Detection sources:
+
+1. Datadog Cloud SIEM correlation rules (primary).
+2. CrowdStrike Falcon detections.
+3. Okta system log alerts (MFA fatigue, impossible travel, password spray).
+4. Arctic Wolf MDR escalations.
+5. User reports via `security@meridiancare.com`, the in-product "Report Phish" Outlook button, or direct CISO outreach.
+6. Customer or third-party notifications (BAA partners).
+7. External researchers via the responsible-disclosure mailbox.
+
+Triage SLA:
+
+- Tier-1 alert acknowledgment: 15 minutes business hours; 30 minutes overnight via Arctic Wolf.
+- Initial severity assignment: within 30 minutes of acknowledgment.
+- IC designation: within 30 minutes of severity assignment for SEV-1/SEV-2.
+
+### 6.3 Analysis
+
+The IC opens an incident record in the IR tracker (Jira `SEC-IR` project). Required fields populated within 1 hour of severity assignment: indicators of compromise, affected systems and accounts, suspected attacker objective, working hypothesis, evidence sources, IC, deputy, comms lead, GC liaison.
+
+Analysis activities include log review (Datadog SIEM, Okta system log, AWS CloudTrail, Aurora pgAudit, EKS audit log), endpoint forensics (CrowdStrike RTR), identity review (Okta application access history), and — when a PHI exposure is plausible — a PHI access review against pgAudit and S3 access logs.
+
+### 6.4 Containment
+
+Containment is staged: short-term (immediate threat reduction), long-term (sustainable measures pending eradication). Common containment levers:
+
+- **Identity:** Revoke Okta sessions, rotate password, remove Okta group membership, disable account, revoke MFA factors and re-enroll.
+- **Endpoint:** CrowdStrike network containment; remote forensic acquisition; reimage.
+- **Cloud:** Rotate IAM credentials and access keys; block IPs at WAF; isolate EKS pods via network policy; quarantine S3 prefixes via bucket policy.
+- **Data:** Pause Snowflake compute; revoke share grants; block Fivetran replication.
+
+Containment actions affecting customer-facing services require CTO concurrence per §4.
+
+### 6.5 Eradication
+
+Activities include malware removal, vulnerability remediation, key rotation across all blast-radius systems, identity hygiene (force re-authentication of impacted populations, full session revocation), and validation that the attacker's foothold and persistence mechanisms are removed. Eradication is signed off by the IC and the relevant engineering lead.
+
+### 6.6 Recovery
+
+Restoration of affected services to normal operation, with monitoring intensity elevated for at least 7 days post-incident. Where a service is recovered from backup or DR, recovery is performed under the Disaster Recovery Plan (PLN-DRP-01) tier-aligned procedures. Customer notification of resolution is led by VP CS with messaging cleared by GC.
+
+### 6.7 Lessons Learned
+
+Within 10 business days of incident closure for SEV-1 and SEV-2 (30 days for SEV-3), the IC convenes a Post-Incident Review (PIR) per §10.
+
+## 7. Roles and RACI
+
+| Activity | CISO | IC | Sec Eng (D&R) | Sec Analyst | GC | VP CS | CTO | CEO |
+|---|---|---|---|---|---|---|---|---|
+| Severity declaration | A | R | C | C | C | I | C | I |
+| Containment authorization (P1-impacting) | A | R | C | I | C | C | A | I |
+| Breach assessment under §164.402 | C | C | C | I | A/R | I | I | I |
+| Customer notification content | C | C | I | I | A | R | I | C |
+| Regulator notification (HHS OCR) | C | I | I | I | A/R | I | I | C |
+| Insurer notification (Beazley) | R | I | I | I | A | I | I | I |
+| Board / Audit & Risk Committee briefing | A/R | C | I | I | C | I | C | C |
+| PIR facilitation | A | R | C | C | C | C | C | I |
+
+(R = Responsible; A = Accountable; C = Consulted; I = Informed.)
+
+## 8. Communication Tree
+
+### 8.1 Internal
+
+| Audience | Trigger | Channel | Cadence |
+|---|---|---|---|
+| Steering Committee (CTO, CISO, GC, VP Eng, VP CS) | SEV-1 immediate; SEV-2 within 1h | Slack `#sec-ir-cmd` (private) + Zoom war room | Every 2h SEV-1; every 4h SEV-2 |
+| Executive team | SEV-1 immediate; SEV-2 within 4h | Email + Zoom | Daily until closure |
+| Board / Audit & Risk Committee | SEV-1 within 4h | CEO call + written brief | Daily SEV-1; on closure SEV-2 |
+| All-hands | SEV-1 within 24h once GC clears messaging | All-hands email or Zoom | One-off plus closure update |
+
+### 8.2 Customer
+
+| Audience | Trigger | Channel | Owner |
+|---|---|---|---|
+| All customers (proactive) | SEV-1 with broad customer impact | TSC portal advisory + emailed letter to security and legal contacts | VP CS draft, CISO + GC clear, CEO sign |
+| Affected-customers-only (targeted) | SEV-2 with limited scope OR §164.402 breach finding | Direct outreach by Customer Success Manager + GC letter | VP CS owns relationship; GC owns letter |
+| Customer regulators (downstream notification support) | Where customer obligations are triggered by an MCT-side event | Customer-led, MCT supports with technical facts | GC + CISO support |
+
+Customer notification commitments under standard BAA: notice "without unreasonable delay and in no case later than 60 calendar days" of discovery of a breach as defined under §164.402, with status updates as material facts develop. MCT's internal SLA is 30 days from discovery for the formal notification, reserving the 60-day floor for legitimately complex cases.
+
+### 8.3 Regulator
+
+| Recipient | Trigger | Owner | Deadline |
+|---|---|---|---|
+| HHS OCR | Breach affecting ≥500 PHI records (per customer obligation; MCT supports as Business Associate) | GC | 60 days from discovery (§164.408) |
+| HHS OCR (annual log) | Breaches affecting <500 records | GC | Annual filing |
+| State AGs (CA, CO, CT, NY, TX, VA) | Per state law and customer agreement | GC | State-specific |
+| HHS OCR cybersecurity event reporting (where applicable under proposed rule) | Per evolving regulation | GC + CISO | Per regulation |
+
+### 8.4 Insurer
+
+Beazley breach response within **72 hours** of suspected covered event per policy. Notice channel: dedicated breach-coach line documented in the Incident Response Quick-Reference card.
+
+### 8.5 Public
+
+External public statements are reserved for SEV-1 with material customer impact and are owned by the CEO with content authored jointly by GC and a designated PR firm (preselected). All other communications are handled via direct customer outreach.
+
+## 9. Evidence Handling and Chain of Custody
+
+All artifacts collected during response are tagged with an incident ID, timestamp (UTC and local), collector, source system, and SHA-256 hash. Evidence is stored in a dedicated S3 bucket (`mct-ir-evidence`, KMS-encrypted, MFA-delete enabled, write-once via S3 Object Lock for SEV-1/SEV-2) with access restricted to the IR team and GC.
+
+Chain-of-custody log entries are recorded for every transfer (Jira ticket comment + signed manifest in the evidence bucket). Where law enforcement engagement is anticipated, evidence is preserved in original form (forensic disk image via CrowdStrike RTR or AWS EBS snapshot) and a working copy is used for analysis. Spoliation risk is reviewed by GC at incident open.
+
+Retention: 7 years from closure, aligning with HIPAA §164.316(b)(2) documentation retention and the Beazley policy notice obligation.
+
+## 10. Breach Assessment under HIPAA §164.402
+
+For any incident where a PHI exposure is plausible, the GC convenes a Breach Assessment Workgroup (GC, CISO, IC, Privacy Counsel — outside counsel as needed). The Workgroup performs the four-factor risk assessment:
+
+1. **Nature and extent of the PHI involved.** Identifiers, sensitivity, scope.
+2. **The unauthorized recipient.** Internal vs. external; identifiable bad actor; trust posture.
+3. **Whether PHI was actually acquired or viewed.** Forensic evidence, not assumption.
+4. **Extent to which the risk has been mitigated.** Remediation actions and recovery of PHI where applicable.
+
+The Workgroup documents its determination in writing (BREACH-ASSESS-{incident-id}) and signs off; the determination is the basis for notification or non-notification. Where the determination is non-notification, the documented analysis is retained as the legal record (the §164.402 presumption is rebutted only by documented assessment).
+
+For an illustration of this workflow in practice see the Pebble Phish case file (LOG-Incident-Case-File-Pebble-Phish-2024-03), in which the four-factor assessment concluded no PHI access occurred and no notification was required.
+
+## 11. Integration with Arctic Wolf MDR
+
+Arctic Wolf provides 24x7 alert monitoring, with active escalation to MCT during overnight (18:00–06:00 ET) and weekend windows. Arctic Wolf concierge security engineers are entitled to:
+
+- Acknowledge alerts and initiate the runbook playbook designated in the alert metadata.
+- Page the MCT on-call security engineer for tier-2 escalation per the documented escalation matrix.
+- Initiate containment actions limited to: Okta session revocation; CrowdStrike network containment of an endpoint; Datadog detection rule suppression with a mandatory MCT review-back within 24h.
+
+Arctic Wolf may **not**: rotate IAM credentials in the production AWS account; modify production EKS workloads; modify Okta policies; communicate externally on MCT's behalf.
+
+The expansion of Arctic Wolf coverage to full tier-1 handoff (FY26 Priority 4) is under negotiation; until executed, the existing model holds.
+
+## 12. Post-Incident Review
+
+For SEV-1 and SEV-2, a Post-Incident Review (PIR) is convened within 10 business days of closure (30 days for SEV-3). The PIR is **blameless** in the sense of the SRE PIR tradition: the goal is system-of-controls improvement, not individual accountability. Required attendees: IC, deputy IC, all responders, CISO, GC, CTO or designate, and the engineering owner of the affected system.
+
+PIR outputs:
+
+1. Written incident timeline (UTC).
+2. Root cause analysis (5-whys minimum).
+3. What worked well; what didn't.
+4. Action items with owners and target dates, tracked in Jira `SEC-IR`.
+5. Risk register update where the incident reveals a new or worsened risk.
+6. Policy / runbook / training updates required.
+
+The PIR document is reviewed by the Steering Committee at the next monthly meeting. Action item status is tracked monthly until closure. Recurring patterns across PIRs are reported to the Audit & Risk Committee quarterly.
+
+## 13. Plan Maintenance
+
+This Plan is reviewed at least annually and after any SEV-1 or SEV-2 incident. Changes are coordinated by the GRC Manager and approved by the CISO and GC.
+
+## 14. Linked Documents
+
+- POL-001 Information Security Policy
+- BIA-2025-12 Business Impact Analysis
+- PLN-BCP-01 Business Continuity Plan
+- PLN-DRP-01 Disaster Recovery Plan
+- PROC-PRIV-01 Privacy Incident Procedure
+- LOG-Incident-Case-File-Pebble-Phish-2024-03
+- RPT-IR-Tabletop-Q4-2025
+- RAS-2025-12 Risk Appetite Statement
+
+## 15. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2019-06 | M. Chen | Initial plan |
+| 4.0 | 2024-05 | S. Yoon, M. Holbrook | Post-Pebble Phish rewrite; introduced four-factor breach workflow; added Arctic Wolf integration |
+| 5.0 | 2025-08 | M. Tan, J. Park | NIST SP 800-61r3 alignment; phase model refresh; severity model rewrite |
+| **5.2** | **2025-12** | **M. Tan** | **Annual review; added Steering Committee comms cadence, MFA-delete on evidence bucket, regulator-notification table** |

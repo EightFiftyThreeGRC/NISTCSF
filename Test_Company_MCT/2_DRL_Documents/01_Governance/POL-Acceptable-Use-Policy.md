@@ -1,0 +1,123 @@
+# Acceptable Use Policy
+
+**Document ID:** POL-AUP-01
+**Version:** 4.3
+**Effective date:** January 1, 2026
+**Last reviewed:** November 14, 2025
+**Approver:** Sarah Yoon, CISO; Linda Chao, CPO
+**Owner:** Jordan Park, GRC Manager
+**Distribution:** All employees, contractors, and authorized third parties; acknowledgment required at hire and annually
+
+---
+
+## 1. Purpose
+
+This Acceptable Use Policy ("AUP") defines the acceptable use of Meridian Care Technologies, Inc. ("MCT") information systems, networks, devices, and information. It supports the Information Security Policy (POL-001) and exists to protect MCT, its customers, its workforce, and the patients whose data MCT processes.
+
+## 2. Scope
+
+This AUP applies to all MCT personnel (employees, contractors, interns) and to authorized third parties who access MCT information systems. It applies to all systems and information described in POL-001 §2.
+
+## 3. General Expectations
+
+3.1 You must use MCT systems and information only for legitimate business purposes consistent with your role.
+
+3.2 You are accountable for activity performed under your account credentials and via devices issued to you.
+
+3.3 You must comply with all applicable laws, MCT policies, and customer contractual obligations.
+
+3.4 You have no expectation of privacy in your use of MCT systems beyond what is required by law. MCT may monitor, log, and review use of its systems for security, legal, and operational purposes, in accordance with applicable law and in coordination with the Privacy Officer.
+
+## 4. Account and Authentication
+
+4.1 You must protect your credentials. Do not share passwords, MFA tokens, or session cookies. Do not write down passwords in unsecured locations.
+
+4.2 You must use MCT-managed identity providers (Okta for workforce access; Auth0 for customer-facing patient portals) for all access to MCT systems.
+
+4.3 Multi-factor authentication is mandatory for all human accounts. Where your role includes production access, security responsibilities, or engineering responsibilities, you must use phishing-resistant MFA (FIDO2/WebAuthn). MFA fatigue prompts (rapid push notifications you did not initiate) must be reported to the security team within 30 minutes by emailing security@meridiancare.com or messaging the #security-help Slack channel.
+
+4.4 You must lock your screen when stepping away from your device. MCT-managed devices enforce automatic screen lock after 10 minutes of inactivity.
+
+## 5. Endpoints and Devices
+
+5.1 You must use MCT-issued laptops for all work involving MCT systems and information. Personal computers may not be used for work activities.
+
+5.2 You must allow MCT endpoint management software (Jamf for macOS, Intune for Windows) and endpoint detection and response (CrowdStrike Falcon) to remain installed and active on MCT-issued devices.
+
+5.3 Removable media (USB drives, external SSDs) are blocked by default on MCT laptops. Exceptions require approval by the IT Manager and the IAM Specialist.
+
+5.4 Personal mobile devices may access MCT-approved Microsoft 365 services subject to Intune mobile application management and conditional access (MFA, device compliance, no jailbreak/root). Personal mobile devices may not download, store, or transmit PHI.
+
+5.5 You must report a lost or stolen device to security@meridiancare.com and the IT Manager within 4 hours of discovery.
+
+## 6. Data Handling
+
+6.1 You must classify and handle MCT data in accordance with the Data Classification Policy (POL-DC-01). The four classification tiers are: Public, Internal, Confidential, and Restricted (PHI and other regulated data).
+
+6.2 You must not transmit Restricted data via personal email, personal cloud storage, personal messaging applications, or other unauthorized channels.
+
+6.3 You must not store Restricted data on local laptop storage except in MCT-approved encrypted locations (e.g., FileVault-encrypted volumes for macOS, BitLocker-encrypted volumes for Windows). Whenever possible, work with Restricted data only via MCT-approved cloud-based applications that do not require local download.
+
+6.4 You must not photograph or screen-record screens displaying Restricted data except where required for incident response, audit support, or other documented business purposes.
+
+6.5 You must dispose of MCT data in accordance with the Data Retention Schedule (REG-RR-01) when authorized to do so.
+
+## 7. Email, Messaging, and Collaboration
+
+7.1 You must use MCT-managed email (Microsoft 365), messaging (Slack), and collaboration platforms (Microsoft 365, Confluence) for work communications. Customer or patient communications must use MCT-approved channels.
+
+7.2 You must not auto-forward MCT email to personal accounts.
+
+7.3 You must report suspected phishing emails using the "Report Phish" button in Outlook or by forwarding to phish@meridiancare.com. Reporting is encouraged even if you are not certain — false positives are tracked and improve detection. The phishing report rate is a tracked KPI.
+
+## 8. Software Installation
+
+8.1 You may not install unauthorized software on MCT-managed endpoints. The list of approved software is available in the Self-Service catalog (Jamf, Intune Company Portal). Requests for additional software should go to the IT Manager.
+
+8.2 Engineers may install development tooling and dependencies necessary for their work, subject to the Approved Open-Source Components List maintained by the Security Engineer (Cloud/AppSec).
+
+## 9. AI Tools and External Services
+
+9.1 You may use MCT-approved AI services (Microsoft Copilot for M365, GitHub Copilot for engineering, the MCT-internal LLM gateway) for work tasks subject to the AI Use Policy (POL-AI-01).
+
+9.2 You may not paste Restricted data (PHI, customer data, source code, secrets, credentials) into public AI services (consumer ChatGPT, public Gemini, public Claude.ai, etc.). MCT enforces Data Loss Prevention (DLP) on egress to known public AI service domains; bypass attempts are logged and reviewed.
+
+9.3 New SaaS services involving MCT data must be vetted by the Security Engineer (Cloud/AppSec) and the GRC Manager prior to use, regardless of cost (free services included).
+
+## 10. Internet and Network Use
+
+10.1 You may use MCT internet access for limited personal use that does not interfere with work, does not consume excessive bandwidth, and does not violate MCT policy or law.
+
+10.2 Use of public Wi-Fi networks is permitted only with the MCT-managed VPN (Cloudflare WARP) active and the device fully patched.
+
+10.3 Connecting personal IoT devices to the MCT corporate network is prohibited. The Pittsburgh and Raleigh sites have separate guest Wi-Fi networks for personal devices.
+
+## 11. Physical Security
+
+11.1 You must wear or visibly carry your MCT badge in MCT facilities. Tailgating (allowing another person through a controlled access point on your badge) is prohibited. You must challenge unbadged individuals or escalate to facilities staff.
+
+11.2 You must not bring visitors into restricted areas (server rooms, secure development zones) without prior approval and an issued visitor badge.
+
+## 12. Reporting
+
+You must promptly report:
+
+- Suspected security incidents to security@meridiancare.com or via the security on-call paging mechanism.
+- Suspected privacy incidents to privacy@meridiancare.com.
+- Suspected policy violations or ethical concerns to your manager, the GRC Manager, or via the MCT ethics hotline (anonymous).
+- Lost or stolen devices to security@meridiancare.com and the IT Manager (per §5.5).
+
+## 13. Enforcement
+
+Violations of this AUP may result in disciplinary action up to and including termination of employment or contract, and may be reported to law enforcement where the violation involves criminal conduct. Repeated minor violations may compound into formal disciplinary action.
+
+## 14. Acknowledgment
+
+All personnel must acknowledge this AUP via Workday at hire and annually thereafter. Acknowledgments are tracked by the People Operations team in coordination with the GRC Manager. As of December 2025, the AUP acknowledgment completion rate was 100%.
+
+## 15. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 4.2 | 2025-08 | J. Park | Added §9 AI Tools provisions following enterprise AI gateway rollout |
+| **4.3** | **2025-11** | **J. Park** | **Annual review; updated §4.3 FIDO2 mandate language; added §7.3 phishing report rate KPI reference; minor cleanup** |

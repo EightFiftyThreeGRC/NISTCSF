@@ -1,0 +1,181 @@
+Detection Use Case Catalog
+
+Document ID: PLAYBOOK-DET-01 Version: 3.4 Effective date: February 1, 2026 Last reviewed: January 28, 2026 Next review: April 2026 (quarterly — detection content is reviewed more frequently than policy) Approver: Sarah Yoon, CISO Owner: Marcus Tan, Security Engineer (Detection & Response) Distribution: Information Security; Arctic Wolf MDR (under NDA); platform engineering leads on a need-to-know basis
+
+1. Purpose
+
+This Playbook catalogs the production and in-development detection use cases operated against MCT log sources in Datadog Cloud SIEM. It implements the continuous monitoring requirements of POL-001 §3.11 and is the primary content artifact backing the Detect (DE) function of the NIST CSF profile.
+
+This document is content-management oriented: it describes what MCT detects, not how (specific queries and thresholds are maintained as Datadog Sigma-format rules in the mct-detection-content repository). It is intended to be read alongside the SIEM Configuration Standard (STD-LOG-01) and the Alert Triage Procedure (PROC-AlertTriage).
+
+2. Catalog Conventions
+
+2.1 Tuning state
+
+2.2 Priority tiers (signal severity)
+
+2.3 Sources referenced
+
+CT = AWS CloudTrail; pgA = Aurora pgAudit; OKT = Okta system log; CS = CrowdStrike Falcon; EKS = EKS audit log; WIZ = Wiz CSPM; SF = Snowflake ACCOUNT_USAGE; ALB = ALB / CloudFront access; M365 = Microsoft 365 audit; GH = GitHub audit; WAF = AWS WAF v2.
+
+3. Use Cases by ATT&CK Tactic
+
+The catalog below is the authoritative inventory as of January 28, 2026. Sigma rule IDs are placeholders pointing into mct-detection-content.
+
+3.1 Initial Access (TA0001)
+
+3.2 Execution (TA0002)
+
+3.3 Persistence (TA0003)
+
+3.4 Privilege Escalation (TA0004)
+
+3.5 Credential Access (TA0006)
+
+3.6 Discovery (TA0007)
+
+3.7 Lateral Movement (TA0008)
+
+3.8 Exfiltration (TA0010)
+
+3.9 Impact (TA0040)
+
+4. Catalog Statistics
+
+As of January 28, 2026:
+
+The 7 use cases in Tuning state are the focus of the Q1 2026 alert tuning sprint (see PROC-AlertTriage §7) and reflect the alert-tuning debt acknowledged in RISK-Cyber-Risk-Register R3.
+
+The 3 use cases in Backlog state are PE-05, LM-02, and LM-04. PE-05 and LM-04 are blocked on telemetry coverage of the legacy ETL cluster (R4) and will be retired upon decommission rather than built. LM-02 depends on completion of the FY26 H1 zero-trust service mesh rollout.
+
+5. Gap Analysis
+
+The detection program is honest about the following gaps. They are reviewed quarterly at the Security Steering Committee and tracked in the cyber risk register.
+
+5.1 Telemetry-driven gaps
+
+Legacy ETL cluster (R4). Host-level visibility is partial; database-layer audit is manual. The two backlog use cases targeting this cluster cannot be fully implemented before decommission. Compensating controls: edge-firewall egress allowlist with logging; CrowdStrike Falcon on cluster hosts (use case EX-01 covers); manual quarterly review of database audit dumps.
+
+Internal-only Aurora reader (P3). Query-level pgAudit is not enabled; lateral-movement and exfiltration detection on the reader is limited to connection-level events.
+
+East-west service-mesh telemetry. mTLS traffic logs are not yet centralized pending zero-trust rollout (FY26 H1). LM-02 backlog will resolve as part of that work.
+
+5.2 Tuning-driven gaps (R3)
+
+High false-positive rate on tier-1 alerts (~28%, Q1 2026). Acknowledged debt. Driven primarily by IA-04 (synthetic monitoring traffic), DI-02 (analyst tooling), CA-04 (legacy build agent), EX-04 (Snowflake auto-scale), and PR-03 (CI/CD churn). The Q1 2026 tuning sprint (one engineer at 50% allocation) is targeting these five and is forecast to close R3 to a residual score of 5 by June 30, 2026.
+
+Snowflake compute anomaly runbook (EX-04) is draft. Use case is in Tuning until the runbook is approved.
+
+5.3 Coverage gaps not yet driven into a use case
+
+Insider-threat / UEBA tuning on production access logs is captured separately as RISK R7.
+
+Patient-portal CIAM (Auth0) anomaly detection is captured under RISK R8 and is in Auth0-native rules; integration into Datadog SIEM is on the FY26 backlog.
+
+6. Lifecycle of a Detection Use Case
+
+Idea — proposed by analyst, engineer, threat-intel feed, post-incident review, or red team.
+
+Backlog — captured in this catalog with telemetry/dependency notes.
+
+Drafting — Sigma rule authored in mct-detection-content; reviewed by D&R engineer.
+
+Tuning — deployed in observation mode for at least 14 days; FP rate measured against threshold (target <10%); runbook drafted.
+
+Production — promoted; bound to a triage tier; runbook published; included in Arctic Wolf MDR scope.
+
+Retirement — when the underlying threat or asset no longer applies (e.g., legacy ETL decom).
+
+All transitions are recorded as PRs against mct-detection-content and reviewed by a second D&R engineer per the four-eyes requirement.
+
+7. Incident-Driven Use Cases
+
+The Pebble Phish incident (March 14, 2024 — see Backgrounder §9) drove the creation of IA-02 (MFA fatigue / push bombing), IA-05 (auth following spray), and PE-04 (Okta admin role assignment outside change window). These remain Production-state and are reviewed annually as part of the post-incident control evaluation.
+
+8. References
+
+POL-001 Information Security Policy
+
+STD-LOG-01 SIEM and Central Logging Configuration Standard
+
+PROC-AlertTriage Alert Triage Procedure
+
+PLN-IR-01 Incident Response Plan
+
+RISK-Cyber-Risk-Register (R3, R4)
+
+MITRE ATT&CK Enterprise Matrix v15
+
+mct-detection-content repository (internal — Sigma rule source of truth)
+
+9. Document Control
+State | Meaning
+Production | Rule is enabled, alerting to triage; signal-to-noise is acceptable; ack/triage SLA applies
+Tuning | Rule is enabled but in observation mode or with relaxed paging behavior; analyst feedback is being collected; not yet meeting FP target
+Backlog | Rule is identified as needed but not yet built or not yet deployable due to telemetry or coverage gap
+Tier | Triage SLA (see PROC-AlertTriage) | Examples
+T1 | Acknowledge within 5 minutes | Suspected compromise of production identity or PHI access anomaly
+T2 | Acknowledge within 30 minutes | Anomalous configuration change; CSPM critical finding
+T3 | Acknowledge next business day | Hygiene; informational; trend-only
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+IA-01 | Suspicious successful login from unusual geography for workforce user | T1078.004 | OKT | mct-det-IA-01 | T1 | Production
+IA-02 | Phishing-resistant MFA bypass attempt (push fatigue / multiple MFA prompts in short window) | T1621 | OKT | mct-det-IA-02 | T1 | Production
+IA-03 | First-time login from a new device for a privileged user without prior enrollment | T1078 | OKT, CS | mct-det-IA-03 | T1 | Production
+IA-04 | Public-facing application high-rate WAF block followed by authenticated session | T1190 | WAF, ALB, OKT | mct-det-IA-04 | T2 | Tuning — high FP rate from synthetic monitoring traffic; under tuning sprint
+IA-05 | Successful authentication immediately following bulk password spray pattern | T1110.003 | OKT, ALB | mct-det-IA-05 | T1 | Production
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+EX-01 | Suspicious process execution on engineering endpoint flagged by Falcon | T1059 | CS | mct-det-EX-01 | T2 | Production (Falcon native + correlation)
+EX-02 | Container image executed in EKS that is not in approved registry list | T1610 | EKS, WIZ | mct-det-EX-02 | T1 | Production
+EX-03 | Interactive shell on production EKS pod (kubectl exec) outside change window | T1059.004 | EKS, CT | mct-det-EX-03 | T2 | Production
+EX-04 | Snowflake compute spike via newly created warehouse outside ITSM change | T1059, T1078 | SF, CT | mct-det-EX-04 | T2 | Tuning — runbook still draft (R3)
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+PE-01 | New IAM user created with console access in production account | T1136.001 | CT | mct-det-PE-01 | T1 | Production
+PE-02 | Long-lived AWS access key created (production accounts disallow) | T1098.001 | CT | mct-det-PE-02 | T1 | Production
+PE-03 | New OAuth application registration in M365 with broad scope | T1098.005 | M365 | mct-det-PE-03 | T2 | Production
+PE-04 | Okta admin role assignment outside change window | T1098 | OKT | mct-det-PE-04 | T1 | Production
+PE-05 | Scheduled task / cronjob created on legacy ETL host | T1053 | host syslog (partial) | mct-det-PE-05 | T2 | Backlog — telemetry gap, depends on R4
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+PR-01 | Use of iam:PassRole to escalate to a privileged role outside approved patterns | T1548 | CT | mct-det-PR-01 | T1 | Production
+PR-02 | EKS RBAC binding granting cluster-admin to new subject | T1548 | EKS | mct-det-PR-02 | T1 | Production
+PR-03 | GitHub Actions workflow modified to add pull_request_target with secret access | T1078, T1098 | GH | mct-det-PR-03 | T2 | Tuning
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+CA-01 | Repeated authentication failures across many accounts from single source (password spray) | T1110.003 | OKT | mct-det-CA-01 | T1 | Production
+CA-02 | Secrets manager (AWS Secrets Manager) GetSecretValue for production secret from non-prod role | T1555 | CT | mct-det-CA-02 | T1 | Production
+CA-03 | GitHub secret scanning alert reopen / dismissed without remediation | T1552.004 | GH | mct-det-CA-03 | T2 | Production
+CA-04 | EC2 IMDSv1 access from inside production VPC (only IMDSv2 allowed) | T1552.005 | CT, VPC flow | mct-det-CA-04 | T2 | Tuning — known FPs from one legacy build agent until decom
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+DI-01 | Bulk Describe* / List* API enumeration from a single principal | T1580 | CT | mct-det-DI-01 | T2 | Production
+DI-02 | Snowflake INFORMATION_SCHEMA enumeration by non-admin role | T1087 | SF | mct-det-DI-02 | T2 | Tuning — analyst tooling drives FPs
+DI-03 | Aurora pg_catalog enumeration by non-DBA role | T1087 | pgA | mct-det-DI-03 | T2 | Production
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+LM-01 | Use of long-term IAM credentials from an EKS pod that should use IRSA | T1550 | CT, EKS | mct-det-LM-01 | T1 | Production
+LM-02 | East-west traffic that bypasses service mesh mTLS (FY26 zero-trust scope) | T1021 | VPC flow, mesh logs | mct-det-LM-02 | T2 | Backlog — depends on FY26 zero-trust rollout
+LM-03 | Workforce account authenticating to production AWS via federation outside business pattern | T1078.004 | OKT, CT | mct-det-LM-03 | T1 | Production
+LM-04 | Inbound SMB / RDP from corporate to legacy ETL host outside admin pattern | T1021 | host syslog (partial) | mct-det-LM-04 | T2 | Backlog — telemetry gap, depends on R4
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+EF-01 | Anomalous s3:GetObject volume from production bucket to non-MCT principal | T1530 | CT | mct-det-EF-01 | T1 | Production
+EF-02 | Snowflake bulk COPY INTO @stage external unload by non-ETL role | T1041 | SF | mct-det-EF-02 | T1 | Production
+EF-03 | Aurora large result-set query from interactive (non-application) role | T1041 | pgA | mct-det-EF-03 | T1 | Production
+EF-04 | M365 anomalous mailbox export / forwarding rule creation | T1114.003 | M365 | mct-det-EF-04 | T2 | Production
+EF-05 | High-volume egress from legacy ETL cluster to non-allowlisted destination | T1041 | edge firewall flow | mct-det-EF-05 | T2 | Tuning — coarse-grained signal pending R4 closure
+# | Use case | ATT&CK | Sources | Rule ID | Tier | State
+IM-01 | Mass deletion of S3 objects in production bucket | T1485 | CT | mct-det-IM-01 | T1 | Production
+IM-02 | KMS key disable / scheduled deletion on customer-managed key | T1485 | CT | mct-det-IM-02 | T1 | Production
+IM-03 | Aurora cluster deletion or stop-DB-instance | T1485, T1490 | CT | mct-det-IM-03 | T1 | Production
+IM-04 | Falcon ransomware behavioral indicator on managed endpoint | T1486 | CS | mct-det-IM-04 | T1 | Production
+IM-05 | Snowflake mass DROP TABLE outside change window | T1485 | SF | mct-det-IM-05 | T1 | Production
+Bucket | Count
+Total documented use cases | 32
+Production | 22
+Tuning | 7
+Backlog | 3
+T1 | 16
+T2 | 16
+T3 | 0
+Version | Date | Author | Change summary
+1.0 | 2023-06 | M. Tan (predecessor) | Initial catalog — 14 use cases
+2.0 | 2024-04 | M. Tan | Post-Pebble Phish; added IA-02/IA-05/PE-04; reorganized by ATT&CK
+3.0 | 2025-01 | M. Tan | Added Snowflake source coverage; added Wiz integration use cases
+3.2 | 2025-07 | M. Tan | Added GitHub-source use cases; honest tuning-state introduced
+3.3 | 2025-10 | M. Tan | Added IM-* impact set; added catalog statistics block
+3.4 | 2026-01 | M. Tan | Quarterly review; refreshed tuning/backlog states; added gap analysis tied to R3/R4; recorded Q1 2026 tuning sprint targets

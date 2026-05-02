@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NIST CSF Assessment — Tests</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;padding:32px;max-width:900px;margin:0 auto}
+  h1{font-size:1.4rem;margin-bottom:6px}
+  .sub{color:#5a7a96;font-size:.9rem;margin-bottom:24px}
+  .summary{background:#fff;border:1px solid #d0dce8;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-weight:600}
+  .summary.pass{border-left:4px solid #2e7d32;color:#1b5e20}
+  .summary.fail{border-left:4px solid #c62828;color:#7a1f1f}
+  .test{background:#fff;border:1px solid #d0dce8;border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:.86rem;line-height:1.5}
+  .test.pass{border-left:3px solid #2e7d32}
+  .test.fail{border-left:3px solid #c62828;background:#fff5f5}
+  .test-name{font-weight:700;margin-bottom:2px}
+  .test-msg{font-size:.78rem;color:#5a7a96}
+  .test.fail .test-msg{color:#7a1f1f;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{background:#eef3f8;padding:1px 5px;border-radius:3px;font-size:.82rem}
+</style>
+</head>
+<body>
+<h1>NIST CSF Assessment — Pure Function Tests</h1>
+<p class="sub">Browser-runnable assertions on the assessment tool's pure functions. No build step, no test framework — open this file and the results render below. The functions under test are duplicated here from <code>nist-csf-assessment.html</code> rather than imported, so this file is self-contained.</p>
+<div id="summary"></div>
+<div id="results"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// Functions copied verbatim from nist-csf-assessment.html
+// (kept here so tests are self-contained; if the originals
+// change, mirror the change here.)
+// ════════════════════════════════════════════════════════════
+
+function parseJSON(str){
+  let s=String(str||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'');
+  const i=s.indexOf('{');
+  const j=s.lastIndexOf('}');
+  if(i===-1||j===-1||j<i)throw new Error('No JSON object found in model response.');
+  s=s.slice(i,j+1);
+  try{return JSON.parse(s);}
+  catch(e){
+    const recovered=recoverPartialJsonObject(s);
+    if(recovered&&Object.keys(recovered).length){return recovered;}
+    throw new Error(((e&&e.message)||'Invalid JSON')+' — model output may be truncated or contain unescaped characters.');
+  }
+}
+
+function recoverPartialJsonObject(s){
+  if(typeof s!=='string')return null;
+  const start=s.indexOf('{');
+  if(start===-1)return null;
+  let depth=0,inStr=false,esc=false,lastSafe=-1;
+  for(let i=start+1;i<s.length;i++){
+    const ch=s[i];
+    if(esc){esc=false;continue;}
+    if(inStr){
+      if(ch==='\\'){esc=true;continue;}
+      if(ch==='"')inStr=false;
+      continue;
+    }
+    if(ch==='"'){inStr=true;continue;}
+    if(ch==='{'||ch==='[')depth++;
+    else if(ch==='}'||ch===']'){
+      if(depth===0)break;
+      depth--;
+      if(depth===0){
+        let k=i+1;
+        while(k<s.length&&(s[k]===' '||s[k]==='\n'||s[k]==='\r'||s[k]==='\t'))k++;
+        if(k>=s.length||s[k]===','||s[k]==='}')lastSafe=i;
+      }
+    }
+  }
+  if(lastSafe===-1)return null;
+  const candidate=s.slice(start,lastSafe+1)+'}';
+  try{return JSON.parse(candidate);}catch(e){return null;}
+}
+
+// Scoring rollup math — mirrors renderReport's chain (subcat → cat → fn → overall)
+function rollupFunctionScore(catScores,catSubcatCounts,categoriesInFn){
+  const cats=categoriesInFn.filter(c=>catScores[c]!=null);
+  if(!cats.length)return null;
+  let totalWeight=0,weightedSum=0;
+  cats.forEach(cat=>{
+    const w=catSubcatCounts[cat]||0;
+    totalWeight+=w;
+    weightedSum+=catScores[cat]*w;
+  });
+  return totalWeight>0?weightedSum/totalWeight:null;
+}
+
+function rollupOverall(fnScores){
+  const valid=Object.values(fnScores).filter(x=>x!=null);
+  return valid.length?valid.reduce((a,b)=>a+b,0)/valid.length:null;
+}
+
+// Findings signature — mirrors generateReport's _findingsSignature (simplified
+// without S/SC_RAW; tests pass in the relevant slice directly).
+function findingsSignature(inScopeIds,findings,includedFns){
+  const sig={fns:includedFns.slice().sort().join(','),f:{}};
+  inScopeIds.forEach(id=>{
+    const f=findings[id];
+    if(!f){sig.f[id]='_';return;}
+    sig.f[id]={
+      s:f.status||'pending',
+      c:f.cmmi_score,
+      l:f.likelihood,
+      i:f.impact,
+      e:f.loe,
+      d:(f.dispute_note||'').trim()||undefined,
+      r:(f.dispute_resolution||'').trim()||undefined,
+    };
+  });
+  return JSON.stringify(sig);
+}
+
+// ════════════════════════════════════════════════════════════
+// Tiny test harness — no framework, just deepEqual + count
+// ════════════════════════════════════════════════════════════
+const TESTS=[];
+function test(name,fn){TESTS.push({name,fn});}
+function deepEqual(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function close(a,b,eps=1e-9){return a==null||b==null?a===b:Math.abs(a-b)<eps;}
+function assert(cond,msg){if(!cond)throw new Error(msg||'assertion failed');}
+
+// ════════════════════════════════════════════════════════════
+// parseJSON — happy path + truncation recovery
+// ════════════════════════════════════════════════════════════
+test('parseJSON: clean object',()=>{
+  const r=parseJSON('{"a":1,"b":"two"}');
+  assert(deepEqual(r,{a:1,b:'two'}),'expected {a:1,b:"two"}, got '+JSON.stringify(r));
+});
+
+test('parseJSON: strips ```json fence',()=>{
+  const r=parseJSON('```json\n{"a":1}\n```');
+  assert(deepEqual(r,{a:1}));
+});
+
+test('parseJSON: strips ``` fence',()=>{
+  const r=parseJSON('```\n{"a":1}\n```');
+  assert(deepEqual(r,{a:1}));
+});
+
+test('parseJSON: extracts object from prose preamble',()=>{
+  const r=parseJSON('Sure, here is your JSON:\n{"a":1,"b":[1,2,3]}\nLet me know if you need more.');
+  assert(deepEqual(r,{a:1,b:[1,2,3]}));
+});
+
+test('parseJSON: throws on no object',()=>{
+  let threw=false;
+  try{parseJSON('no JSON here at all');}catch(e){threw=true;}
+  assert(threw,'expected throw on no-object input');
+});
+
+test('recoverPartialJsonObject: recovers complete entries from mid-value truncation',()=>{
+  // Two complete entries, third truncated mid-string
+  const truncated='{"GV.OC-01":{"score":3.25,"note":"complete"},"GV.OC-02":{"score":2.5,"note":"also complete"},"GV.OC-03":{"score":1.5,"note":"this is trunc';
+  const r=recoverPartialJsonObject(truncated);
+  assert(r&&Object.keys(r).length===2,'expected 2 recovered, got '+(r?Object.keys(r).length:0));
+  assert(r['GV.OC-01'].score===3.25);
+  assert(r['GV.OC-02'].score===2.5);
+  assert(r['GV.OC-03']===undefined,'truncated entry should NOT appear');
+});
+
+test('parseJSON: falls through to recovery when JSON.parse fails',()=>{
+  // lastIndexOf('}') will find the inner } before truncation
+  const truncated='{"a":{"score":1},"b":{"score":2},"c":{"score":3,"note":"trunc';
+  const r=parseJSON(truncated);
+  assert(r.a&&r.a.score===1,'recovered a');
+  assert(r.b&&r.b.score===2,'recovered b');
+  assert(r.c===undefined,'should NOT have recovered partial c');
+});
+
+test('recoverPartialJsonObject: handles braces inside string values',()=>{
+  // The "}" inside the rationale string must not fool the depth tracker
+  const s='{"a":{"rationale":"this has } in it","score":3},"b":{"rationale":"trunc';
+  const r=recoverPartialJsonObject(s);
+  assert(r&&r.a&&r.a.score===3,'should recover a despite } in string');
+  assert(r.b===undefined);
+});
+
+// ════════════════════════════════════════════════════════════
+// Scoring rollup — function = cat-weighted-by-subcat-count, overall = equal-weight functions
+// ════════════════════════════════════════════════════════════
+test('rollupFunctionScore: subcat-count weighting',()=>{
+  // Two categories, sizes 20 and 10. Per the user spec, the bigger cat
+  // should drive 2/3 of the function score.
+  const catScores={A:3.0,B:1.5};
+  const catSubcatCounts={A:20,B:10};
+  const r=rollupFunctionScore(catScores,catSubcatCounts,['A','B']);
+  // (3.0*20 + 1.5*10)/30 = (60+15)/30 = 75/30 = 2.5
+  assert(close(r,2.5),'expected 2.5, got '+r);
+});
+
+test('rollupFunctionScore: equivalent to direct subcat avg',()=>{
+  // Three categories with all-equal subcat scores should yield exactly that score
+  const catScores={A:3.5,B:3.5,C:3.5};
+  const catSubcatCounts={A:5,B:7,C:3};
+  const r=rollupFunctionScore(catScores,catSubcatCounts,['A','B','C']);
+  assert(close(r,3.5));
+});
+
+test('rollupFunctionScore: null when no in-scope categories',()=>{
+  const r=rollupFunctionScore({},{},['A','B']);
+  assert(r===null);
+});
+
+test('rollupOverall: each function gets 1/6 weight regardless of size',()=>{
+  const fnScores={GV:3.0,ID:3.0,PR:3.0,DE:3.0,RS:3.0,RC:1.5};
+  const r=rollupOverall(fnScores);
+  // (3+3+3+3+3+1.5)/6 = 16.5/6 = 2.75
+  assert(close(r,2.75),'expected 2.75, got '+r);
+});
+
+test('rollupOverall: skips null function scores',()=>{
+  const fnScores={GV:3.0,ID:null,PR:3.0,DE:null,RS:null,RC:null};
+  const r=rollupOverall(fnScores);
+  // (3+3)/2 = 3
+  assert(close(r,3.0));
+});
+
+test('rollupOverall: returns null when no valid functions',()=>{
+  const r=rollupOverall({GV:null,ID:null});
+  assert(r===null);
+});
+
+// ════════════════════════════════════════════════════════════
+// findingsSignature — stable across irrelevant changes, varies on relevant ones
+// ════════════════════════════════════════════════════════════
+test('findingsSignature: stable across identical state',()=>{
+  const ids=['GV.OC-01','GV.OC-02'];
+  const findings={
+    'GV.OC-01':{status:'approved',cmmi_score:3.5,likelihood:2,impact:3,loe:'medium'},
+    'GV.OC-02':{status:'pending',cmmi_score:2.0,likelihood:4,impact:4,loe:'high'},
+  };
+  const a=findingsSignature(ids,findings,['GV','ID']);
+  const b=findingsSignature(ids,findings,['GV','ID']);
+  assert(a===b,'identical inputs should produce identical signatures');
+});
+
+test('findingsSignature: changes when score changes',()=>{
+  const ids=['GV.OC-01'];
+  const a=findingsSignature(ids,{'GV.OC-01':{status:'approved',cmmi_score:3.0}},['GV']);
+  const b=findingsSignature(ids,{'GV.OC-01':{status:'approved',cmmi_score:3.5}},['GV']);
+  assert(a!==b,'score change should invalidate signature');
+});
+
+test('findingsSignature: changes when status changes',()=>{
+  const ids=['GV.OC-01'];
+  const a=findingsSignature(ids,{'GV.OC-01':{status:'pending',cmmi_score:3.0}},['GV']);
+  const b=findingsSignature(ids,{'GV.OC-01':{status:'approved',cmmi_score:3.0}},['GV']);
+  assert(a!==b);
+});
+
+test('findingsSignature: changes when dispute_note added',()=>{
+  const ids=['GV.OC-01'];
+  const a=findingsSignature(ids,{'GV.OC-01':{status:'disputed',cmmi_score:3.0}},['GV']);
+  const b=findingsSignature(ids,{'GV.OC-01':{status:'disputed',cmmi_score:3.0,dispute_note:'reviewer disagrees'}},['GV']);
+  assert(a!==b);
+});
+
+test('findingsSignature: stable when irrelevant fields change',()=>{
+  // Adding an unrelated property to the finding should NOT change the signature
+  const ids=['GV.OC-01'];
+  const a=findingsSignature(ids,{'GV.OC-01':{status:'approved',cmmi_score:3.0,recommendation:'do X'}},['GV']);
+  const b=findingsSignature(ids,{'GV.OC-01':{status:'approved',cmmi_score:3.0,recommendation:'completely different recommendation'}},['GV']);
+  assert(a===b,'recommendation text alone should not invalidate the cache (it does not change the report data)');
+});
+
+test('findingsSignature: not-analyzed slot is recorded distinctly',()=>{
+  const ids=['GV.OC-01'];
+  const a=findingsSignature(ids,{},['GV']);
+  const b=findingsSignature(ids,{'GV.OC-01':{status:'pending',cmmi_score:1.0}},['GV']);
+  assert(a!==b,'empty findings vs scored should produce different signatures');
+});
+
+// ════════════════════════════════════════════════════════════
+// Run
+// ════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  const out=document.getElementById('results');
+  let passed=0,failed=0;
+  TESTS.forEach(t=>{
+    let pass=false,err='';
+    try{t.fn();pass=true;}catch(e){err=e&&e.message?e.message:String(e);}
+    const div=document.createElement('div');
+    div.className='test '+(pass?'pass':'fail');
+    div.innerHTML='<div class="test-name">'+(pass?'✓':'✗')+' '+t.name+'</div>'+(err?'<div class="test-msg">'+err+'</div>':'');
+    out.appendChild(div);
+    if(pass)passed++;else failed++;
+  });
+  const sum=document.getElementById('summary');
+  sum.className='summary '+(failed===0?'pass':'fail');
+  sum.textContent=(failed===0?'✓ All ':'✗ ')+passed+' passed'+(failed?', '+failed+' failed':'')+' ('+TESTS.length+' tests)';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+Audit & Risk Committee — Q4 2025 Meeting Minutes (Cybersecurity Excerpt)
+
+Meeting: Audit & Risk Committee of the Board of Directors Date: December 11, 2025, 13:00–15:30 ET (cybersecurity items 14:15–15:10 ET) Location: MCT Raleigh HQ Boardroom (in-person) and Zoom (hybrid) Members present: Dr. James Okonkwo (Chair, Independent Director), Dr. Elena Voss (Executive Chair, ex-officio), Greg Whitman (Sequoia-appointed Director). Also attending: Helena Park (CEO), Greg Hartman (CFO), Sarah Yoon (CISO), Marcus Holbrook (GC), Jordan Park (GRC Manager — for cybersecurity items only). Members absent: None. Quorum: Confirmed at 13:00 ET. Recording secretary: Marcus Holbrook (GC).
+
+This document is an excerpt of the meeting minutes covering cybersecurity-related agenda items only. Other agenda items (financial review, audit committee items, ESG report) are recorded separately and are not reproduced here. Approved by the Committee on January 14, 2026.
+
+Agenda Item 4.0 — Cybersecurity Update (Sarah Yoon, CISO)
+
+4.1 Q3 2025 KPI Dashboard Review. The CISO presented the Q3 2025 cybersecurity KPI dashboard. Highlights:
+
+Time-to-detect (TTD) reached 9 minutes (target <10), a continued quarter-over-quarter improvement from 11 minutes in Q2 2025 and 42 minutes baseline in Q1 2024.
+
+Phishing-resistant MFA coverage on production-access roles reached 98% in Q3 2025 (target 100%); the CISO confirmed that 100% enforcement was achieved as of November 2025 with the final two contractor exceptions resolved. The Committee noted satisfaction with the closure of this multi-quarter program.
+
+Patch SLA compliance for critical and high vulnerabilities both at or above target.
+
+Vendor reassessment cadence at 60% (target ≥90%) — flagged as below target. The CISO described the planned Q1 2026 redesign of the supplier risk program (see Item 4.4).
+
+Recovery testing remained at one full failover exercise in the trailing twelve months — the Committee acknowledged this as a known gap (R2 in the cyber risk register).
+
+4.2 Cyber Risk Register Q4 2025 Review. The Committee reviewed the open entries on the cyber risk register:
+
+R1 (HIGH) — Supplier continuous-monitoring gap. Reassessment cadence at 60% (target ≥90%). Treatment: redesign supplier risk program (see 4.4) — funded.
+
+R2 (HIGH) — Recovery testing depth. One full failover/year, single-service scope. Treatment: FY26 plan adds two recovery tabletops and a second failover exercise — funded.
+
+R3 (MEDIUM) — Detection alert tuning debt. Approximately 28% false-positive rate on tier-1 alerts. Treatment: dedicated tuning sprint Q1 2026 — partially funded (one engineer half-allocated).
+
+R4 (MEDIUM) — PHI flow visibility into legacy ETL cluster. Treatment: cluster decommission Q4 2026 will eliminate the gap — on track.
+
+R5 (MEDIUM) — Third-party access reviews. Quarterly reviews now performed; tooling gaps for SaaS service-account access. Treatment: Vanta access governance pilot Q2 2026.
+
+R6 (LOW) — Warm-DR readiness for Population Insights module. Treatment: tracked for FY27 planning.
+
+The Committee accepted all current treatment plans. No risk acceptances were requested at this meeting.
+
+4.3 Q3 2025 Incident Summary. The CISO confirmed no SEV-1 incidents in Q3 2025. Two SEV-2 incidents were reported (a transient credential leak in a public GitHub Action log discovered and rotated within 47 minutes, and an Okta application misconfiguration that exposed internal-only links to authenticated employees outside the intended group for approximately 6 hours). Both were closed; post-incident reviews completed and lessons-learned items in flight.
+
+4.4 Supplier Risk Program Redesign (R1 treatment). The CISO presented the supplier risk program redesign, including: revised supplier criticality tiering; introduction of continuous-monitoring expectations for Tier-1 vendors; expansion of continuous-monitoring scope to Tier-2 vendors by Q3 2026 (Change Healthcare, Surescripts, Arctic Wolf, Datadog); revised contract security clauses for new and renewing vendors; and the use of Vanta and Hyperproof to centralize attestation collection. The Committee approved the redesign by unanimous voice vote and noted that the Change Healthcare event (February 2024) remains a pertinent reminder of the importance of supplier continuous monitoring.
+
+4.5 2026 NIST CSF 2.0 Assessment Business Case (decision item). The CISO and GRC Manager presented the business case for the 2026 enterprise NIST CSF 2.0 assessment (separately distributed; document reference: BC-CSF-2026 v1.3). Key elements: scope all 6 functions and all 106 subcategories; budget $310K base + $20K Board-delegated contingency drawdown authority (CISO + CFO joint); two finalists Coalfire and Crowe; Schellman excluded due to existing SOC 2 engagement; outcome shareable in tiered form (executive summary externally under NDA; full findings internal only). Discussion: Dr. Okonkwo asked about expected score range; the CISO advised that internal preliminary self-assessment suggested an aggregate score in the lower-Tier 3 / Tier 2 range, with weaker performance in RECOVER and supplier monitoring than the Committee's informal expectations. The CISO offered a pre-brief to the Committee Chair before the formal August report. Motion to approve the business case (Whitman; second Okonkwo): approved 5-0 with one abstention (Voss recused as Executive Chair to avoid quorum question on a budget item).
+
+4.6 HITRUST CSF r2 Status Update. The CISO reported that the validated assessment phase of the HITRUST r2 program is in flight with Coalfire as the assessor (separate engagement from the prospective CSF assessor); fieldwork is on schedule; control evidence in Hyperproof is approximately 92% complete; target attestation date September 30, 2026 remains achievable.
+
+4.7 Cybersecurity Insurance Renewal. The CFO noted that the Beazley cyber insurance policy was renewed effective January 1, 2026 with the existing tier structure ($5M/$10M/$5M). Premium increased 8% YoY; the CFO indicated this is below market average for healthcare-segment renewals. No coverage changes.
+
+4.8 Open Items / Action Tracker.
+
+4.9 Executive Session. The Committee held a brief executive session with the CISO and the General Counsel (no other officers present) to discuss two items related to the supplier program; a single action item arose and was added to the action tracker.
+
+End of Cybersecurity Excerpt
+
+Subsequent agenda items (5.0 Financial Review through 8.0 Adjournment) are recorded in the full minutes.
+
+Document Control
+# | Item | Owner | Due
+AR-Q4-2025-1 | Pre-brief to Committee Chair on expected CSF score range before formal report | Yoon | August 1, 2026
+AR-Q4-2025-2 | Formal selection of CSF assessor firm | Yoon, Hartman | February 28, 2026
+AR-Q4-2025-3 | Quarterly status updates on Tier-2 vendor continuous-monitoring expansion | Yoon, Park | Quarterly through Q3 2026
+Field | Value
+Document ID | MIN-ARC-2025-Q4
+Status | Approved (January 14, 2026 ARC meeting)
+Distribution | Committee members; CEO; CFO; CISO; GC; Board members on request; external auditors and assessors under NDA
+Retention | 7 years per Document Retention Schedule REG-RR-01

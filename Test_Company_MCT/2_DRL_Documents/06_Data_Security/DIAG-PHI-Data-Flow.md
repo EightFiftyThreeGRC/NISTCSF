@@ -1,0 +1,200 @@
+# PHI Data Flow Diagram
+
+**Document ID:** DIAG-PHI-01
+**Version:** 3.1
+**Effective date:** January 1, 2026
+**Last reviewed:** December 9, 2025
+**Next review:** December 2026 (or on material data-flow change)
+**Approver:** Marcus Holbrook, GC & HIPAA Privacy Officer; Sarah Yoon, CISO
+**Owner:** Alicia Reyes, Security Engineer (Cloud/AppSec); Jordan Park, GRC Manager
+**Distribution:** Internal — Engineering, Security, GRC, Legal; included in HITRUST and HIPAA SRA evidence packets
+
+---
+
+## 1. Purpose
+
+This document depicts the lifecycle of Protected Health Information (PHI) handled by MCT under its Business Associate role: ingress from customers and their integration partners, processing within the MeridianCare platform, derivative analytics, attachment storage, and outbound exchange with downstream partners. It maps each flow to the encryption boundary, BAA coverage, and data-residency expectation that applies to it. It is referenced from POL-001 §3.8, STD-ENC-01, and the HIPAA Security Risk Assessment.
+
+This is a logical depiction; per-customer integration topologies, where they vary, are documented in the customer's onboarding package.
+
+## 2. Logical Diagram
+
+```mermaid
+flowchart LR
+    classDef ext fill:#e8e8e8,stroke:#666,color:#000
+    classDef ing fill:#ffe8c4,stroke:#b06c00,color:#000
+    classDef pri fill:#cfe9ff,stroke:#0a5fae,color:#000
+    classDef ana fill:#d6f5d6,stroke:#246b24,color:#000
+    classDef att fill:#e8d6f5,stroke:#5b2c87,color:#000
+    classDef out fill:#fcd6d6,stroke:#9c2a2a,color:#000
+
+    EHR[Customer EHRs<br/>Epic - Cerner - Meditech - athena]:::ext
+    DT[Direct Trust HISPs]:::ext
+    HL7[HL7 v2 feeders<br/>some via legacy ETL]:::ext
+
+    subgraph INGRESS [Ingress  -  Z1 to Z2]
+        FHIR[FHIR R4 ingestion service<br/>TLS 1.2+, mTLS where contracted]:::ing
+        DTR[Direct Trust receiver<br/>TLS + SMIME]:::ing
+        HL7R[HL7 v2 receiver<br/>VPN or PrivateLink<br/>legacy via Z5 ETL]:::ing
+    end
+
+    subgraph PRIMARY [Primary store  -  Z3 KMS-CMK]
+        AUR[Aurora PostgreSQL<br/>identifiable PHI<br/>pgAudit + row-level audit]:::pri
+        S3[S3 attachments bucket<br/>versioned + CRR<br/>presigned URLs only]:::att
+        EC[ElastiCache Redis<br/>session metadata only<br/>NO PHI persisted]:::pri
+    end
+
+    subgraph ANALYTICS [Analytics  -  Z3 KMS-CMK]
+        FT[Fivetran<br/>BAA in place<br/>encrypted in transit]:::ana
+        SNO[Snowflake<br/>de-identified default<br/>identifiable where BAA permits]:::ana
+        DEID[De-identification job<br/>Safe Harbor + Expert Determination]:::ana
+    end
+
+    subgraph OUTBOUND [Outbound  -  Z2 to Z0]
+        CHP[Change Healthcare<br/>clearinghouse pilot only<br/>BAA - paused production cutover post Feb 2024]:::out
+        SRX[Surescripts<br/>medication history<br/>BAA in place]:::out
+        DTOUT[Direct Trust outbound<br/>care-plan handoffs]:::out
+    end
+
+    EHR --> FHIR
+    DT --> DTR
+    HL7 --> HL7R
+    FHIR --> AUR
+    DTR --> AUR
+    HL7R --> AUR
+    AUR --> S3
+    AUR --> EC
+    AUR -->|CDC via Fivetran| FT
+    FT --> SNO
+    AUR --> DEID
+    DEID --> SNO
+    AUR --> DTOUT
+    AUR --> SRX
+    AUR -->|pilot| CHP
+    S3 --> DTOUT
+```
+
+## 3. Data Categories Handled
+
+| Category | Examples | Where stored | Encryption | BAA required to share |
+|---|---|---|---|---|
+| Identifiable PHI | Patient demographics, MRN, problem list, medication list, recent encounter summaries, structured tasks | Aurora; S3 (attachments) | KMS-CMK at rest; TLS 1.2+ in transit; mTLS east-west where supported | Yes |
+| Identifiable PHI — analytics | Subset of the above replicated to Snowflake under the customer's contracted analytics scope | Snowflake (per-environment account) | KMS-CMK at rest (Snowflake-managed CMK on AWS); TLS in transit | Yes |
+| De-identified data | Output of MCT de-identification job per Safe Harbor (45 CFR §164.514(b)(2)) or Expert Determination | Snowflake (de-identified schemas) | KMS-CMK at rest | No (de-identified data is not PHI under HIPAA) |
+| Session metadata | Opaque session IDs, user UUIDs, timestamps | ElastiCache (Redis) | AWS-managed key at rest; TLS in transit | n/a — no PHI |
+| Attachments | Care-plan documents, signed CCDA, scanned forms | S3 attachments bucket; presigned URL access only | KMS-CMK at rest; TLS in transit | Yes |
+| Audit logs | Application audit, pgAudit, Snowflake access history, S3 access | Datadog (90 days hot); S3 cold (7 years; Glacier at 365 days) | TLS 1.2+ in transit; KMS-CMK at rest | Yes (if logs contain PHI references) |
+
+## 4. Flow-by-Flow Detail
+
+### 4.1 PHI ingress — FHIR R4 from customer EHRs (Z0 → Z1 → Z2)
+
+- **Source:** Customer EHRs (Epic, Cerner/Oracle Health, Meditech, athenahealth) reach the MCT FHIR R4 endpoints.
+- **Transport:** HTTPS (TLS 1.2+). Mutual TLS additionally enforced for customers contractually opted-in (currently 31 of 47).
+- **Authentication:** SMART-on-FHIR for EHR-launched contexts; OAuth 2.0 client credentials for system-to-system.
+- **Validation:** FHIR resources are validated against MCT profiles; messages that fail validation are quarantined (no PHI in error logs — see STD-ENC-01 §6 prohibited practices).
+- **Storage:** Persisted to Aurora with the originating customer tenant ID. pgAudit captures DDL and selective DML; row-level audit on PHI tables emits to Datadog.
+
+### 4.2 PHI ingress — Direct Trust messaging (Z0 → Z1 → Z2)
+
+- **Source:** Customer-side HISPs and EHRs sending Direct Trust messages.
+- **Transport:** S/MIME-signed and -encrypted SMTP; transport TLS in addition.
+- **Authentication:** Direct Trust certificate pinning per partner; trust bundle managed via the DirectTrust Accreditation program.
+- **Storage:** Envelope retained for audit; structured payload extracted and persisted to Aurora.
+
+### 4.3 PHI ingress — HL7 v2 feeds (Z0 → Z1/Z5 → Z2)
+
+- **Source:** Customer interface engines (Mirth, Rhapsody, Cloverleaf, Iguana).
+- **Modern path:** AWS PrivateLink or site-to-site IPsec to a dedicated HL7 receiver in the EKS cluster.
+- **Legacy path (Z5):** Two long-tenured customers continue to send v2 feeds through the on-prem Raleigh ETL cluster. The cluster terminates the v2 connection on-premises, transforms, and forwards to Aurora over the site-to-site IPsec VPN. This path is the documented control gap targeted for decommission Q4 2026 (see DIAG-NET-01 §3.1).
+
+### 4.4 Primary store — Aurora PostgreSQL (Z3)
+
+- Multi-AZ Aurora cluster; encryption at rest with KMS-CMK; PITR window 35 days; daily snapshots cross-region replicated to us-west-2.
+- Access to Aurora is restricted to (a) EKS service accounts with rotating IAM database authentication, and (b) named human admin roles assumed via AWS IAM Identity Center with FIDO2 step-up. No long-lived database passwords for production.
+- pgAudit captures privileged operations; row-level audit triggers on PHI-bearing tables emit append-only events to Datadog.
+
+### 4.5 Attachments — S3 (Z3)
+
+- Versioning on; cross-region replication to us-west-2; KMS-CMK encryption; bucket policy denies any non-TLS request.
+- Application access via presigned URLs scoped to a single object and a 5-minute expiration window. No public-read buckets in production. Wiz monitors for drift and alerts on any policy changes.
+
+### 4.6 Session state — ElastiCache (Z3 — non-PHI)
+
+- ElastiCache Redis holds opaque session IDs and user UUIDs only; payload contains no PHI.
+- Encryption at rest uses AWS-managed keys (acceptable per STD-ENC-01 because no PHI is persisted); encryption in transit via TLS.
+
+### 4.7 Analytics — Aurora → Snowflake (Z3 internal)
+
+- Change Data Capture extraction via Fivetran (BAA in place; encryption in transit).
+- Snowflake accounts are per-environment (production / non-production / dev). The default landing schema in production is **identifiable** but is access-restricted to a small number of named roles; downstream analytical schemas are populated by the de-identification job per the customer's contracted analytics scope.
+- Identifiable analytics is permitted only where the customer's MSA / BAA explicitly authorizes it for treatment, payment, or healthcare-operations purposes. The list of authorized customers is maintained by Legal in the BAA register and reconciled monthly to the Snowflake role grants.
+- Snowflake encryption at rest uses Snowflake-managed CMKs backed by AWS KMS; access history retention is 365 days minimum.
+
+### 4.8 De-identification (Z3 internal)
+
+- A scheduled job de-identifies a subset of PHI per Safe Harbor (45 CFR §164.514(b)(2)). Expert Determination is in place for the Population Insights cohort analytics layer (most recent expert determination dated October 2025; renewed every 2 years).
+- The de-identification process is logged with input record counts and output record counts; the procedure is documented in PROC-DEID-01.
+
+### 4.9 Outbound — Surescripts, Direct Trust, and Change Healthcare pilot
+
+- **Surescripts (medication history):** TLS in transit; BAA in place; outbound queries originate from a single egress identity per environment.
+- **Direct Trust outbound:** Care-plan handoff messages signed and encrypted via Direct Trust (S/MIME); recipient HISPs validated against the DirectTrust trust bundle.
+- **Change Healthcare (clearinghouse pilot):** Production cutover was paused following the Feb–Mar 2024 ALPHV/BlackCat event; current state is a contracted-and-tested integration in pilot only, with no production billing flows. A Waystar backup path is on the FY26 roadmap. Documented in vendor file CHC-2024.
+
+## 5. Encryption Boundaries
+
+```
+Customer EHR  ==(TLS 1.2+; mTLS optional)==>  CloudFront/WAF/ALB
+                                                  |
+ALB  ==(TLS 1.2+ to ingress; envoy mTLS east-west)==>  EKS services
+                                                  |
+EKS service  ==(TLS 1.2+; KMS-CMK at rest)==>  Aurora / S3 / Snowflake
+                                                  |
+                                                  +--(KMS-CMK at rest)--> us-west-2 DR
+```
+
+Plaintext PHI does not traverse any unencrypted hop. Plaintext PHI is also not permitted in queues, log lines, or non-production environments — see STD-ENC-01 §6.
+
+## 6. BAA-Required Data Sharing
+
+| Counterparty | Activity | BAA in place |
+|---|---|---|
+| Customers (47 organizations) | Inbound and outbound clinical exchange | Yes |
+| Fivetran | Extract from Aurora → Snowflake | Yes |
+| Snowflake | Analytics platform | Yes |
+| AWS | Infrastructure provider | Yes (BAA executed) |
+| Datadog | SIEM / observability — log payloads may reference PHI | Yes |
+| Surescripts | Medication history | Yes |
+| Direct Trust HISP partners | Direct messaging | Yes (DirectTrust framework) |
+| Change Healthcare | Clearinghouse — pilot only | Yes |
+| Microsoft (M365) | Corporate communications — incidental PHI in support email | Yes |
+| Arctic Wolf | MDR — alerts may reference PHI | Yes |
+
+## 7. Data Residency
+
+All production data residency is currently US (us-east-1 primary; us-west-2 DR). One customer is in negotiation for an EU residency arrangement that would extend to eu-central-1; no PHI is currently stored or replicated outside US AWS regions. Snowflake accounts are pinned to AWS US East (Ohio) for production and AWS US West (Oregon) for the DR environment.
+
+## 8. Honest Acknowledgements
+
+- The legacy ETL ingestion path (Z5) for two long-tenured HL7 v2 customers carries elevated residual risk; mitigations are documented and the path is targeted for retirement Q4 2026.
+- Identifiable analytics in Snowflake depends on a manual monthly reconciliation of role grants against the BAA register. Automating this reconciliation is on the FY26 roadmap (under the DLP / DSPM theme — see backgrounder §10 priority 5).
+- Datadog log retention includes incidental PHI references where applications log identifiers; STD-ENC-01 §6 prohibits PHI payloads in logs but identifier-level traces remain. PHI-references in Datadog are covered by the BAA and access-controlled.
+
+## 9. Related Documents
+
+- POL-001 Information Security Policy (§3.8)
+- STD-ENC-01 Encryption Standard
+- DIAG-NET-01 Network Architecture
+- POL-DC-01 Data Classification Policy
+- PROC-DEID-01 De-identification Procedure
+- BAA register (Legal — `baa-register` ServiceNow GRC table)
+
+## 10. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2023-01 | A. Reyes | Initial PHI flow diagram |
+| 2.0 | 2024-04 | A. Reyes, M. Holbrook | Added Direct Trust path; clarified BAA scope; added CHC pilot status |
+| 3.0 | 2025-06 | A. Reyes | Added Snowflake identifiable-analytics pattern; added Expert Determination basis for Population Insights |
+| **3.1** | **2025-12** | **A. Reyes** | **Annual review; mermaid diagram refresh; called out Z5 partial exception explicitly; added BAA reconciliation honesty note** |

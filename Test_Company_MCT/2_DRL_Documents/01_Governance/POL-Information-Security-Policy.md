@@ -1,0 +1,145 @@
+# Information Security Policy
+
+**Document ID:** POL-001
+**Version:** 6.1
+**Effective date:** January 1, 2026
+**Last reviewed:** December 11, 2025 (annual review)
+**Next review:** December 2026
+**Approver:** Helena Park, CEO; Sarah Yoon, CISO
+**Owner:** Sarah Yoon, CISO (delegated operationally to Jordan Park, GRC Manager)
+**Distribution:** All employees, contractors, and authorized third parties; published on internal wiki and acknowledged annually via Workday
+
+---
+
+## 1. Purpose
+
+This Information Security Policy ("Policy") establishes Meridian Care Technologies, Inc.'s ("MCT" or "the Company") commitment to protecting the confidentiality, integrity, and availability of the information assets that support the MeridianCare platform and the Company's business operations. It establishes management's intent, expectations, and direction regarding cybersecurity risk; it defines roles, responsibilities, and authorities; and it sets the framework under which all subordinate policies, standards, and procedures operate.
+
+This Policy is the highest authority in the MCT cybersecurity policy hierarchy. Where conflicts arise between this Policy and a subordinate document, this Policy controls.
+
+## 2. Scope
+
+This Policy applies to:
+
+- All MCT personnel — full-time employees, part-time employees, interns, and contractors — regardless of work location or employment status.
+- All third parties (vendors, suppliers, partners) who access MCT information systems, process MCT data, or operate on MCT's behalf.
+- All MCT-managed information systems, including the production MeridianCare platform (AWS us-east-1 and us-west-2), the corporate IT environment (Microsoft 365, Okta, endpoint fleet), the legacy on-premises ETL cluster at the Raleigh HQ, and the Pittsburgh secondary site.
+- All MCT data, with particular emphasis on Protected Health Information (PHI) processed under HIPAA Business Associate Agreements with customers.
+
+## 3. Policy Statements
+
+### 3.1 Commitment to security
+
+MCT is committed to maintaining a cybersecurity program that is risk-informed, proportionate to the sensitivity of the data we steward, aligned with NIST Cybersecurity Framework 2.0 and the HIPAA Security Rule, and continuously improving. Cybersecurity is treated as a shared responsibility across all functions of the Company; it is not the sole responsibility of the Information Security team.
+
+### 3.2 Risk management
+
+MCT operates a formal cybersecurity risk management program documented in the Enterprise Risk Management Policy (POL-002) and the Risk Appetite Statement (RAS-2025-12). Cybersecurity risks are identified, analyzed, prioritized, and responded to in accordance with the Risk Management Procedure (PROC-RM-01). Risk appetite is approved by the Board annually and reviewed quarterly.
+
+### 3.3 Compliance with laws, regulations, and contracts
+
+MCT shall comply with all applicable laws and regulations governing the security and privacy of information, including but not limited to: the HIPAA Privacy, Security, and Breach Notification Rules; HITECH; the California Consumer Privacy Act (CCPA/CPRA); the Texas Medical Records Privacy Act (TX HB 300); the Colorado Privacy Act; and the New York SHIELD Act and 23 NYCRR 500 where applicable. The Company is committed to obtaining HITRUST CSF r2 certification by September 30, 2026.
+
+MCT shall meet all cybersecurity obligations specified in customer contracts and Business Associate Agreements (BAAs).
+
+### 3.4 Roles, responsibilities, and authorities
+
+| Role | Cybersecurity responsibilities |
+|---|---|
+| Board of Directors / Audit & Risk Committee | Approves cybersecurity strategy, risk appetite, and material policy changes. Reviews quarterly CISO report. |
+| Chief Executive Officer | Accountable to the Board for the cybersecurity program. Authority to approve incident-response declarations of severity SEV-1. |
+| Chief Information Security Officer (Sarah Yoon) | Owns the cybersecurity program. Designated HIPAA Security Official under 45 CFR §164.308(a)(2). Authority to escalate any cybersecurity matter directly to the CEO and Board. Reports to the CTO with dotted line to the CEO. |
+| General Counsel & HIPAA Privacy Officer (Marcus Holbrook) | Designated HIPAA Privacy Officer under 45 CFR §164.530(a)(1). Owns the breach notification process. |
+| GRC Manager (Jordan Park) | Owns this Policy and the policy hierarchy; chairs the Policy Review Forum; manages audit and certification cycles. |
+| Control owners | Each subordinate policy and procedure has a named control owner responsible for implementation, monitoring, and attestation. |
+| All personnel | Comply with this Policy and all subordinate policies; complete annual security awareness training; report suspected security events promptly. |
+
+The Security Steering Committee (CTO, CISO, GC, VP Engineering, VP Customer Success) meets monthly to review the cyber risk register and remediation progress.
+
+### 3.5 Asset management
+
+MCT shall maintain inventories of hardware, software, data, and third-party services in accordance with the Asset Management Standard (STD-AM-01). Hardware and managed-software inventory updates shall be automated where technically feasible (Jamf, Intune, Wiz). Data inventories and classification levels are governed by the Data Classification Policy (POL-DC-01).
+
+### 3.6 Access control and identity
+
+Access to MCT information systems shall be granted on the principle of least privilege, granted via documented authorization, and reviewed at least quarterly. Multi-factor authentication is mandatory for all human accounts. Phishing-resistant MFA (FIDO2/WebAuthn) is mandatory for all production-access roles, security personnel, and engineers; full enforcement was achieved Q4 2025.
+
+Detailed requirements are in the Identity and Access Management Policy (POL-IAM-01) and the Privileged Access Management Procedure (PROC-PAM-01).
+
+### 3.7 Awareness and training
+
+All personnel shall complete annual security awareness training within 30 days of hire and annually thereafter. Personnel in roles with elevated access (engineers, administrators, security staff) shall complete role-based training appropriate to their responsibilities. Phishing simulations are conducted quarterly. Detailed requirements are in the Security Awareness Program Plan (PLN-SA-01).
+
+### 3.8 Data security
+
+PHI and other sensitive data shall be protected by technical safeguards including encryption at rest (AWS KMS customer-managed keys for Aurora, S3, Snowflake; AWS-managed keys for ElastiCache where no PHI is persisted) and encryption in transit (TLS 1.2 or higher; mutual TLS for east-west service-to-service communication where supported). Detailed requirements are in the Encryption Standard (STD-ENC-01) and the Data Classification Policy (POL-DC-01).
+
+### 3.9 Platform and infrastructure security
+
+Production systems shall be protected by defense-in-depth controls, including but not limited to: hardened baseline configurations (CIS benchmarks), automated configuration drift detection (Wiz), endpoint detection and response (CrowdStrike Falcon), web application firewall (AWS WAF v2), and network segmentation between trust zones. The legacy on-premises ETL cluster at Raleigh HQ is a known partial exception, scheduled for decommission by Q4 2026; compensating controls are documented in CRA-LegacyETL-2025.
+
+### 3.10 Vulnerability and patch management
+
+Vulnerabilities in MCT-managed systems and applications shall be identified through automated scanning (Wiz, Snyk, GitHub Advanced Security), penetration testing (annual), and threat intelligence inputs. Patching SLAs are 14 days for critical, 30 days for high, 90 days for medium, and 180 days for low. Detailed requirements are in the Patch Management Policy (POL-PM-01).
+
+### 3.11 Logging and continuous monitoring
+
+Security-relevant events shall be logged, aggregated to the central SIEM (Datadog Cloud SIEM), and monitored 24x7 by a combination of MCT staff (business hours) and the contracted MDR provider, Arctic Wolf (overnight and weekends; expansion under negotiation). Audit logs are retained 90 days hot in Datadog and 7 years cold in S3 with Glacier transition at 365 days, satisfying HIPAA §164.316(b)(2).
+
+### 3.12 Incident response
+
+The Company shall maintain an Incident Response Plan (PLN-IR-01) covering preparation, detection, analysis, containment, eradication, recovery, and post-incident review. The plan is tested at least four times per year via tabletop exercise. The CISO has authority to declare incident severity. Breach notification is governed by 45 CFR §§164.400–414 and applicable state law and is coordinated by the General Counsel and Privacy Officer.
+
+### 3.13 Business continuity and recovery
+
+The Company shall maintain a Business Continuity Plan (PLN-BCP-01) and a Disaster Recovery Plan (PLN-DRP-01). Service tiering and target RTOs/RPOs are defined in the Company Backgrounder §6.5 (P1: RTO 4h, RPO 15m; P2: RTO 24h, RPO 4h; P3: RTO 72h, RPO 24h). The Company acknowledges that current recovery testing depth is below the Board's expectations and is captured as risk register entry R2.
+
+### 3.14 Supply chain risk management
+
+Third parties with access to MCT data or systems shall be subject to risk-based due diligence prior to onboarding and reassessment in accordance with the Third-Party Risk Management Policy (POL-TPRM-01). The supplier inventory and tiering are maintained in ServiceNow GRC.
+
+### 3.15 Acceptable use
+
+All personnel and authorized third parties shall comply with the Acceptable Use Policy (POL-AUP-01) governing use of MCT-issued and -authorized systems, networks, and information.
+
+### 3.16 Personnel security
+
+Cybersecurity is integrated into human resources processes including pre-hire screening (background checks for all personnel; enhanced screening for engineers, security staff, and finance personnel), onboarding (mandatory security awareness training prior to system access), role changes (access right re-evaluation), and offboarding (access revocation within 4 hours of separation).
+
+### 3.17 Continuous improvement
+
+The cybersecurity program is subject to continuous improvement through monthly Security Steering Committee reviews, quarterly Audit & Risk Committee reporting, annual third-party assessments (SOC 2 Type II, HIPAA SRA, NIST CSF), penetration testing, and post-incident reviews. The Company commits to maturity progression aligned with NIST CSF Implementation Tiers, with a target of Tier 3 ("Repeatable") at the organizational profile level.
+
+## 4. Policy Hierarchy
+
+This Policy sits at the top of the MCT cybersecurity policy hierarchy:
+
+- **POL-001 Information Security Policy** (this document) — top-level intent and direction
+- Domain policies (POL-IAM-01, POL-DC-01, POL-PM-01, POL-TPRM-01, POL-AUP-01, POL-AT-01, POL-ENC-01, POL-BCP-01) — domain-specific requirements
+- Standards (STD-ENC-01, STD-AM-01) — technical specifications
+- Procedures (PROC-RM-01, PROC-PAM-01, PROC-IR-*, PROC-AC-01, PROC-BR-01) — step-by-step operational guidance
+- Work instructions / runbooks — execution detail
+
+## 5. Compliance and Enforcement
+
+Compliance with this Policy is mandatory. Violations may result in disciplinary action up to and including termination of employment or contract, and may be reported to law enforcement where appropriate. Suspected violations should be reported to security@meridiancare.com, the CISO, or anonymously via the MCT ethics hotline.
+
+The GRC team measures compliance with this Policy through control testing, internal audit, KPI tracking (see KPI dashboard), and annual user attestation. Significant compliance findings are reported to the Audit & Risk Committee.
+
+## 6. Exceptions
+
+Exceptions to this Policy or to subordinate policies shall be requested in writing via the GRC team, evaluated for risk, and approved by the CISO. Exceptions exceeding 90 days require Security Steering Committee endorsement; exceptions exceeding 180 days require Audit & Risk Committee notification. Approved exceptions are documented in the Exceptions Register (REG-EX-01) with a remediation plan and target closure date.
+
+## 7. Review Cadence
+
+This Policy is reviewed at least annually and upon material change to the regulatory environment, the threat landscape, organizational structure, or in-scope information systems. Reviews are coordinated by the GRC Manager and approved by the CISO and CEO.
+
+## 8. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2018-04 | M. Chen (former CTO) | Initial policy |
+| 4.0 | 2023-08 | S. Yoon | Major rewrite on CISO appointment; introduced policy hierarchy |
+| 5.0 | 2024-08 | S. Yoon, J. Park | Post-Pebble Phish rewrite; introduced FIDO2 mandate, MDR provisions |
+| 6.0 | 2025-08 | J. Park | NIST CSF 2.0 alignment; added GV.SC explicit language |
+| **6.1** | **2025-12** | **J. Park** | **Annual review; added explicit HIPAA Security Official designation; added audit log retention; minor cleanup** |

@@ -1,0 +1,231 @@
+# Identity and Access Management Policy
+
+**Document ID:** POL-IAM-01
+**Version:** 4.2
+**Effective date:** January 1, 2026
+**Last reviewed:** December 11, 2025 (annual review)
+**Next review:** December 2026
+**Approver:** Sarah Yoon, CISO; David Mehta, CTO
+**Owner:** Sarah Yoon, CISO (operationally delegated to Ben Olafsson, IAM Specialist)
+**Distribution:** All employees, contractors, and authorized third parties; published on internal wiki and acknowledged annually via Workday
+
+---
+
+## 1. Purpose
+
+This Identity and Access Management Policy ("Policy") establishes the requirements for managing digital identities and controlling logical access to Meridian Care Technologies, Inc.'s ("MCT" or "the Company") information systems. It implements the access-control intent of the Information Security Policy (POL-001 §3.6) and the HIPAA Security Rule administrative and technical safeguards under 45 CFR §164.308(a)(3)–(4) and §164.312(a)–(d).
+
+This Policy is the authoritative source for identity-lifecycle, authentication, authorization, and access-review requirements at MCT. Where it conflicts with a subordinate procedure, this Policy controls. Where it conflicts with POL-001, POL-001 controls.
+
+## 2. Scope
+
+This Policy applies to:
+
+- All MCT human accounts (employees, contractors, interns) provisioned through Okta from Workday.
+- All MCT non-human / service identities (CI/CD service accounts, application service principals, AWS IAM roles, third-party SaaS API tokens).
+- All customer-administrative accounts that access the MeridianCare platform's customer admin console.
+- All patient-facing identities provisioned through Auth0 in customer tenants.
+- All in-scope systems including the production MeridianCare platform (AWS us-east-1 / us-west-2), the corporate IT environment, and the legacy on-premises ETL cluster at Raleigh HQ. The legacy ETL cluster is a known partial exception (CRA-LegacyETL-2025); compensating controls are documented and decommission is scheduled for Q4 2026.
+
+## 3. Identity Sources and Authoritative Stores
+
+### 3.1 Workforce identity (employees and contractors)
+
+**Authoritative source:** Workday (HRIS).
+
+**Identity provider:** Okta. All employees and contractors authenticate to all MCT-managed systems through Okta SSO except where break-glass access is invoked under PROC-PAM-01.
+
+**Provisioning:** SCIM 2.0 from Workday to Okta. Joiner events from Workday create the Okta account within 4 hours of "Hire" status; mover events update group memberships within 4 hours; leaver events disable the Okta account and revoke all sessions within 4 hours of "Termination" status. Manual joiner/mover/leaver actions are prohibited except under documented exception.
+
+**Cloud workforce access:** AWS IAM Identity Center (formerly AWS SSO) is federated to Okta. Cloud roles are session-bound and assumed via just-in-time elevation; no standing IAM user credentials are issued except for break-glass accounts.
+
+### 3.2 Customer administrative identity
+
+Customer-side administrators of the MeridianCare platform are provisioned through the customer admin console, federated to the customer's IDP via SAML 2.0 or OIDC where the customer supports federation. Customers without federation use Okta-hosted credentials with mandatory MFA.
+
+### 3.3 Patient identity
+
+Patient-facing portals (where deployed) authenticate against Auth0 tenants administered by MCT. Auth0 enforces customer-tenant-configurable identity policy. Per-tenant MFA configuration is at the discretion of the customer (see §4.4 and risk register entry R8).
+
+### 3.4 Service / non-human identity
+
+Service accounts and machine identities are inventoried in ServiceNow GRC and rotated per the Cryptographic Key Management Standard (STD-ENC-01). Long-lived static credentials are prohibited for new services; AWS IAM roles assumed via OIDC are required for CI/CD pipelines (GitHub OIDC -> AWS).
+
+## 4. Authentication Standards
+
+### 4.1 Multi-factor authentication (MFA) — workforce
+
+MFA is mandatory for 100% of human workforce accounts. The default workforce MFA factor is Okta Verify with push and number-matching. Knowledge-based factors (security questions) are prohibited as primary or secondary factors.
+
+### 4.2 Phishing-resistant MFA (FIDO2 / WebAuthn)
+
+Phishing-resistant MFA via FIDO2 / WebAuthn is **mandatory** for the following populations and was fully enforced in Q4 2025 (KPI: 100%):
+
+- All Information Security personnel.
+- All engineers and SREs with production access.
+- All IAM administrators and IT administrators.
+- All members of the Office of the CEO.
+- Any role with an entitlement to read or modify PHI in production.
+
+Approved factors: YubiKey 5 series (issued by IT), Apple Touch ID / Face ID via platform authenticator, Windows Hello platform authenticator. Non-FIDO2 factors are blocked for these roles by Okta authentication policy.
+
+### 4.3 Privileged access (PAM)
+
+Privileged access (administrative roles in production AWS, production Aurora, Snowflake admin, Okta super-admin, AWS IAM Identity Center admin, Datadog admin, CrowdStrike admin) requires:
+
+- A separate privileged identity (`<user>.adm@meridiancare.com`) distinct from the daily-use account.
+- FIDO2 authentication.
+- Just-in-time elevation per PROC-PAM-01 (sessions are time-bound and reason-tagged).
+- All privileged sessions logged to Datadog Cloud SIEM.
+
+### 4.4 Customer-administrative MFA
+
+MFA is mandatory for all customer-administrative accounts. Customers using federated IDPs are required by contract to enforce MFA at the IDP. Customers using Okta-hosted credentials have MFA enforced by MCT-managed Okta authentication policy.
+
+### 4.5 Patient-portal MFA
+
+Patient-portal MFA is configured per customer tenant in Auth0. Risk-based step-up authentication is the default. Some customer tenants do not require MFA on every patient login by tenant configuration; this is documented as risk register entry R8 and is the subject of a planned tenant-by-tenant uplift in FY26.
+
+### 4.6 Password requirements (where passwords are used as a factor)
+
+Passwords are used only as one factor in conjunction with FIDO2 or Okta Verify. Minimum length 14 characters, blocklist-checked against the Okta-curated breach corpus, no rotation cadence (per NIST SP 800-63B-3), no composition rules.
+
+## 5. Authorization (Role-Based Access Control)
+
+### 5.1 Principle of least privilege
+
+Access shall be granted on the principle of least privilege. The default state for all entitlements is "no access." Entitlements are granted only via documented authorization, are scoped to the minimum necessary for the role, and are reviewed quarterly (see §7).
+
+### 5.2 Role-based access control (RBAC)
+
+Entitlements are grouped into roles. Roles are assigned to users via Okta groups, which are sourced from Workday job-role attributes plus role-specific overlays. Direct entitlements outside the role model are prohibited except under documented exception.
+
+### 5.3 Just-in-time (JIT) elevation
+
+For privileged roles, standing entitlements are eliminated where technically feasible. Engineers and SREs request elevated AWS roles via Okta Access Requests; sessions are bound to a maximum of 4 hours and require business justification. Detailed mechanics are in PROC-PAM-01.
+
+### 5.4 Separation of duties
+
+Separation of duties is enforced for the following activity pairs:
+
+- Code authorship and production deployment approval (CODEOWNERS + branch protection).
+- Access provisioning and access review (IAM Specialist provisions; manager attests).
+- Change implementation and change approval (engineer implements; senior engineer or peer approves).
+- Vendor onboarding and vendor approval (GRC reviews; CISO approves Tier 1; CFO co-signs spend > $250K).
+
+### 5.5 Customer-tenant isolation
+
+All access to PHI is tenant-scoped. Application-layer authorization enforces tenant boundary on every read and write. Cross-tenant access by MCT staff is permitted only via specific support roles, requires customer authorization for production data, and is logged to Datadog with PHI-access markers.
+
+## 6. Joiner / Mover / Leaver Lifecycle
+
+### 6.1 Joiner
+
+Triggered by Workday "Hire" status. Within 4 hours: Okta account provisioned, base group memberships applied per role template, security awareness training assigned in Vanta, hardware shipment kicked off. Production-access roles are gated on (a) FIDO2 enrollment and (b) HIPAA workforce training completion (KPI: 97% of role-based training completed on time as of Q1 2026).
+
+### 6.2 Mover (role change)
+
+Triggered by Workday job-attribute change. Within 4 hours: Okta group memberships re-evaluated against the new role template; entitlements no longer required by the new role are revoked at the next quarterly review (or sooner if explicitly flagged by the previous-role manager).
+
+### 6.3 Leaver (separation)
+
+Triggered by Workday "Termination" status. Within 4 hours: Okta account disabled; active sessions revoked across all SAML/OIDC apps via Okta Universal Logout; FIDO2 keys returned and de-registered; hardware return tracked by IT; M365 mailbox placed on litigation hold per Legal direction. KPI: 100% of leaver actions completed within 4 hours, measured monthly.
+
+### 6.4 Long-term leave / inactive accounts
+
+Accounts inactive for more than 30 days are flagged. Accounts inactive more than 60 days are auto-disabled in Okta unless excepted (e.g., parental leave, sabbatical) by the People Operations team.
+
+## 7. Access Reviews
+
+### 7.1 Cadence
+
+- **Quarterly** access reviews of all workforce roles in critical applications (Tier Critical / High in INV-Software-Application-Inventory).
+- **Quarterly** review of all service accounts and machine identities.
+- **Annually** review of customer-administrative accounts in coordination with each customer.
+- **Continuously** triggered review on Workday mover/leaver events.
+
+### 7.2 Methodology
+
+Reviews are run from ServiceNow GRC. Each manager receives a system-generated certification campaign listing direct reports' entitlements; managers attest, revoke, or escalate within a 14-day campaign window. Automated nudges are issued at days 7, 10, 12, and 13. Non-completion past day 14 results in (a) automatic escalation to the manager's manager and (b) entitlement revocation if not certified by day 21.
+
+KPI target: ≥95% on-time completion. Q1 2026 actual: 98% on-time completion (RPT-Quarterly-Access-Review-Q4-2025).
+
+### 7.3 Independent verification
+
+The IAM Specialist (Ben Olafsson) and the GRC Manager (Jordan Park) sample-test 5% of certifications each quarter for evidentiary integrity (e.g., that the manager actually inspected entitlements rather than rubber-stamping). Findings are reported in the quarterly access review report.
+
+## 8. Service Accounts and Non-Human Identities
+
+Service accounts shall:
+
+- Have a named human owner recorded in ServiceNow GRC.
+- Use AWS IAM roles assumed via OIDC for CI/CD wherever supported (no static credentials).
+- Where static credentials are unavoidable, secrets are stored in AWS Secrets Manager or HashiCorp Vault, rotated per STD-ENC-01 (90-day max for static API keys).
+- Be reviewed quarterly (§7).
+- Be inventoried with their authorized scope and last-used timestamp.
+
+## 9. Customer-Administrative Access
+
+Customer admins onboarded to the MeridianCare customer admin console:
+
+- Authenticate via the customer's federated IDP where supported, or Okta-hosted credentials with mandatory MFA.
+- Are scoped to a single customer tenant.
+- Are subject to a contractual obligation that the customer revoke departed admins promptly (within 24 hours of separation).
+- Are reviewed annually with each customer as part of the customer success Quarterly Business Review (QBR) cycle.
+
+## 10. Exceptions
+
+Exceptions to this Policy follow the process in POL-001 §6. Common exception scenarios include:
+
+- Legacy on-prem ETL cluster (CRA-LegacyETL-2025) — manual provisioning to local Linux ACLs; centralized SSO not feasible. Compensating controls: bastion-only ingress, MFA at bastion, quarterly local-account review by IT Operations, decommission Q4 2026.
+- Vendor-emergency support access — break-glass procedure per PROC-PAM-01.
+- Long-lived static API keys for legacy SaaS integrations without OIDC support — quarterly rotation and additional logging required.
+
+All exceptions are logged in the Exceptions Register (REG-EX-01).
+
+## 11. Roles and Responsibilities
+
+| Role | IAM responsibilities |
+|---|---|
+| CISO (Sarah Yoon) | Owner of this Policy; HIPAA Security Official; approves exceptions |
+| IAM Specialist (Ben Olafsson) | Operational owner of Okta, AWS IAM Identity Center, Auth0 (workforce-side); access reviews |
+| GRC Manager (Jordan Park) | Policy maintenance; quarterly access review reporting; audit liaison |
+| CTO (David Mehta) | Co-approver of this Policy; sponsor of zero-trust segmentation initiative |
+| VP Engineering (Tomás Reyes) | Owns CODEOWNERS, branch protection, change-approval matrix |
+| Chief People Officer (Linda Chao) | Owns Workday source data feeding SCIM provisioning |
+| Managers | Attest to direct reports' entitlements quarterly |
+| All personnel | Use authorized identities only; do not share credentials; report suspected compromise |
+
+## 12. Compliance and Enforcement
+
+Compliance is mandatory. Violations may result in disciplinary action up to and including termination. Significant findings are reported to the Audit & Risk Committee. Compliance is measured via:
+
+- Okta MFA enrollment dashboards (target 100%).
+- Okta FIDO2 enrollment for in-scope populations (target 100%; Q1 2026 actual 100%).
+- ServiceNow GRC quarterly review on-time completion (target ≥95%; Q1 2026 actual 98%).
+- Leaver-action SLA dashboard (target 100% within 4 hours).
+- Quarterly sample testing by GRC.
+
+## 13. Related Documents
+
+- POL-001 Information Security Policy
+- PROC-PAM-01 Privileged Access Management Procedure
+- STD-MFA-01 MFA Standard and Rollout Evidence
+- STD-ENC-01 Cryptographic Key Management Standard
+- STD-AM-01 Asset Management Standard
+- POL-DC-01 Data Classification Policy
+- POL-TPRM-01 Third-Party Risk Management Policy
+- RAS-2025-12 Risk Appetite Statement
+- CRA-LegacyETL-2025 Legacy ETL Cluster Compensating Controls
+- INV-Software-Application-Inventory
+- INV-Supplier-Tiering / INV-Supplier-Service-Inventory
+
+## 14. Document Control
+
+| Version | Date | Author | Change summary |
+|---|---|---|---|
+| 1.0 | 2019-06 | Prior CISO | Initial IAM policy |
+| 3.0 | 2023-09 | S. Yoon | Rewrite on CISO appointment; alignment with Okta migration |
+| 4.0 | 2024-10 | S. Yoon, B. Olafsson | Post-Pebble Phish update; FIDO2 mandate added; SCIM-from-Workday provisioning standard |
+| 4.1 | 2025-08 | B. Olafsson, J. Park | NIST CSF 2.0 alignment (PR.AA); customer-admin federation language added |
+| **4.2** | **2025-12** | **B. Olafsson, J. Park** | **Annual review; clarified leaver SLA (4 hours); added KPI references; added R8 cross-reference for patient-portal MFA** |

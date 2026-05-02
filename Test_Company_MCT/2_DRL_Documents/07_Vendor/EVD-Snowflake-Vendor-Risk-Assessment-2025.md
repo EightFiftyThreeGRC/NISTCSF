@@ -1,0 +1,105 @@
+# Vendor Risk Assessment — Snowflake Inc.
+
+**Vendor:** Snowflake Inc.
+**Service:** Cloud-based data warehouse (analytical compute and storage)
+**Tier:** 1 (Critical)
+**Assessment date:** September 18, 2025 (annual cycle)
+**Previous assessment:** September 22, 2024
+**Next reassessment:** September 2026
+**Assessor:** Jordan Park, GRC Manager
+**Reviewer:** Sarah Yoon, CISO; Alicia Reyes, Security Engineer (Cloud/AppSec)
+
+---
+
+## 1. Engagement Summary
+
+| Field | Value |
+|---|---|
+| Vendor legal entity | Snowflake Inc. |
+| Service consumed | Snowflake Data Cloud (Enterprise Edition) |
+| Service description | MCT uses Snowflake to host the analytical data layer powering the Population Insights product module. Data is ingested from Aurora via Fivetran and is also fed via direct event stream from EKS workloads. |
+| MCT account regions | AWS us-east-1 (primary), AWS us-west-2 (warm replica) |
+| MCT data classification stored | Restricted (de-identified PHI for analytics; identifiable PHI for operational analytical workflows where customer permission is documented per their BAA) |
+| Approximate annual spend | $2.32M (FY26 plan) |
+| Contract effective | August 1, 2022; renewed November 2024; current term through October 31, 2027 |
+| Business Associate Agreement | Executed August 1, 2022; refreshed November 2024 alongside contract renewal |
+
+## 2. Reason for Tier 1 Designation
+
+Snowflake is Tier 1 because (a) it stores and processes PHI on behalf of MCT under our customers' BAAs, (b) it is the single-vendor backbone of the Population Insights product module — a P2 service tier — and (c) Snowflake-side events have material potential to disrupt MCT customer-facing analytics. Although Population Insights is P2 (not P1) and the direct contractual penalty exposure from a Snowflake outage is limited, the regulatory and customer-trust exposure of a Snowflake data confidentiality event would be material.
+
+## 3. Evidence Reviewed
+
+| Evidence | Date | Source | Outcome |
+|---|---|---|---|
+| Snowflake SOC 2 Type II (TSC: Security, Availability, Confidentiality) | Issued April 14, 2025; period October 1, 2024 – March 31, 2025 | Vendor portal | Clean opinion; one minor exception (logging gap in a non-MCT-facing internal admin function); accepted |
+| Snowflake SOC 1 Type II | Issued April 14, 2025 | Vendor portal | Clean opinion |
+| Snowflake ISO/IEC 27001:2022 certificate | Renewed October 2024 | Vendor portal | In scope: customer-facing platform |
+| Snowflake HITRUST CSF r2 certification | Issued June 2024, renewed in flight at time of review | Vendor portal | r2 certification valid through June 2026 |
+| Snowflake FedRAMP Moderate | Authorized | Snowflake Trust Center | Not directly relevant to MCT scope but informative for control rigor |
+| Snowflake penetration test executive summary | Most recent dated July 2025; performed by Bishop Fox | Provided under NDA via vendor portal | No critical findings; high findings remediated within stated SLAs |
+| Snowflake security questionnaire (custom MCT-Critical-Vendor) | September 2025 response | Submitted via Vanta | Satisfactory; addressed in detail below |
+| Snowflake breach notification history | None affecting MCT in past 24 months | Vanta + vendor history | OK (the November 2024 industry-wide credential-stuffing event affecting some Snowflake customers did not affect MCT — MCT enforces SCIM-managed federated identity from Okta and does not permit local Snowflake credentials) |
+
+## 4. Findings — Risk-Domain View
+
+### 4.1 Identity and access (PR.AA equivalent)
+
+**Status: Strong.** MCT does not use Snowflake-local accounts; all human and service access is federated via Okta (workforce) or via per-environment scoped service accounts whose credentials are sourced from AWS Secrets Manager. MFA is enforced upstream by Okta; Snowflake-local MFA was historically optional but is now Snowflake's default for SSO-bypass scenarios (which MCT does not use). Notable: the November 2024 industry credential-stuffing event was the catalyst for Snowflake making MFA mandatory by default; this is positive control evolution.
+
+### 4.2 Data protection (PR.DS equivalent)
+
+**Status: Strong.** Encryption at rest is enabled with customer-managed keys (Tri-Secret Secure with AWS KMS); MCT controls the KMS key rotation cycle (annual; emergency rotation tested quarterly via Wiz). Encryption in transit via TLS 1.2+. Data classification tags applied via Snowflake object tagging; row-level access policies enforced for PHI columns where customer BAA requires.
+
+### 4.3 Detection and response (DE / RS equivalent)
+
+**Status: Adequate; some open items.** Snowflake provides an audit log via the ACCOUNT_USAGE schema; MCT exports this log to Datadog Cloud SIEM with a 4-hour ingestion lag (acceptable). Detection use cases for Snowflake-specific events (warehouse spin-up by unexpected role, mass-export query patterns, IP allowlist deviation) are operational but tuning is in progress (referenced in MCT's R3 risk register entry — alert tuning debt). Snowflake's incident response cooperation is documented at 24h notification SLA; this is consistent with Tier 1 expectations.
+
+### 4.4 Subprocessor list (GV.SC-09 equivalent)
+
+**Status: Adequate.** Snowflake's subprocessor list (most recent disclosure August 2025) was reviewed. The list is dominated by AWS/GCP/Azure (cloud infrastructure providers MCT also uses directly), customer support tooling (Zendesk, Salesforce), and a small set of operational vendors. Two subprocessor changes were noted between the 2024 and 2025 reviews; both were considered acceptable. Snowflake's subprocessor change notification process meets MCT's 30-day notification requirement.
+
+### 4.5 Concentration / single-vendor risk
+
+**Status: Acknowledged; treatment in flight.** Snowflake is single-source for the Population Insights product module. Migration cost to an alternative cloud data warehouse (Databricks, BigQuery) is estimated at 6-9 person-quarters; no active plan to dual-source. Acceptance documented in CFO/CISO concentration review.
+
+### 4.6 Continuous monitoring
+
+**Status: Operational.** Vanta integration with Snowflake is operational as of Q3 2024 and feeds approximately 24 control attestations into MCT's Hyperproof control evidence repository on a near-real-time basis. This is a foundational element of MCT's Q1 2026 supplier program redesign.
+
+## 5. Open Items / Action Tracker
+
+| # | Item | Owner | Due |
+|---|---|---|---|
+| SNF-2025-1 | Tune Snowflake-specific detection use cases (within MCT's R3 alert tuning sprint) | M. Tan (MCT) | June 30, 2026 |
+| SNF-2025-2 | Confirm subprocessor change notification email is monitored and routed to GRC mailbox (current routing is to procurement only) | Procurement | February 28, 2026 |
+| SNF-2025-3 | Joint tabletop exercise with Snowflake security team on a multi-tenant exfiltration scenario | GRC + CISO + Snowflake | Target Q3 2026 |
+
+## 6. Risk Score and Recommendation
+
+| Dimension | Likelihood (1-5) | Impact (1-5) | Score |
+|---|---|---|---|
+| Confidentiality | 2 | 5 | 10 |
+| Integrity | 1 | 4 | 4 |
+| Availability | 2 | 3 | 6 |
+
+**Overall vendor risk:** **Moderate-Low** (residual). Strong controls; dependable evidence; operational continuous monitoring. Concentration risk acknowledged; treatment is FY27 backlog.
+
+**Recommendation:** **Continue engagement at Tier 1 with no contract changes required at this time.** Proceed with annual cycle reassessment September 2026.
+
+## 7. Approval and Sign-off
+
+| Role | Name | Date |
+|---|---|---|
+| Assessor | Jordan Park, GRC Manager | September 18, 2025 |
+| Reviewer | Alicia Reyes, Security Engineer (Cloud/AppSec) | September 22, 2025 |
+| Approver | Sarah Yoon, CISO | September 24, 2025 |
+| Procurement notification | Lauren Pham (VP CS, Procurement liaison) | September 24, 2025 |
+
+## 8. Document Control
+
+| Field | Value |
+|---|---|
+| Document ID | EVD-VRA-Snowflake-2025 |
+| Confidentiality | Internal — Confidential (vendor-supplied evidence subject to NDA) |
+| Retention | 7 years per Document Retention Schedule (REG-RR-01) |
