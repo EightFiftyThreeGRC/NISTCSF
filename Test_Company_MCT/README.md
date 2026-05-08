@@ -28,4 +28,24 @@ Test_Company_MCT/
     07_Vendor/              —   third-party risk program, supplier criticality tiering
     08_Monitoring/          —   SIEM standards, detection playbooks, alert triage
     09_Vuln_Mgmt/           —   patch policy, pentest exec summary, vuln scan results
-    (and the re
+    (and the rest of the 12 DRL categories)
+  3_Evidence_Map/           — Pre-built spreadsheet of expected evidence-to-subcategory mappings
+                              (used to validate the AI's evidence_quality classification)
+  4_Maturity_Profile/       — The calibration sheet — target CMMI scores per function/category,
+                              with rationale for each, including the deliberate weaknesses
+```
+
+## How to use it
+
+1. From the tool's Welcome screen, start a new assessment.
+2. On Setup, fill in: Industry = Healthcare, headcount band = 201–1,000.
+3. On Document Upload, upload the contents of each `2_DRL_Documents/NN_*` subfolder into its matching DRL category card. (The AI will infer mappings even if you don't get the routing perfect.)
+4. Run Analysis → Questionnaire → Findings → Report.
+5. Compare the report's function scores against `4_Maturity_Profile/maturity-profile.md`.
+6. Look for whether GV.SC, RC.RP, and ID.IM landed in their expected weak bands.
+
+## Why this exists
+
+A common failure mode for AI assessment tools is producing plausible-looking output that doesn't actually correlate to the underlying evidence. A calibrated test corpus turns "is the AI being reasonable?" into a measurable question: do the scores hit the targets, and do the deliberate weaknesses surface? Without it, prompt iteration is just vibes.
+
+The corpus was hand-built to be self-consistent — the case study narrative explains the business, the financials reflect the org size, the KPIs reference the same incidents and audits as the policy documents, and the maturity profile is the answer key.

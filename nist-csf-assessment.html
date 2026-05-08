@@ -18,6 +18,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .top-bar{background:#0d2137;color:#fff;padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
 .top-bar h1{font-size:1.05rem;font-weight:600;letter-spacing:.3px}
 .top-bar .badge{background:#1e88e5;color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600}
+.topbar-home{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);padding:5px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+.topbar-home:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.45)}
+.top-bar h1:hover{opacity:.85}
+@media print{.topbar-home{display:none}}
 .progress-bar{background:#1a3a5c;padding:0 32px}
 .steps-row{display:flex;gap:0}
 .step-pill{padding:10px 0;flex:1;text-align:center;font-size:.72rem;color:#7ab3d8;border-bottom:3px solid transparent;transition:.2s;cursor:default}
@@ -180,6 +184,83 @@ textarea{resize:vertical;min-height:80px}
 .alert-warn{background:#fff3e0;color:#e65100;border-left:4px solid #ffa726}
 .alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #66bb6a}
 .info-box{background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:16px;font-size:.83rem;color:#1a2332;line-height:1.6;margin-top:12px}
+/* ── Welcome demo video ── */
+.demo-video-card{padding:20px 24px}
+.demo-video-head{margin-bottom:14px}
+.demo-video-eyebrow{font-size:.7rem;font-weight:800;color:#1e88e5;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.demo-video{width:100%;border-radius:10px;background:#0d2137;display:block;aspect-ratio:16/9}
+@media print{.demo-video-card{display:none}}
+/* ── Welcome tier picker ── */
+.tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.tier-card{border:1.5px solid #d0dce8;border-radius:10px;padding:16px 16px 14px;cursor:pointer;transition:.15s;background:#fff;position:relative;display:flex;flex-direction:column;min-height:170px}
+.tier-card:hover{border-color:#90caf9;background:#f8fcff}
+.tier-card.selected{border-color:#1e88e5;background:#f0f7ff;box-shadow:0 2px 10px rgba(30,136,229,.18)}
+.tier-card.disabled{opacity:.6;cursor:not-allowed;background:#f8fafc}
+.tier-card.disabled:hover{border-color:#d0dce8;background:#f8fafc}
+.tier-badge{position:absolute;top:-8px;right:12px;padding:2px 9px;border-radius:10px;font-size:.65rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.tier-badge-free{background:#43a047;color:#fff}
+.tier-badge-soon{background:#90a4ae;color:#fff}
+.tier-name{font-weight:800;font-size:.95rem;color:#0d2137;margin-bottom:2px}
+.tier-price{font-size:1.4rem;font-weight:900;color:#1e88e5;margin-bottom:6px;line-height:1.1}
+.tier-price-sub{font-size:.7rem;color:#5a7a96;font-weight:600;margin-left:4px}
+.tier-desc{font-size:.74rem;color:#5a7a96;line-height:1.5;flex:1}
+.tier-asterisk{font-size:.66rem;color:#7a9ab8;margin-top:8px;font-style:italic;line-height:1.4}
+.tier-section-label{font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#5a7a96;margin:18px 0 8px}
+.tier-section-label:first-child{margin-top:0}
+.tier-form{margin-top:16px;padding:18px;border:1.5px solid #d0dce8;border-radius:10px;background:#fafcfe}
+.tier-form-head{font-weight:700;font-size:.88rem;color:#0d2137;margin-bottom:4px}
+.tier-form-sub{font-size:.78rem;color:#5a7a96;margin-bottom:14px;line-height:1.5}
+.coming-soon-form{margin-top:16px;padding:18px;border:1.5px solid #ffe0b2;border-radius:10px;background:#fff8e1;text-align:center}
+/* ── Top Gaps & Consultation step ── */
+.gap-card{border:1.5px solid #ffd1a8;border-left:5px solid #ff9800;background:#fff8f0;border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.gap-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.gap-rank{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#e65100;color:#fff;font-weight:800;font-size:.85rem;flex-shrink:0}
+.gap-title{font-size:.95rem;font-weight:700;color:#0d2137;flex:1;line-height:1.35}
+.gap-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.gap-section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#e65100;margin-top:10px;margin-bottom:3px}
+.gap-text{font-size:.85rem;color:#2c4a6a;line-height:1.55}
+.consult-cta{background:linear-gradient(135deg,#0d2137 0%,#1a3a5c 100%);color:#fff;border-radius:14px;padding:32px;margin-bottom:24px;box-shadow:0 4px 18px rgba(13,33,55,.18)}
+.consult-cta h2{color:#fff;font-size:1.5rem;margin-bottom:8px}
+.consult-cta p{color:#a8c8e8;font-size:.95rem;line-height:1.55;margin-bottom:20px;max-width:680px}
+/* ── Three consultation cards (#7) ── */
+.consult-stack{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.consult-card{border-radius:14px;padding:24px 26px;box-shadow:0 2px 12px rgba(13,33,55,.08);border:1.5px solid transparent}
+.consult-card-1{background:#fff;border-color:#cfe1f2}
+.consult-card-2{background:#fff;border-color:#cfe1f2}
+.consult-card-3{background:linear-gradient(135deg,#0d2137 0%,#1a3a5c 100%);color:#fff;border-color:transparent;box-shadow:0 4px 18px rgba(13,33,55,.22)}
+.consult-card .cc-eyebrow{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#1e88e5;margin-bottom:6px}
+.consult-card-3 .cc-eyebrow{color:#90caf9}
+.consult-card h3{font-size:1.18rem;font-weight:800;margin:0 0 6px 0;color:#0d2137}
+.consult-card-3 h3{color:#fff;font-size:1.3rem}
+.consult-card .cc-blurb{font-size:.88rem;line-height:1.55;color:#3a5a78;margin-bottom:14px}
+.consult-card-3 .cc-blurb{color:#a8c8e8}
+.consult-card .cc-includes{margin:0 0 16px 0;padding:0;list-style:none}
+.consult-card-3 .cc-includes li{color:#cfe1f2;font-size:.85rem;line-height:1.55;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid rgba(255,255,255,.08)}
+.consult-card-3 .cc-includes li:last-child{border-bottom:none}
+.consult-card-3 .cc-includes li::before{content:'✓';position:absolute;left:0;color:#66bb6a;font-weight:900}
+.consult-card-3 .cc-includes li strong{color:#fff;font-weight:700}
+.consult-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #1e88e5;background:#fff;color:#1e88e5;font-size:.82rem;font-weight:700;cursor:pointer;transition:.15s;margin:3px;font-family:inherit}
+.consult-pill:hover{background:#1e88e5;color:#fff}
+.consult-pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.consult-card-cta{background:#fff;color:#0d2137;border:none;padding:12px 22px;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+.consult-card-cta:hover{background:#e3f2fd}
+.consult-card-foot{font-size:.78rem;color:#5a7a96;margin-top:10px;font-style:italic}
+.consult-card-3 .consult-card-foot{color:#a8c8e8;font-style:normal}
+.consult-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn-consult-yes{background:#43a047;color:#fff;font-size:1rem;padding:14px 24px;font-weight:700}
+.btn-consult-yes:hover{background:#2e7d32}
+.btn-consult-skip{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.3);font-size:.95rem;padding:13px 22px}
+.btn-consult-skip:hover{background:rgba(255,255,255,.2)}
+.consult-form{background:#fff;color:#1a2332;border-radius:10px;padding:24px;margin-top:18px}
+.consult-form h3{color:#0d2137;font-size:1.1rem;margin-bottom:6px}
+.consult-form .sub{color:#5a7a96;font-size:.85rem;margin-bottom:16px}
+.consult-row{display:flex;gap:12px;flex-wrap:wrap}
+.consult-row>div{flex:1;min-width:200px}
+.consult-sent{background:#e8f5e9;border:1.5px solid #66bb6a;border-radius:10px;padding:18px;margin-top:18px;color:#1b5e20}
+.consult-sent strong{color:#1b5e20}
+@media print{
+  .consult-cta,.consult-form,.gap-actions{display:none!important}
+}
 @media print{
   .top-bar .badge,.progress-bar,.btn,.step-pill,.finding-actions,.dispute-box{display:none!important}
   .card{box-shadow:none;border:1px solid #ddd}
@@ -215,6 +296,17 @@ textarea{resize:vertical;min-height:80px}
 .scope-stat{background:#f0f4f8;border-radius:8px;padding:10px 18px;text-align:center}
 .scope-stat-num{font-size:1.4rem;font-weight:800;color:#1e88e5}
 .scope-stat-lbl{font-size:.72rem;color:#5a7a96;font-weight:600}
+
+.ui-modal-overlay{position:fixed;inset:0;background:rgba(10,20,35,0.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:ui-modal-overlay-in .12s ease-out}
+@keyframes ui-modal-overlay-in{from{background:rgba(10,20,35,0)}to{background:rgba(10,20,35,0.65)}}
+.ui-modal{background:#fff;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:480px;width:100%;padding:22px 24px;animation:ui-modal-in .15s ease-out}
+@keyframes ui-modal-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.ui-modal-msg{font-size:.95rem;line-height:1.5;color:#1a2332;margin-bottom:18px;white-space:pre-wrap}
+.ui-modal-actions{display:flex;justify-content:flex-end;gap:8px}
+.ui-modal-actions .btn-danger{background:#c62828;color:#fff;border:1px solid #b21f1f}
+.ui-modal-actions .btn-danger:hover{background:#b21f1f}
+.finding-card.not_analyzed{border-left:3px solid #c5cad2}
+.finding-not-analyzed-reason{margin-top:8px;padding:8px 12px;background:#fff7e6;border-left:3px solid #f5a623;color:#8a4f00;font-size:.83rem;line-height:1.5;border-radius:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -499,7 +591,10 @@ let S={
   step:'welcome',
   provider:'anthropic',
   apiKey:localStorage.getItem('csf_apiKey')||'',
+  geminiApiKey:localStorage.getItem('csf_geminiApiKey')||'',
   model:_initialModel,
+  assessmentMode:'full', // 'full' (Anthropic, all 6 functions) | 'sample' (Govern only; Gemini-compatible)
+  selectedTier:'byo',    // 'sample' | 'byo' | 'haiku' | 'sonnet' | 'opus' — drives the welcome-page tier picker
   org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},
   scoringMethod:'both',
   includedFns:['GV','ID','PR','DE','RS','RC'],
@@ -507,8 +602,6 @@ let S={
   aiScopeRec:{},
   benchmarkSent:false,
   drlViewFns:null,
-  demoEvidence:false,
-  demoFindings:false,
   drl:{},
   drlValidationErrors:[],
   evidenceMap:{},
@@ -522,6 +615,8 @@ let S={
   reportPage:0,
   targetFnScores:{},    // desired CMMI per function for current-vs-target gap analysis
   execSummary:'',       // reserved for future use / cached overall narrative
+  topGapsAnalysis:null, // cached AI narrative for the gap-summary / consultation step
+  consultationLead:{shown:false,path:'',topic:'',duration:'',name:'',company:'',email:'',phone:'',preferredContact:'',notes:'',sent:false},
 };
 
 function saveState(){try{localStorage.setItem('csf_state',JSON.stringify(S));}catch(e){}}
@@ -530,11 +625,19 @@ function loadState(){
   if(r){
     try{
       Object.assign(S,JSON.parse(r));
-      // Anthropic is the only supported provider — coerce older saves.
-      if(S.provider!=='anthropic'){
+      // Supported providers: 'anthropic' (full or sample) | 'gemini' (sample-only). Coerce unknown values.
+      if(S.provider!=='anthropic'&&S.provider!=='gemini'){
         S.provider='anthropic';
-        if(S.model&&!/^claude-/.test(S.model))S.model='claude-sonnet-4-6';
       }
+      // Coerce model to a valid value for the active provider so the dropdown shows a real selection.
+      if(S.provider==='anthropic'&&S.model&&!/^claude-/.test(S.model))S.model='claude-sonnet-4-6';
+      if(S.provider==='gemini'&&S.model&&!/^gemini-/.test(S.model))S.model='gemini-2.5-flash';
+      if(!S.geminiApiKey)S.geminiApiKey=localStorage.getItem('csf_geminiApiKey')||'';
+      if(!S.assessmentMode||(S.assessmentMode!=='full'&&S.assessmentMode!=='sample'))S.assessmentMode='full';
+      // Gemini cannot reliably run the full assessment under free-tier limits — force sample mode.
+      if(S.provider==='gemini')S.assessmentMode='sample';
+      const _validTiers=['sample','byo'];
+      if(!S.selectedTier||!_validTiers.includes(S.selectedTier))S.selectedTier='byo';
       if(S.reportPage==null||typeof S.reportPage!=='number')S.reportPage=0;
       // Migrate missing new fields
       if(!S.org.email)S.org.email='';
@@ -548,6 +651,12 @@ function loadState(){
       if(!S.excludedSubcategories)S.excludedSubcategories=[];
       if(!S.aiScopeRec)S.aiScopeRec={};
       if(S.benchmarkSent==null)S.benchmarkSent=false;
+      if(S.topGapsAnalysis===undefined)S.topGapsAnalysis=null;
+      if(!S.consultationLead||typeof S.consultationLead!=='object')S.consultationLead={shown:false,path:'',topic:'',duration:'',name:'',company:'',email:'',phone:'',preferredContact:'',notes:'',sent:false};
+      // Migrate older consultation leads that didn't have path/topic/duration fields.
+      if(S.consultationLead.path===undefined)S.consultationLead.path='';
+      if(S.consultationLead.topic===undefined)S.consultationLead.topic='';
+      if(S.consultationLead.duration===undefined)S.consultationLead.duration='';
       persistAIPrefs();
     }catch(e){}
   }
@@ -556,7 +665,25 @@ function persistAIPrefs(){
   try{
     if(S.provider)localStorage.setItem('csf_provider',S.provider);
     if(S.model)localStorage.setItem('csf_model',S.model);
+    if(S.geminiApiKey)localStorage.setItem('csf_geminiApiKey',S.geminiApiKey);
   }catch(e){}
+}
+// ── Sample mode enforcement ──────────────────────────────────────
+// Sample mode = "free Govern-only" path. Locks scope to GV so Gemini's free-tier
+// rate limits (15 RPM Flash, 1500 RPD) can complete an assessment. Anthropic users
+// can also opt into sample mode for a quick taste, but it's mandatory for Gemini.
+function isSampleMode(){return S.assessmentMode==='sample';}
+function enforceSampleMode(){
+  if(!isSampleMode())return;
+  // Lock scope to Govern-only. We still let users review/exclude individual GV subcategories,
+  // but the function set itself is fixed.
+  S.includedFns=['GV'];
+  if(!S.drlViewFns||!S.drlViewFns.includes('GV'))S.drlViewFns=['GV'];
+}
+function sampleModeBanner(){
+  if(!isSampleMode())return '';
+  const provLabel=S.provider==='gemini'?'Google Gemini (free tier)':'Anthropic Claude';
+  return `<div style="background:#fff3e0;border-bottom:2px solid #ffa726;padding:8px 32px;font-size:.78rem;color:#7a5200;text-align:center"><strong>⚠ Sample mode</strong> — Govern function only. Using ${escHtml(provLabel)}. For a complete assessment across all six CSF functions, switch to a full Anthropic key on the welcome screen.</div>`;
 }
 function findingScidFromEl(el){return el&&typeof el.getAttribute==='function'?el.getAttribute('data-scid'):null;}
 
@@ -640,6 +767,10 @@ function ensureDrlViewFns(){
 }
 function drlCatsForTable(){
   ensureDrlViewFns();
+  // Sample mode: restrict to the dedicated Governance bucket only. Risk-mgmt and audit
+  // also touch GV but bring in non-GV requests; the strict whitelist keeps the sample
+  // bounded enough to fit free-tier rate limits.
+  if(isSampleMode())return DRL_CATS.filter(cat=>cat.id==='governance');
   return DRL_CATS.filter(cat=>cat.fn.some(fid=>S.drlViewFns.includes(fid)));
 }
 function allRequestsForView(){
@@ -742,6 +873,53 @@ function _aiSlotRelease(poolName){
 }
 function _sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
+// In-page confirm/alert that returns Promises — replaces blocking native dialogs
+// (the previous setup froze the renderer for several seconds at a time, breaking
+// programmatic flows and giving an inconsistent feel against the in-app UI).
+function uiConfirm(message,opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    const ok=opts.okText||'Confirm';
+    const cancel=opts.cancelText||'Cancel';
+    const danger=!!opts.danger;
+    const overlay=document.createElement('div');
+    overlay.className='ui-modal-overlay';
+    overlay.innerHTML='<div class="ui-modal" role="dialog" aria-modal="true"><div class="ui-modal-msg"></div><div class="ui-modal-actions"><button type="button" class="btn btn-secondary" data-ui-cancel></button><button type="button" class="btn '+(danger?'btn-danger':'btn-primary')+'" data-ui-ok></button></div></div>';
+    overlay.querySelector('.ui-modal-msg').textContent=message;
+    overlay.querySelector('[data-ui-cancel]').textContent=cancel;
+    overlay.querySelector('[data-ui-ok]').textContent=ok;
+    function done(v){overlay.remove();document.removeEventListener('keydown',key);resolve(v);}
+    function key(e){if(e.key==='Escape'){e.preventDefault();done(false);}else if(e.key==='Enter'){e.preventDefault();done(true);}}
+    document.addEventListener('keydown',key);
+    overlay.addEventListener('click',e=>{
+      if(e.target===overlay)done(false);
+      else if(e.target.closest('[data-ui-ok]'))done(true);
+      else if(e.target.closest('[data-ui-cancel]'))done(false);
+    });
+    document.body.appendChild(overlay);
+    overlay.querySelector('[data-ui-ok]').focus();
+  });
+}
+function uiAlert(message,opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    const ok=opts.okText||'OK';
+    const overlay=document.createElement('div');
+    overlay.className='ui-modal-overlay';
+    overlay.innerHTML='<div class="ui-modal" role="alertdialog" aria-modal="true"><div class="ui-modal-msg"></div><div class="ui-modal-actions"><button type="button" class="btn btn-primary" data-ui-ok></button></div></div>';
+    overlay.querySelector('.ui-modal-msg').textContent=message;
+    overlay.querySelector('[data-ui-ok]').textContent=ok;
+    function done(){overlay.remove();document.removeEventListener('keydown',key);resolve();}
+    function key(e){if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();done();}}
+    document.addEventListener('keydown',key);
+    overlay.addEventListener('click',e=>{
+      if(e.target===overlay||e.target.closest('[data-ui-ok]'))done();
+    });
+    document.body.appendChild(overlay);
+    overlay.querySelector('[data-ui-ok]').focus();
+  });
+}
+
 async function callAI(system, userMsg, qualityCall=false, callOpts={}){
   const pool=callOpts.bandwidth==='short'?'short':'long';
   await _aiSlotAcquire(pool);
@@ -772,12 +950,15 @@ async function callAI(system, userMsg, qualityCall=false, callOpts={}){
 
 async function _callAIDispatch(system, userMsg, qualityCall=false, callOpts={}){
   const outTok=callOpts.outputTokens!=null?callOpts.outputTokens:(qualityCall?8192:4096);
-  // User-selected model is honored everywhere — except Haiku auto-upgrades
-  // to Sonnet for quality calls (findings/narratives) so a cheap default
-  // doesn't degrade scoring.
-  const userModel=S.model||'claude-sonnet-4-6';
-  const isHaiku=userModel==='claude-haiku-4-5-20251001';
-  const model=qualityCall&&isHaiku?'claude-sonnet-4-6':userModel;
+  // Honor the user's model choice. The previous auto-upgrade silently swapped
+  // Haiku→Sonnet on quality calls, multiplying latency 5-8x and routinely hitting
+  // OTPM rate limits on findings (six 16K-token calls). If users want Sonnet
+  // quality on findings, they can pick it explicitly.
+  if(S.provider==='gemini'){
+    const model=S.model&&/^gemini-/.test(S.model)?S.model:'gemini-2.5-flash';
+    return callGemini(system,userMsg,model,{maxTokens:outTok});
+  }
+  const model=S.model||'claude-sonnet-4-6';
   return callAnthropic(system,userMsg,model,{maxTokens:outTok});
 }
 
@@ -799,6 +980,55 @@ async function callAnthropic(system, userMsg, model, opts={}){
   }
   const d=await resp.json();
   return d.content[0].text;
+}
+
+// ── Gemini (free-tier sample mode) ─────────────────────────────────
+// Free-tier Gemini Flash: 15 req/min, 1500 req/day. Throttle to ~12 RPM (5s spacing)
+// to stay safely under the limit even with parallel callers.
+const _GEMINI_MIN_INTERVAL_MS=5000;
+let _geminiLastCallAt=0;
+async function _geminiThrottle(){
+  const now=Date.now();
+  const wait=Math.max(0,(_geminiLastCallAt+_GEMINI_MIN_INTERVAL_MS)-now);
+  if(wait>0)await _sleep(wait);
+  _geminiLastCallAt=Date.now();
+}
+async function callGemini(system, userMsg, model, opts={}){
+  if(!S.geminiApiKey)throw new Error('No Gemini API key set. Get a free key at aistudio.google.com.');
+  await _geminiThrottle();
+  model=model||'gemini-2.5-flash';
+  const max_tokens=opts.maxTokens!=null?opts.maxTokens:4096;
+  // Generative Language API. systemInstruction is a separate field; user content goes in `contents`.
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(S.geminiApiKey)}`;
+  // The tool's prompts all ask for JSON output. Gemini Flash regularly truncates or
+  // produces malformed JSON without structured-output mode — adding responseMimeType
+  // forces the model into JSON-only mode and eliminates the truncation/escape errors
+  // that previously broke ~75% of doc-analysis and findings-generation calls.
+  const body={
+    systemInstruction:system?{parts:[{text:system}]}:undefined,
+    contents:[{role:'user',parts:[{text:userMsg}]}],
+    generationConfig:{maxOutputTokens:max_tokens,temperature:0.4,responseMimeType:'application/json'}
+  };
+  const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!resp.ok){
+    const e=await resp.text();
+    const err=new Error(`Gemini error ${resp.status}: ${e}`);
+    err.status=resp.status;
+    // Gemini returns 429 with a RetryInfo on quota exhaustion. Surface a friendlier message.
+    if(resp.status===429){
+      err.retryAfter=30;
+      err.message+='\n\nFree-tier quota likely exhausted. Wait a minute and retry, or switch to an Anthropic key for the full assessment.';
+    }
+    throw err;
+  }
+  const d=await resp.json();
+  // Defensive parsing — Gemini may omit `candidates` if a safety filter trips.
+  const cand=d&&d.candidates&&d.candidates[0];
+  if(!cand||!cand.content||!cand.content.parts||!cand.content.parts.length){
+    const reason=cand?.finishReason||d?.promptFeedback?.blockReason||'unknown';
+    throw new Error(`Gemini returned no text (finishReason: ${reason}). Try retrying or switching to a Claude model.`);
+  }
+  return cand.content.parts.map(p=>p.text||'').join('');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -830,9 +1060,103 @@ async function extractDOCX(file){
 // ════════════════════════════════════════════════════════════
 // STEP 1: WELCOME
 // ════════════════════════════════════════════════════════════
+function renderSampleTierForm(){
+  // Sample tier supports either Gemini (truly free) or Anthropic (BYO key, you pay your own usage).
+  // Both run Govern-only; sample mode is mandatory.
+  const isGem=S.provider==='gemini';
+  return `
+  <div class="tier-form">
+    <div class="tier-form-head">⚡ Free Sample — Govern function only</div>
+    <div class="tier-form-sub">Pick a provider. Either way, the assessment is locked to the Govern function — perfect for getting a feel for the tool without committing to a full assessment.</div>
+
+    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="provider-card ${isGem?'selected':''}" data-action="set-provider" data-provider="gemini" style="flex:1;min-width:240px">
+        <input type="radio" name="prov" ${isGem?'checked':''} readonly>
+        <div>
+          <div style="font-weight:700;font-size:.9rem;color:#0d2137">Google Gemini <span style="color:#43a047;font-weight:700">— $0</span></div>
+          <div style="font-size:.74rem;color:#5a7a96;margin-top:2px;line-height:1.5">Free Google API tier. No credit card needed. Subject to free-tier rate limits (15 req/min on Flash).</div>
+        </div>
+      </div>
+      <div class="provider-card ${!isGem?'selected':''}" data-action="set-provider" data-provider="anthropic" style="flex:1;min-width:240px">
+        <input type="radio" name="prov" ${!isGem?'checked':''} readonly>
+        <div>
+          <div style="font-weight:700;font-size:.9rem;color:#0d2137">Anthropic Claude <span style="color:#5a7a96;font-weight:600;font-size:.78rem">— ~$2 in API usage</span></div>
+          <div style="font-size:.74rem;color:#5a7a96;margin-top:2px;line-height:1.5">Use your own Anthropic key. A Govern-only sample typically costs $1–$3 in API usage (your key, your bill).</div>
+        </div>
+      </div>
+    </div>
+
+    ${isGem?`
+      <label>Gemini API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help-gemini">How do I get this?</span></label>
+      <input type="password" id="inp-gemini-key" placeholder="AIza..." value="${escHtml(S.geminiApiKey)}">
+      <div id="api-help-gemini" class="info-box" style="display:none;margin-top:10px">
+        <strong style="color:#1565c0">How to get a free Gemini API key</strong>
+        <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+          <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1e88e5">aistudio.google.com/apikey</a> and sign in with any Google account.</li>
+          <li>Click <strong>Create API Key</strong>.</li>
+          <li>Copy the key and paste it above. No payment required.</li>
+        </ol>
+      </div>
+      <label>Model</label>
+      <select id="inp-model">
+        <option value="gemini-2.5-flash" ${(!S.model||S.model==='gemini-2.5-flash')?'selected':''}>Gemini 2.5 Flash (recommended for free tier)</option>
+        <option value="gemini-2.5-pro" ${S.model==='gemini-2.5-pro'?'selected':''}>Gemini 2.5 Pro (lower free quota, higher quality)</option>
+      </select>
+    `:`
+      <label>Anthropic API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
+      <input type="password" id="inp-apikey" placeholder="sk-ant-..." value="${escHtml(S.apiKey)}">
+      <div id="api-help" class="info-box" style="display:none;margin-top:10px">
+        <strong style="color:#1565c0">How to get an Anthropic API key</strong>
+        <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+          <li>Go to <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a> and create an account.</li>
+          <li>Click <strong>API Keys</strong> in the sidebar, then <strong>Create Key</strong>.</li>
+          <li>Copy the key and paste it above. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-ant-</code>.</li>
+        </ol>
+      </div>
+      <label>Model</label>
+      <select id="inp-model">
+        <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku 4.5 (recommended for sample)</option>
+        <option value="claude-sonnet-4-6" ${(!S.model||S.model==='claude-sonnet-4-6')?'selected':''}>Claude Sonnet 4.6</option>
+        <option value="claude-opus-4-6" ${S.model==='claude-opus-4-6'?'selected':''}>Claude Opus 4.6</option>
+      </select>
+    `}
+  </div>`;
+}
+function renderByoTierForm(){
+  return `
+  <div class="tier-form">
+    <div class="tier-form-head">🔑 Full Assessment — Bring Your Own Anthropic Key</div>
+    <div class="tier-form-sub">All six CSF functions on your own data. Pay only what you use directly to Anthropic — no markup, no middleman. Pick the Claude model that matches your stakes (initial vs. in-depth vs. critical).</div>
+
+    <label>Anthropic API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
+    <input type="password" id="inp-apikey" placeholder="sk-ant-..." value="${escHtml(S.apiKey)}">
+    <div id="api-help" class="info-box" style="display:none;margin-top:10px">
+      <strong style="color:#1565c0">How to get an Anthropic API key</strong>
+      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        <li>Go to <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a> and create an account.</li>
+        <li>Click <strong>API Keys</strong> in the sidebar, then <strong>Create Key</strong>.</li>
+        <li>Copy the key and paste it above. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-ant-</code>.</li>
+      </ol>
+      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is never sent anywhere except Anthropic's API.</div>
+    </div>
+    <label>Model</label>
+    <select id="inp-model">
+      <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku 4.5 — initial analysis (fastest, lowest cost)</option>
+      <option value="claude-sonnet-4-6" ${(!S.model||S.model==='claude-sonnet-4-6')?'selected':''}>Claude Sonnet 4.6 — more in-depth (recommended)</option>
+      <option value="claude-opus-4-6" ${S.model==='claude-opus-4-6'?'selected':''}>Claude Opus 4.6 — thorough and critical analysis</option>
+    </select>
+    <div style="margin-top:14px;padding:10px 12px;background:#f8fafc;border:1px solid #e0eaf4;border-radius:8px;font-size:.78rem;color:#5a7a96">
+      <label style="display:flex;align-items:flex-start;gap:8px;margin:0;cursor:pointer;font-weight:500;color:#2c4a6a">
+        <input type="checkbox" id="inp-anthropic-sample" style="margin-top:3px" ${isSampleMode()?'checked':''}>
+        <span><strong>Optional:</strong> run as a Govern-only sample. Smaller scope, lower API spend, faster.</span>
+      </label>
+    </div>
+  </div>`;
+}
 function renderWelcome(){
   const hasSaved=!!localStorage.getItem('csf_state');
-  const prov=S.provider;
+  const tier=S.selectedTier||'byo';
+  const sel=t=>tier===t?'selected':'';
   return `
 <div class="welcome-hero">
   <h1>NIST CSF 2.0 Guided Assessment</h1>
@@ -842,41 +1166,48 @@ function renderWelcome(){
     <div class="sp-step">🤖 AI Analysis</div>
     <div class="sp-step">📋 Questionnaire</div>
     <div class="sp-step">📊 Findings</div>
+    <div class="sp-step">⚠️ Top Gaps</div>
     <div class="sp-step">📄 Report</div>
   </div>
 </div>
 <div class="container">
+  <div class="card demo-video-card">
+    <div class="demo-video-head">
+      <div>
+        <div class="demo-video-eyebrow">2-MINUTE DEMO</div>
+        <h2 style="margin-bottom:4px">See the tool in action</h2>
+        <p class="sub" style="margin-bottom:0">A walk-through of the full pipeline — from organization setup through evidence upload, AI analysis, findings, and the board-ready report.</p>
+      </div>
+    </div>
+    <video class="demo-video" controls preload="metadata" poster="demo-poster.jpg">
+      <source src="nist-csf-tool-demo.mp4" type="video/mp4">
+      Your browser does not support HTML5 video. <a href="nist-csf-tool-demo.mp4">Download the demo video</a>.
+    </video>
+  </div>
+
   <div class="card">
-    <h2>Get Started</h2>
-    <p class="sub">Choose your AI provider and enter your API key. The AI analyzes your documents, generates a targeted questionnaire, and produces draft findings for your review.</p>
+    <h2>Choose your path</h2>
+    <p class="sub">Two ways to run this assessment. Both use your own API key — nothing leaves your browser except calls to the AI provider you choose.</p>
 
-    <div class="section-label" style="margin-top:0">AI Provider</div>
-    <div style="margin-bottom:14px;padding:14px 16px;background:#f0f7ff;border:1.5px solid #1e88e5;border-radius:10px">
-      <div style="font-weight:700;font-size:.9rem;color:#0d2137">Anthropic Claude</div>
-      <div style="font-size:.78rem;color:#2c4a6a;margin-top:2px;line-height:1.5">Pay-as-you-go via the Anthropic API. Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5;font-weight:600">console.anthropic.com</a>. Pick your model below — Haiku for speed/cost, Sonnet for balanced assessments, Opus for the highest-quality findings.</div>
+    <div class="tier-grid">
+      <div class="tier-card ${sel('sample')}" data-action="set-tier" data-tier="sample">
+        <span class="tier-badge tier-badge-free">Free</span>
+        <div class="tier-name">Free Sample</div>
+        <div class="tier-price">$0</div>
+        <div class="tier-desc"><strong>Govern function only.</strong> Try the workflow end-to-end with a free Google Gemini key (no credit card needed) or your own Anthropic key. Best for evaluating the tool before committing to a full run.</div>
+      </div>
+      <div class="tier-card ${sel('byo')}" data-action="set-tier" data-tier="byo">
+        <div class="tier-name">Full Assessment</div>
+        <div class="tier-price">Pay API costs</div>
+        <div class="tier-desc"><strong>All six CSF functions.</strong> Use your own Anthropic key — pick Haiku for initial analysis, Sonnet for more in-depth work, or Opus for thorough and critical analysis. You pay Anthropic directly for usage.</div>
+      </div>
     </div>
 
-    <div id="api-help" class="info-box" style="display:none">
-      <strong style="color:#1565c0">How to get an Anthropic API key</strong>
-      <ol style="padding-left:18px;margin-top:8px;display:flex;flex-direction:column;gap:5px">
-        <li>Go to <a href="https://console.anthropic.com" target="_blank" style="color:#1e88e5">console.anthropic.com</a> and create an account.</li>
-        <li>Click <strong>API Keys</strong> in the left sidebar, then <strong>Create Key</strong>.</li>
-        <li>Copy the key and paste it below. It starts with <code style="background:#e3f2fd;padding:1px 5px;border-radius:4px">sk-ant-</code>.</li>
-      </ol>
-      <div style="margin-top:8px;font-size:.75rem;color:#5a7a96">Your key is stored only in your browser. It is never sent anywhere except Anthropic's API.</div>
-    </div>
-    <div style="margin-bottom:4px"></div>
-    <label>Anthropic API Key <span style="color:#e53935">*</span> <span style="font-weight:400;font-size:.78rem;color:#1e88e5;cursor:pointer;text-decoration:underline" data-action="toggle-api-help">How do I get this?</span></label>
-    <input type="password" id="inp-apikey" placeholder="sk-ant-..." value="${escHtml(S.apiKey)}">
-    <label>Model</label>
-    <select id="inp-model">
-      <option value="claude-haiku-4-5-20251001" ${S.model==='claude-haiku-4-5-20251001'?'selected':''}>Claude Haiku 4.5 (fastest, lowest cost)</option>
-      <option value="claude-sonnet-4-6" ${(!S.model||S.model==='claude-sonnet-4-6')?'selected':''}>Claude Sonnet 4.6 (balanced — recommended)</option>
-      <option value="claude-opus-4-6" ${S.model==='claude-opus-4-6'?'selected':''}>Claude Opus 4.6 (highest quality, slowest, most expensive)</option>
-    </select>
+    ${tier==='sample'?renderSampleTierForm():''}
+    ${tier==='byo'?renderByoTierForm():''}
 
     <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
-      <button class="btn btn-primary" data-action="welcome-start">Start New Assessment →</button>
+      <button class="btn btn-primary" data-action="welcome-start">Start Assessment →</button>
       ${hasSaved?'<button class="btn btn-secondary" data-action="welcome-resume">Resume Saved Assessment</button>':''}
       ${hasSaved?'<button class="btn btn-secondary" style="color:#c62828;border-color:#e57373" data-action="welcome-reset">🗑 Clear &amp; Start Fresh</button>':''}
     </div>
@@ -903,7 +1234,9 @@ function renderSetup(){
   const itSizes=['0–5','6–25','26–100','101–500','501–2,000','2,001+'];
   const cyberSizes=['0–2','3–10','11–30','31–100','101–500','500+'];
   const o=S.org;
-  const provName='Anthropic (Claude API)';
+  // Provider-aware label so the privacy copy matches whichever provider the user picked on the welcome page.
+  const provName=S.provider==='gemini'?'Google (Gemini API)':'Anthropic (Claude API)';
+  const provHostName=S.provider==='gemini'?"Google's Gemini API":"Anthropic's API";
   return`
 ${topBar(1)}
 <div class="container">
@@ -953,7 +1286,7 @@ ${topBar(1)}
     <div style="font-size:.84rem;color:#1a2332;line-height:1.7">
       <p style="margin-bottom:8px">📁 <strong>Your uploaded documents</strong> stay in your browser. They are sent only to <strong>${escHtml(provName)}</strong> for AI analysis using the API key you provided. Nothing is stored on any third-party server by this tool.</p>
       <p style="margin-bottom:8px">💾 <strong>Your assessment data</strong> (findings, answers, scores) is saved only in your browser's <code>localStorage</code>. Closing the tab keeps your progress; clearing browser data wipes it.</p>
-      <p>🔑 <strong>Your API key</strong> stays in your browser too. It's sent directly to Anthropic's API from this page — no proxy, no backend.</p>
+      <p>🔑 <strong>Your API key</strong> stays in your browser too. It's sent directly to ${escHtml(provHostName)} from this page — no proxy, no backend.</p>
     </div>
   </div>
 
@@ -1066,7 +1399,7 @@ ${topBar(2)}
 (function(){
   document.querySelectorAll('[data-partial="1"]').forEach(el=>{el.indeterminate=true;});
 })();
-</script>`;
+<\/script>`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1105,9 +1438,6 @@ ${topBar(3)}
     </div>
     <p class="sub" style="margin-top:0;font-size:.78rem;color:#5a7a96;line-height:1.45">This page counts <strong>${st.total}</strong> evidence <strong>requests</strong> (artifact rows in your current table). After analysis, the tool scores <strong>${subcategoriesInScopeCount()}</strong> CSF <strong>subcategories</strong> in your scope — finer outcome-level statements (${subcategoriesInScopeCount()} is larger because one policy or log export can support many subcategories).</p>
     <div class="alert alert-info">💡 Supported formats: PDF, Word (.docx), and plain text. Each uploaded file requires context. For non-applicable requests, select "Not provided" and explain (e.g., on-prem control not applicable in all-cloud environment).</div>
-    <div class="alert alert-warn" style="border-color:#90caf9;background:#f3f9ff">
-      <strong>Demo mode</strong> — Use <strong>Demo: synthetic data → Analysis</strong> below to fill synthetic files, build a local evidence map (no document AI), and jump to Analysis to test questionnaire and findings with your API key.
-    </div>
     ${S.drlValidationErrors?.length?`<div class="alert alert-warn"><strong>Complete these before analysis:</strong><ul style="margin-top:6px;padding-left:18px">${S.drlValidationErrors.slice(0,12).map(e=>`<li style="margin-bottom:3px">${escHtml(e)}</li>`).join('')}</ul>${S.drlValidationErrors.length>12?`<div style="margin-top:4px;font-size:.78rem">+ ${S.drlValidationErrors.length-12} more...</div>`:''}</div>`:''}
   </div>
   ${fnFilterCard}
@@ -1168,10 +1498,7 @@ ${topBar(3)}
 
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:24px 0 32px;align-items:center">
     <button class="btn btn-secondary" data-action="goto-scope">← Back to Scope</button>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button type="button" class="btn btn-secondary" data-action="drl-demo-skip" title="Fill rows with synthetic files and a local evidence map, then go to Analysis (tests questionnaire/findings)">Demo: synthetic data → Analysis</button>
-      <button class="btn btn-primary" data-action="drl-analyze">🤖 Analyze Evidence Package →</button>
-    </div>
+    <button class="btn btn-primary" data-action="drl-analyze">🤖 Analyze Evidence Package →</button>
   </div>
 </div>`;
 }
@@ -1190,11 +1517,10 @@ function renderAnalysis(){
   return`
 ${topBar(4)}
 <div class="container">
-  ${S.demoEvidence?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo mode is active.</strong> Rows used synthetic files and a local evidence map (no AI document read). Questionnaire and findings still call the AI using your key — use this to test those steps end-to-end.</div>':''}
   <div class="card">
     <h2>Evidence Analysis Complete</h2>
-    <p class="sub">${S.demoEvidence?'Synthetic demo files were used instead of AI document analysis.':'The AI has mapped your documents to NIST CSF 2.0 subcategories.'} Review the coverage below, then generate your targeted questionnaire.</p>
-    <p class="sub" style="margin-top:-8px;font-size:.79rem;color:#1e88e5"><strong>${subcategoriesInScopeCount()} subcategories in scope</strong> across ${FUNCTIONS.filter(f=>S.includedFns.includes(f.id)).length} functions${(S.excludedSubcategories||[]).length>0?\` · <span style="color:#8aa3bc">${S.excludedSubcategories.length} excluded via scope selection</span>\`:''}</p>
+    <p class="sub">The AI has mapped your documents to NIST CSF 2.0 subcategories. Review the coverage below, then generate your targeted questionnaire.</p>
+    <p class="sub" style="margin-top:-8px;font-size:.79rem;color:#1e88e5"><strong>${subcategoriesInScopeCount()} subcategories in scope</strong> across ${FUNCTIONS.filter(f=>S.includedFns.includes(f.id)).length} functions${(S.excludedSubcategories||[]).length>0?` · <span style="color:#8aa3bc">${S.excludedSubcategories.length} excluded via scope selection</span>`:''}</p>
     <p class="sub" style="margin-top:-8px;font-size:.78rem;color:#5a7a96;line-height:1.45">The tables below add up to <strong>${scScope}</strong> CSF <strong>subcategories</strong> in your scope (each row’s <strong>Total</strong> is how many subcategories sit in that category). That is different from the <strong>${drlReqTotal}</strong> evidence <strong>requests</strong> on Document Upload: those rows are the artifact checklist; subcategories are the finer outcomes the model rates from your whole evidence package.</p>
     <div class="row" style="margin-bottom:24px">
       <div class="stat-card col"><div class="stat-num" style="color:#2e7d32">${counts.strong}</div><div class="stat-lbl">Strong Evidence</div></div>
@@ -1255,9 +1581,6 @@ ${topBar(5)}
       <div style="font-size:.83rem;font-weight:600;color:#2c4a6a;white-space:nowrap">${totalA} / ${totalQ} answered</div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${totalQ?Math.round(totalA/totalQ*100):0}%"></div></div>
     </div>
-    <div class="alert alert-warn" style="margin-top:14px;border-color:#90caf9;background:#f3f9ff">
-      <strong>Testing</strong> — <strong>Demo: fill answers</strong> populates questions; <strong>Demo: findings (no AI)</strong> skips the API and opens Findings Review instantly so you can confirm the rest of the flow. <strong>Generate Findings</strong> runs real AI (several parallel requests; still often a few minutes). Not for real assessments.
-    </div>
   </div>
 
   <div class="card" style="padding:0;overflow:hidden">
@@ -1272,79 +1595,9 @@ ${topBar(5)}
 
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 32px">
     <button class="btn btn-secondary" data-action="goto-analysis">← Back to Analysis</button>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button type="button" class="btn btn-secondary" data-action="questionnaire-demo-fill">Demo: fill answers</button>
-      <button type="button" class="btn btn-secondary" data-action="questionnaire-demo-findings" title="Fill draft findings locally; no API call">Demo: findings (no AI)</button>
-      <button class="btn btn-primary" data-action="gen-findings" ${totalA<Math.ceil(totalQ*0.5)?'disabled':''}>🤖 Generate Findings ${totalA<Math.ceil(totalQ*0.5)?'(answer more questions first)':''} →</button>
-    </div>
+    <button class="btn btn-primary" data-action="gen-findings" ${totalA<Math.ceil(totalQ*0.5)?'disabled':''}>🤖 Generate Findings ${totalA<Math.ceil(totalQ*0.5)?'(answer more questions first)':''} →</button>
   </div>
 </div>`;
-}
-
-function demoAnswerHash(seed){
-  let h=0;
-  const s=String(seed||'');
-  for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;
-  return h>>>0;
-}
-function applyDemoQuestionnaireAnswers(){
-  const q=S.questionnaire;
-  if(!q||!q.roles||!q.roles.length){alert('No questionnaire loaded.');return;}
-  const totalA=q.roles.reduce((a,r)=>a+r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length,0);
-  if(totalA>0&&!confirm(`Replace ${totalA} existing answer(s) with synthetic demo answers?`))return;
-  const openings=[
-    '[Demo] In our environment, ',
-    '[Demo walkthrough] Staff report that ',
-    '[Demo] For this topic, ',
-    '[Demo] Process-wise, ',
-    '[Demo] Evidence suggests ',
-    '[Demo] Practically, ',
-    '[Demo] For testing: ',
-    '[Demo] Interview-style note: ',
-  ];
-  const middles=[
-    'we review this on a quarterly cadence with named owners.',
-    'exceptions are uncommon and tracked in a ticketing system.',
-    'policy exists and is enforced first on higher-risk systems.',
-    'metrics are still maturing but sponsorship is visible.',
-    'critical vendors are assessed at least annually.',
-    'logging coverage expanded after the last assessment cycle.',
-    'the steering group escalates gaps to leadership within a few weeks.',
-    'a tabletop exercise partially validated the workflow.',
-    'ownership is split between security and IT with clear RACI.',
-    'budget was approved for remediation items tied to this area.',
-    'we use a risk register entry and revisit it at each QBR.',
-    'training is role-based; completion is monitored in the LMS.',
-  ];
-  const closings=[
-    'No production customer data was used in this demo answer.',
-    'Numbers here are illustrative for UI testing only.',
-    'Further detail would come from policy attachments and tickets.',
-    'This line is unique to this question id for downstream AI testing.',
-  ];
-  let n=0;
-  q.roles.forEach((r,ri)=>{
-    r.questions.forEach((qu,qi)=>{
-      const seed=`${qu.id}|${ri}|${qi}|${r.role||''}|${(qu.text||'').slice(0,80)}`;
-      const h=demoAnswerHash(seed+n);
-      const t=(qu.type||'freetext').toLowerCase();
-      if(t==='likert5')S.answers[qu.id]=String((h%5)+1);
-      else if(t==='likert3')S.answers[qu.id]=String((h%3)+1);
-      else if(t==='yesno'){const yn=['yes','no','partial','na'];S.answers[qu.id]=yn[h%4];}
-      else if(t==='multichoice'&&qu.options&&qu.options.length)S.answers[qu.id]=qu.options[h%qu.options.length];
-      else{
-        const qtext=(qu.text||'').replace(/\s+/g,' ').trim().slice(0,100);
-        const sc=(qu.subcategories&&qu.subcategories.length)?` Maps to: ${qu.subcategories.slice(0,4).join(', ')}.`:'';
-        S.answers[qu.id]=
-          openings[n%openings.length]+
-          middles[(h+ri+qi)%middles.length]+
-          ` Question ${qu.id} (${(r.role||'Role').slice(0,32)}): ${qtext}.${sc}`+
-          closings[h%closings.length];
-      }
-      n++;
-    });
-  });
-  saveState();render();
 }
 
 function renderQuestion(qu,qi){
@@ -1379,10 +1632,9 @@ function renderFindingsReview(){
   return`
 ${topBar(6)}
 <div class="container">
-  ${S.demoFindings?'<div class="alert alert-warn" style="margin-bottom:16px"><strong>Demo findings</strong> — These rows were generated locally for UI testing (no AI). Use <strong>Generate Findings</strong> on the questionnaire for real model output.</div>':''}
   <div class="card">
     <h2>Findings Review</h2>
-    <p class="sub">${S.demoFindings?'Review the locally generated demo rows.':'Review the AI-generated draft findings.'} Approve findings you agree with, or dispute those that need revision. Disputed findings can be re-analyzed with your additional context.</p>
+    <p class="sub">Review the AI-generated draft findings. Approve findings you agree with, or dispute those that need revision. Disputed findings can be re-analyzed with your additional context.</p>
     <div style="display:flex;justify-content:flex-end;margin:12px 0 0;flex-wrap:wrap;gap:8px">
       <button type="button" class="btn btn-secondary btn-sm" data-action="approve-all-pending" ${pending===0?'disabled':''} title="Marks every pending in-scope finding as approved">Approve all pending…</button>
     </div>
@@ -1404,7 +1656,10 @@ ${topBar(6)}
       ${allScs.map(scId=>{
         const sc=SC_MAP[scId];
         const f=S.findings[scId];
-        if(!f)return`<div class="finding-card"><div class="finding-header"><span class="finding-id">${scId}</span><span class="chip chip-gray">Not analyzed</span></div><div class="finding-text">${escHtml(sc.text)}</div></div>`;
+        if(!f||f.status==='not_analyzed'){
+          const reason=f&&f.not_analyzed_reason;
+          return`<div class="finding-card not_analyzed"><div class="finding-header"><span class="finding-id">${scId}</span><span class="chip chip-gray">Not analyzed</span></div><div class="finding-text">${escHtml(sc.text)}</div>${reason?`<div class="finding-not-analyzed-reason">⚠️ ${escHtml(reason)} <button type="button" class="btn btn-secondary btn-sm" data-action="retry-findings" style="margin-left:8px">Retry findings</button></div>`:''}</div>`;
+        }
         const status=f.status||'pending';
         const c=scoreColor(f.cmmi_score);
         return`
@@ -1444,7 +1699,289 @@ ${topBar(6)}
 
   <div style="display:flex;justify-content:space-between;margin:0 0 32px">
     <button class="btn btn-secondary" data-action="goto-questionnaire">← Back to Questionnaire</button>
-    <button class="btn btn-primary" data-action="gen-report" ${!allReviewed?'disabled':''}>📄 Generate Report ${!allReviewed?'(review all findings first)':''} →</button>
+    <button class="btn btn-primary" data-action="gen-report" ${!allReviewed?'disabled':''}>⚠️ Review Top Gaps ${!allReviewed?'(review all findings first)':''} →</button>
+  </div>
+</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 7.5: TOP GAPS + CONSULTATION CTA
+// ════════════════════════════════════════════════════════════
+const CONSULT_EMAIL='nistcsftool@gmail.com';
+function _topGapsRanked(){
+  const _excl=new Set(S.excludedSubcategories||[]);
+  return Object.entries(S.findings||{})
+    .filter(([id,f])=>f&&S.includedFns.includes(id.split('.')[0])&&!_excl.has(id)&&f.status!=='not_analyzed')
+    .map(([id,f])=>({id,f,rs:(f.likelihood||1)*(f.impact||1),cmmi:f.cmmi_score||0}))
+    .sort((a,b)=>{
+      // Primary: highest risk score. Secondary: lowest CMMI. Tertiary: lower LOE first
+      // (low LOE = quicker remediation, higher upsell appeal).
+      if(b.rs!==a.rs)return b.rs-a.rs;
+      if(a.cmmi!==b.cmmi)return a.cmmi-b.cmmi;
+      const loO={low:0,medium:1,high:2};
+      return(loO[a.f.loe||'medium']||1)-(loO[b.f.loe||'medium']||1);
+    })
+    .slice(0,5);
+}
+async function generateTopGapNarratives(){
+  if(!S.apiKey){await uiAlert('Please enter your API key on the Welcome screen first.');return;}
+  const top=_topGapsRanked();
+  if(!top.length){await uiAlert('No findings available to summarize. Generate findings first.');return;}
+  setLoading('Generating plain-English gap summary…','Synthesizing your top 5 risk-ranked findings into a board-ready narrative. Usually under 60 seconds.');
+  try{
+    const sys=`You are a senior cybersecurity consultant translating NIST CSF 2.0 assessment findings into plain-English language a non-technical executive can understand. Output ONLY valid JSON, no markdown fences, no commentary.`;
+    const findingsBlob=top.map((g,i)=>{
+      const sc=SC_MAP[g.id]||{};
+      return`#${i+1} ${g.id} — ${sc.text||''}
+  CMMI: ${g.f.cmmi_score||'N/A'} | Likelihood: ${g.f.likelihood||'?'} | Impact: ${g.f.impact||'?'} | LOE: ${g.f.loe||'?'}
+  Current state: ${(g.f.current_state||'').slice(0,400)}
+  Gaps: ${(g.f.gaps||'').slice(0,400)}
+  Rationale: ${(g.f.rationale||'').slice(0,400)}`;
+    }).join('\n\n');
+    const usr=`Organization: ${S.org.name||'Unknown'} (${S.org.industry||'Industry unspecified'})
+Scope: ${(S.org.scope||'').slice(0,400)}
+
+Top 5 risk-ranked findings (already prioritized by Likelihood × Impact):
+${findingsBlob}
+
+Return JSON in this exact shape:
+{
+  "executive_overview": "2-3 sentence plain-English summary of the overall pattern in these 5 gaps. Frame around business risk, not compliance jargon. No more than 280 chars.",
+  "top_gaps": [
+    {
+      "scid": "string — the subcategory ID exactly as given",
+      "headline": "8-12 word plain-English problem statement (NOT the NIST text — re-state in business terms)",
+      "business_impact": "1-2 sentences on what this could cost the business if exploited / unaddressed. Concrete, no hedging.",
+      "why_consult": "1 sentence on why a subject matter professional adds value here vs. a DIY fix (e.g., regulatory nuance, cross-functional coordination, tooling expertise)."
+    }
+  ]
+}
+Order top_gaps in the same order as the input findings.`;
+    const raw=await callAI(sys,usr,true,{outputTokens:2400});
+    const parsed=parseJSON(raw);
+    if(!parsed||!Array.isArray(parsed.top_gaps))throw new Error('Model did not return top_gaps array.');
+    S.topGapsAnalysis={generatedAt:new Date().toISOString(),executive_overview:parsed.executive_overview||'',top_gaps:parsed.top_gaps,scidsAtGen:top.map(g=>g.id)};
+    saveState();
+  }catch(e){
+    console.error('[gap-narratives]',e);
+    await uiAlert('Could not generate the plain-English summary: '+(e.message||e)+'\n\nThe raw findings will still be shown below.');
+  }finally{
+    clearLoading();render();
+  }
+}
+function submitConsultationLead(){
+  const c=S.consultationLead||{};
+  if(!c.name||!c.name.trim()){uiAlert('Please enter your name.');return;}
+  if(!c.email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email)){uiAlert('Please enter a valid email address.');return;}
+  const top=_topGapsRanked();
+  const ai=S.topGapsAnalysis||{};
+  const gapsList=top.map((g,i)=>{
+    const aiGap=(ai.top_gaps||[]).find(x=>x.scid===g.id);
+    const sc=SC_MAP[g.id]||{};
+    const headline=aiGap?.headline||sc.text||g.id;
+    const risk=g.f.likelihood&&g.f.impact?` (risk ${g.f.likelihood*g.f.impact})`:'';
+    return`${i+1}. ${g.id}${risk} — ${headline}`;
+  }).join('\n');
+
+  // Subject and lead-paragraph branch on which card the user clicked. Triage tags in
+  // the subject line let Jacob route incoming requests in his inbox without opening each.
+  let subjectTag='';
+  let leadLine='';
+  if(c.path==='topic'){
+    subjectTag=`[Topic Consult: ${c.topic||'Unspecified'}]`;
+    leadLine=`I'd like to book a free 30-minute topic-specific consultation focused on **${c.topic||'a specific area'}** based on my NIST CSF self-assessment.`;
+  }else if(c.path==='comprehensive'){
+    const dur=c.duration==='60'?'60':'30';
+    subjectTag=`[Comp Consult ${dur}min]`;
+    leadLine=`I'd like to book a free ${dur}-minute comprehensive consultation covering all six CSF functions, based on my self-assessment.`;
+  }else if(c.path==='full_assessment_scoping'){
+    subjectTag=`[CISSP Scoping]`;
+    leadLine=`I'd like to book a free 30-minute conversation to learn more about what a full NIST CSF maturity assessment with a CISSP-certified professional looks like for an organization like ours.`;
+  }else{
+    subjectTag=`[CSF Consult]`;
+    leadLine=`I just completed a NIST CSF 2.0 self-assessment and would like to talk about it.`;
+  }
+  const subject=`${subjectTag} ${c.company||c.name}`;
+  const lines=[
+    `Hi,`,
+    ``,
+    leadLine,
+    ``,
+    `── Contact ──`,
+    `Name:    ${c.name}`,
+    `Company: ${c.company||'(not provided)'}`,
+    `Email:   ${c.email}`,
+    `Phone:   ${c.phone||'(not provided)'}`,
+    `Best time to reach me: ${c.preferredContact||'(no preference)'}`,
+    ``,
+    `── Assessment context ──`,
+    `Organization: ${S.org.name||'(unspecified)'}`,
+    `Industry:     ${S.org.industry||'(unspecified)'}`,
+    `Functions in scope: ${(S.includedFns||[]).join(', ')}`,
+    ``,
+    `── Top risk-ranked gaps from my assessment ──`,
+    gapsList||'(no findings on file)',
+    ``,
+    ai.executive_overview?`── Executive overview ──\n${ai.executive_overview}\n`:'',
+    c.notes?`── My notes ──\n${c.notes}\n`:'',
+    `Sent from the NIST CSF 2.0 Guided Assessment tool.`,
+  ].filter(Boolean);
+  const body=lines.join('\n');
+  const href='mailto:'+encodeURIComponent(CONSULT_EMAIL)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  window.location.href=href;
+  S.consultationLead.sent=true;saveState();
+  setTimeout(()=>render(),200);
+}
+function renderGapSummary(){
+  const top=_topGapsRanked();
+  const ai=S.topGapsAnalysis;
+  // If the underlying findings have shifted since the AI summary was generated, force a re-gen prompt.
+  const aiStale=ai&&JSON.stringify(ai.scidsAtGen||[])!==JSON.stringify(top.map(g=>g.id));
+  const c=S.consultationLead||{};
+  const pathLabels={
+    topic:c.topic?`Topic-specific (${escHtml(c.topic)}) · 30 min`:'Topic-specific · 30 min',
+    comprehensive:c.duration==='60'?'Comprehensive · 60 min':'Comprehensive · 30 min',
+    full_assessment_scoping:'Full NIST CSF Assessment — scoping call · 30 min',
+  };
+  const formHeading=pathLabels[c.path]||'Free consultation';
+  const consultForm=c.sent?`
+    <div class="consult-sent">
+      <div style="font-size:1rem;margin-bottom:6px"><strong>✓ Consultation request opened in your email client.</strong></div>
+      <div style="font-size:.85rem;line-height:1.55">If your mail app didn't open, copy-paste this address: <strong>${CONSULT_EMAIL}</strong>. We'll be in touch within one business day.</div>
+    </div>`:c.shown?`
+    <div class="consult-form">
+      <h3>${escHtml(formHeading)}</h3>
+      <div class="sub">Tell us how to reach you. Your assessment summary and top 5 risk-ranked gaps will be included automatically.</div>
+      <div class="consult-row">
+        <div>
+          <label for="consult-name">Your name *</label>
+          <input id="consult-name" type="text" data-action="consult-field" data-field="name" value="${escHtml(c.name||'')}" placeholder="Jane Smith">
+        </div>
+        <div>
+          <label for="consult-company">Company</label>
+          <input id="consult-company" type="text" data-action="consult-field" data-field="company" value="${escHtml(c.company||S.org.name||'')}" placeholder="${escHtml(S.org.name||'Acme Inc.')}">
+        </div>
+      </div>
+      <div class="consult-row">
+        <div>
+          <label for="consult-email">Email *</label>
+          <input id="consult-email" type="text" data-action="consult-field" data-field="email" value="${escHtml(c.email||S.org.email||'')}" placeholder="jane@acme.com">
+        </div>
+        <div>
+          <label for="consult-phone">Phone</label>
+          <input id="consult-phone" type="text" data-action="consult-field" data-field="phone" value="${escHtml(c.phone||'')}" placeholder="(555) 123-4567">
+        </div>
+      </div>
+      <label for="consult-when">Best time to reach you</label>
+      <input id="consult-when" type="text" data-action="consult-field" data-field="preferredContact" value="${escHtml(c.preferredContact||'')}" placeholder="Weekday afternoons ET">
+      <label for="consult-notes">Anything specific you'd like to discuss?</label>
+      <textarea id="consult-notes" data-action="consult-field" data-field="notes" rows="3" placeholder="Optional — e.g., 'we're heading into a SOC 2 audit in Q3' or 'I'm most worried about #2 above.'">${escHtml(c.notes||'')}</textarea>
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" class="btn btn-success" data-action="submit-consultation">📧 Send Consultation Request</button>
+        <button type="button" class="btn btn-secondary" data-action="cancel-consultation">Cancel</button>
+      </div>
+      <div style="font-size:.75rem;color:#7a9ab8;margin-top:12px;line-height:1.5">Clicking <strong>Send</strong> opens your default email client with a pre-filled message to <strong>${CONSULT_EMAIL}</strong>. No data leaves your browser until you hit Send in your mail app.</div>
+    </div>`:'';
+  const showCards=!c.shown&&!c.sent;
+  const topicChoices=[
+    ['GV','Govern'],['ID','Identify'],['PR','Protect'],['DE','Detect'],['RS','Respond'],['RC','Recover'],
+    ['Top Gaps','Top Gaps'],['Other','Other'],
+  ];
+  const threeCards=showCards?`
+    <div class="consult-stack">
+      <div class="consult-card consult-card-1">
+        <div class="cc-eyebrow">Free · 30 minutes</div>
+        <h3>📌 Topic-specific consultation</h3>
+        <p class="cc-blurb">Pick a single area of your assessment for a focused 30-minute conversation. Best when you have a specific question — "are our identity gaps as bad as the report says?" or "what would a remediation roadmap for Detect look like?"</p>
+        <div class="consult-pill-row">
+          ${topicChoices.map(([val,label])=>`<button type="button" class="consult-pill" data-action="request-consultation-topic" data-topic="${escHtml(val)}">${escHtml(label)}</button>`).join('')}
+        </div>
+        <div class="consult-card-foot">Want to cover several areas? See the comprehensive consultation below — usually faster than booking multiple sessions.</div>
+      </div>
+
+      <div class="consult-card consult-card-2">
+        <div class="cc-eyebrow">Free · 30 or 60 minutes</div>
+        <h3>🧭 Comprehensive consultation</h3>
+        <p class="cc-blurb">A holistic second opinion across all six CSF functions and your highest-risk gaps. Best when you want a complete picture before deciding what to prioritize.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <button type="button" class="consult-pill" data-action="request-consultation-comprehensive" data-duration="30"><strong>30 minutes</strong> — high-level walk-through</button>
+          <button type="button" class="consult-pill" data-action="request-consultation-comprehensive" data-duration="60"><strong>60 minutes</strong> — deeper conversation</button>
+        </div>
+      </div>
+
+      <div class="consult-card consult-card-3">
+        <div class="cc-eyebrow">Free · 30-minute conversation</div>
+        <h3>🎓 Learn about conducting a full NIST CSF assessment</h3>
+        <p class="cc-blurb">Book a free 30-minute consultation with an <strong style="color:#fff">experienced, CISSP-certified cyber NIST CSF assessor</strong> to learn more about the value a full NIST CSF maturity assessment can bring to your organization.</p>
+        <p class="cc-blurb" style="margin-bottom:8px">A complete professional assessment typically includes:</p>
+        <ul class="cc-includes">
+          <li><strong>Thorough evidence review</strong> — targeted artifact requests, sampling validation, and gap probing across all 106 CSF subcategories</li>
+          <li><strong>Structured interviews with your key personnel across all CSF domains</strong> — governance, risk, IT, security operations, vendor management, business continuity</li>
+          <li><strong>Formal detailed report</strong> with prioritized findings and a phased remediation roadmap, mapped to CSF subcategories and scored on both CMMI and Tier scales — ready for auditors, regulators, or your board</li>
+          <li><strong>Executive-level presentation to your senior leadership</strong> translating technical findings into business risk and investment priorities</li>
+          <li><strong>Optional no-cost quarterly follow-up</strong> on remediation items for the first year — a 30-minute progress review every quarter, at no additional charge</li>
+        </ul>
+        <button type="button" class="consult-card-cta" data-action="request-consultation-full-assessment">📅 Book a free 30-minute conversation</button>
+        <div class="consult-card-foot">No pressure, no sales push — just a conversation about what a full assessment could look like in your environment.</div>
+      </div>
+    </div>`:'';
+  const cards=top.length?top.map((g,i)=>{
+    const sc=SC_MAP[g.id]||{};
+    const f=g.f;
+    const aiGap=(ai&&!aiStale&&Array.isArray(ai.top_gaps))?ai.top_gaps.find(x=>x.scid===g.id):null;
+    const headline=aiGap?.headline||sc.text||g.id;
+    const businessImpact=aiGap?.business_impact||f.gaps||f.current_state||'';
+    const whyConsult=aiGap?.why_consult||'';
+    const risk=f.likelihood!=null&&f.impact!=null?f.likelihood*f.impact:null;
+    const cmmi=f.cmmi_score;
+    const sCol=scoreColor(cmmi);
+    return`
+    <div class="gap-card">
+      <div class="gap-card-head">
+        <div class="gap-rank">${i+1}</div>
+        <div class="gap-title">${escHtml(headline)}</div>
+        <div class="gap-meta">
+          ${cmmi!=null?`<span class="score-badge" style="background:${sCol.bg};color:${sCol.fg}">CMMI ${fmtScore(cmmi)}</span>`:''}
+          ${risk!=null?_riskBadge(risk):''}
+          ${f.loe?_loeBadge(f.loe):''}
+          <span class="chip chip-gray" title="NIST CSF 2.0 subcategory">${g.id}</span>
+        </div>
+      </div>
+      <div class="gap-text" style="font-size:.78rem;color:#5a7a96;font-style:italic;margin-bottom:6px">${escHtml(sc.text||'')}</div>
+      ${businessImpact?`<div class="gap-section-label">Business impact</div><div class="gap-text">${escHtml(businessImpact)}</div>`:''}
+      ${whyConsult?`<div class="gap-section-label">Why a professional helps</div><div class="gap-text">${escHtml(whyConsult)}</div>`:''}
+    </div>`;
+  }).join(''):`<div class="alert alert-warn">No findings are available to summarize. Go back to the findings review and approve at least a few rows.</div>`;
+  return`
+${topBar(7)}
+<div class="container">
+  <div class="card">
+    <h2>⚠️ Your Top 5 Cybersecurity Gaps</h2>
+    <p class="sub">Before you generate the full report, here are the five highest-risk gaps from your assessment — ranked by Likelihood × Impact. These are the items most worth a focused conversation with a subject matter professional.</p>
+    ${ai&&!aiStale?`
+      <div class="alert alert-info" style="margin-bottom:0">
+        <strong>Executive overview:</strong> ${escHtml(ai.executive_overview||'')}
+      </div>`:''}
+    ${aiStale?`<div class="alert alert-warn">Your findings have changed since the last AI summary. <button type="button" class="btn btn-sm btn-primary" data-action="gen-gap-narratives" style="margin-left:8px">↻ Regenerate summary</button></div>`:''}
+    ${!ai?`
+      <div class="gap-actions" style="margin-top:12px;padding:14px;background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="font-size:.85rem;color:#1a3a5c;flex:1;min-width:240px">Get a plain-English, board-ready summary of these gaps written by AI.</div>
+        <button type="button" class="btn btn-primary btn-sm" data-action="gen-gap-narratives">✨ Generate Plain-English Summary</button>
+      </div>`:''}
+  </div>
+
+  ${cards}
+
+  <div style="margin:8px 0 18px;text-align:center">
+    <h2 style="font-size:1.35rem;color:#0d2137;margin-bottom:6px">💬 Talk to a CSF professional</h2>
+    <p style="font-size:.92rem;color:#5a7a96;max-width:640px;margin:0 auto;line-height:1.55">Three free options to keep the conversation moving — pick whichever matches what you need next.</p>
+  </div>
+  ${threeCards}
+  ${consultForm}
+
+  <div style="display:flex;justify-content:space-between;margin:0 0 32px;flex-wrap:wrap;gap:10px">
+    <button class="btn btn-secondary" data-action="goto-findings-review">← Back to Findings</button>
+    <button class="btn btn-primary" data-action="goto-report-from-gap">📄 Continue to Full Report →</button>
   </div>
 </div>`;
 }
@@ -1486,7 +2023,7 @@ function renderReport(){
     const hasRisk=riskEntries.some(e=>e.f.likelihood!=null);
     const missingRisk=riskEntries.some(e=>e.f.likelihood==null||e.f.impact==null||!e.f.loe);
     return`
-${topBar(7)}
+${topBar(8)}
 <div class="container">
 ${nav}
   <div class="card" style="text-align:center">
@@ -1672,13 +2209,13 @@ ${nav}
 
   // ── Per-function page ──
   const fn=fns[rp-1];
-  if(!fn)return`${topBar(7)}<div class="container">${nav}<div style="margin-bottom:32px"></div></div>`;
+  if(!fn)return`${topBar(8)}<div class="container">${nav}<div style="margin-bottom:32px"></div></div>`;
   const fs=fnScores[fn.id];const fc=scoreColor(fs);
   const narrative=S.functionNarratives?.[fn.id]||'';
   const evQualColor={strong:'#2e7d32',adequate:'#f57f17',weak:'#e65100',missing:'#c62828'};
   const evQualBg={strong:'#e8f5e9',adequate:'#fffde7',weak:'#fff3e0',missing:'#ffebee'};
   return`
-${topBar(7)}
+${topBar(8)}
 <div class="container">
 ${nav}
   <div class="card">
@@ -1761,71 +2298,19 @@ function renderRadar(fns,fnScores){
 // TOP BAR
 // ════════════════════════════════════════════════════════════
 function topBar(activeStep){
-  const steps=['Organization','Scope','Documents','Analysis','Questionnaire','Findings','Report'];
+  const steps=['Organization','Scope','Documents','Analysis','Questionnaire','Findings','Top Gaps','Report'];
   return`
 <div class="top-bar">
-  <h1>NIST CSF 2.0 Guided Assessment <span class="badge">AI-Powered</span>${S.demoEvidence?'<span class="badge" style="background:#e65100;margin-left:6px">Demo evidence</span>':''}</h1>
-  <div style="font-size:.8rem;color:#7ab3d8">${escHtml(S.org.name||'New Assessment')}</div>
+  <h1 data-action="goto-welcome" title="Back to welcome screen" style="cursor:pointer;user-select:none">NIST CSF 2.0 Guided Assessment <span class="badge">AI-Powered</span>${isSampleMode()?'<span class="badge" style="background:#ffa726;margin-left:6px">Sample mode</span>':''}</h1>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div style="font-size:.8rem;color:#7ab3d8">${escHtml(S.org.name||'New Assessment')}</div>
+    <button type="button" data-action="goto-welcome" class="topbar-home" title="Back to welcome screen">↩ Welcome</button>
+  </div>
 </div>
 <div class="progress-bar">
   <div class="steps-row">${steps.map((s,i)=>`<div class="step-pill ${i+1===activeStep?'active':i+1<activeStep?'done':''}">${i+1<activeStep?'✓ ':''} ${s}</div>`).join('')}</div>
-</div>`;
-}
-
-// ════════════════════════════════════════════════════════════
-// DEMO — synthetic uploads + evidence map (no document AI; tests full flow)
-// ════════════════════════════════════════════════════════════
-function scIdsTouchingDrlCategory(cat){
-  const fns=(cat.fn||[]).filter(fid=>S.includedFns.includes(fid));
-  const seen=new Set();
-  fns.forEach(fn=>{(SC_BY_FN[fn]||[]).forEach(id=>{if(S.includedFns.includes(id.split('.')[0]))seen.add(id);});});
-  return[...seen];
-}
-function applyDemoEvidenceSkip(){
-  if(!confirm('Demo mode: fill each evidence row with a synthetic file (as if uploaded), build a simulated evidence map and document summaries, then open Analysis so you can run Generate Questionnaire and Findings using your API key. Nothing is sent for document parsing. Continue?'))return;
-  drlSelectAllViewFns();
-  const rank={strong:3,adequate:2,weak:1,missing:0};
-  const qualities=['strong','adequate','weak','missing'];
-  S.evidenceMap={};
-  S.docSummaries=[];
-  const demoBody='This is synthetic assessment text for tool testing. It describes policies, access control, monitoring, logging, incident response, recovery planning, vendor risk, and management oversight in generic terms so downstream questionnaire and findings steps have plausible material to reference. ';
-  ensureDrlViewFns();
-  allRequestsForView().forEach((r,idx)=>{
-    const e=getDrlEntry(r.catId,r.id);
-    e.notProvided=false;
-    e.notProvidedReason='';
-    const fname=`[Demo] ${r.title}.txt`;
-    e.files=[{
-      name:fname,
-      context:'Synthetic demo file for walkthrough; not real organizational evidence.',
-      content:demoBody.repeat(3)+`Bucket: ${r.catName}. Artifact: ${r.title}. Row ${idx+1}.`
-    }];
-    const cat=DRL_CATS.find(c=>c.id===r.catId);
-    const candidates=cat?scIdsTouchingDrlCategory(cat):[];
-    const pick=candidates.length?candidates.slice(0,Math.min(5,candidates.length)):SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(x=>x[0]).slice(0,3);
-    const mapping={};
-    pick.forEach((scId,j)=>{
-      const q=qualities[(idx+j)%4];
-      mapping[scId]={evidence_quality:q,excerpt:`Demo line for ${scId} from ${r.title}.`,notes:'Synthetic demo mapping'};
-    });
-    Object.entries(mapping).forEach(([scId,ev])=>{
-      if(!S.evidenceMap[scId])S.evidenceMap[scId]={quality:'missing',excerpts:[]};
-      if((rank[ev.evidence_quality]||0)>(rank[S.evidenceMap[scId].quality]||0))S.evidenceMap[scId].quality=ev.evidence_quality;
-      S.evidenceMap[scId].excerpts.push(`[${fname}] ${ev.excerpt}`);
-    });
-    S.docSummaries.push({
-      catId:r.catId,requestId:r.id,name:fname,
-      summary:`Synthetic demo stand-in for "${r.title}" (no AI document read).`,
-      mappings:mapping
-    });
-  });
-  SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id],i)=>{
-    if(!S.evidenceMap[id])S.evidenceMap[id]={quality:qualities[i%4],excerpts:[`[Demo] Placeholder coverage for ${id}`]};
-  });
-  S.drlValidationErrors=[];
-  S.demoEvidence=true;
-  S.step='analysis';
-  saveState();render();
+</div>
+${sampleModeBanner()}`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1834,14 +2319,18 @@ function applyDemoEvidenceSkip(){
 async function analyzeDocuments(){
   const errs=validateDRL();
   S.drlValidationErrors=errs;
-  if(errs.length){saveState();render();alert(`Please address ${errs.length} evidence request issue(s) before analysis.`);return;}
-  if(S.demoEvidence&&!confirm('Replace demo evidence with a real AI read of your uploaded files? Your current demo evidence map and summaries will be cleared.'))return;
-  S.demoEvidence=false;
-  setLoading('Analyzing documents with AI...');
+  if(errs.length){saveState();render();await uiAlert(`Please address ${errs.length} evidence request issue(s) before analysis.`);return;}
   S.evidenceMap={};S.docSummaries=[];
+  // In-scope set used to (a) build the prompt's subcategory list and (b) reject any
+  // out-of-scope IDs the model invents — fixes off-by-N drift in the evidence map.
+  const _excl=new Set(S.excludedSubcategories||[]);
+  const _inScopeId=(id)=>S.includedFns.includes(id.split('.')[0])&&!_excl.has(id);
   try{
-    const scList=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).map(([id,text])=>`${id}: ${text}`).join('\n');
+    const scList=SC_RAW.filter(([id])=>_inScopeId(id)).map(([id,text])=>`${id}: ${text}`).join('\n');
     ensureDrlViewFns();
+    // Flatten everything into a single task list. Document analysis is independent
+    // per-file; the previous serial loop wasted minutes waiting on Anthropic round-trips.
+    const tasks=[];
     for(const cat of drlCatsForTable()){
       for(const req of cat.requests){
         const entry=getDrlEntry(cat.id,req.id);
@@ -1849,25 +2338,38 @@ async function analyzeDocuments(){
           S.docSummaries.push({catId:cat.id,requestId:req.id,name:req.title,summary:`Not provided: ${entry.notProvidedReason}`,mappings:{}});
           continue;
         }
-        for(const file of(entry.files||[])){
-        setLoading(`Analyzing: ${file.name}...`);
-        const sys=`You are a NIST CSF 2.0 expert assessor. Analyze the document excerpt and identify which CSF 2.0 subcategories it provides evidence for. Return ONLY valid JSON, no markdown.`;
-        const msg=`Document category: ${cat.name}\nRequested artifact: ${req.title}\nDocument: ${file.name}\nUploader context: ${file.context||'None provided'}\n\nContent:\n${file.content.slice(0,6000)}\n\nSubcategories:\n${scList}\n\nReturn JSON:\n{"document_type":"policy|procedure|risk_register|asset_inventory|training|architecture|contract|audit|other","document_summary":"one sentence","mappings":{"SC_ID":{"evidence_quality":"strong|adequate|weak","excerpt":"relevant text max 150 chars","notes":"why this supports the subcategory"}}}`;
-        try{
-          const raw=await callAI(sys,msg,false);
-          const p=parseJSON(raw);
-          S.docSummaries.push({catId:cat.id,requestId:req.id,name:file.name,summary:p.document_summary,mappings:p.mappings||{}});
-          const rank={strong:3,adequate:2,weak:1,missing:0};
-          Object.entries(p.mappings||{}).forEach(([scId,ev])=>{
-            if(!S.evidenceMap[scId])S.evidenceMap[scId]={quality:'missing',excerpts:[]};
-            if((rank[ev.evidence_quality]||0)>(rank[S.evidenceMap[scId].quality]||0))S.evidenceMap[scId].quality=ev.evidence_quality;
-            if(ev.excerpt)S.evidenceMap[scId].excerpts.push(`[${file.name}] ${ev.excerpt}`);
-          });
-        }catch(e){console.warn('Doc error:',file.name,e);}
-      }
+        for(const file of(entry.files||[]))tasks.push({cat,req,file});
       }
     }
-    SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id])=>{if(!S.evidenceMap[id])S.evidenceMap[id]={quality:'missing',excerpts:[]};});
+    const total=tasks.length;
+    let done=0;
+    setLoading(`Analyzing 0 / ${total} documents…`,'Files run in parallel (concurrency cap honors API rate limits). Much faster than the old per-file serial path.');
+    const rank={strong:3,adequate:2,weak:1,missing:0};
+    const sys=`You are a NIST CSF 2.0 expert assessor. Analyze the document excerpt and identify which CSF 2.0 subcategories it provides evidence for. Return ONLY valid JSON, no markdown.`;
+    await Promise.allSettled(tasks.map(async ({cat,req,file})=>{
+      const msg=`Document category: ${cat.name}\nRequested artifact: ${req.title}\nDocument: ${file.name}\nUploader context: ${file.context||'None provided'}\n\nContent:\n${file.content.slice(0,6000)}\n\nSubcategories:\n${scList}\n\nReturn JSON:\n{"document_type":"policy|procedure|risk_register|asset_inventory|training|architecture|contract|audit|other","document_summary":"one sentence","mappings":{"SC_ID":{"evidence_quality":"strong|adequate|weak","excerpt":"relevant text max 150 chars","notes":"why this supports the subcategory"}}}`;
+      try{
+        // bandwidth:'short' opts into the fan-out pool (limit 4). Bumped output budget
+        // to 8192 — comprehensive policies map to 30+ subcategories with excerpts/notes.
+        const raw=await callAI(sys,msg,false,{outputTokens:8192,bandwidth:'short'});
+        const p=parseJSON(raw);
+        S.docSummaries.push({catId:cat.id,requestId:req.id,name:file.name,summary:p.document_summary,mappings:p.mappings||{}});
+        Object.entries(p.mappings||{}).forEach(([scId,ev])=>{
+          if(!_inScopeId(scId))return; // ignore out-of-scope IDs the model may invent
+          if(!S.evidenceMap[scId])S.evidenceMap[scId]={quality:'missing',excerpts:[]};
+          if((rank[ev.evidence_quality]||0)>(rank[S.evidenceMap[scId].quality]||0))S.evidenceMap[scId].quality=ev.evidence_quality;
+          if(ev.excerpt)S.evidenceMap[scId].excerpts.push(`[${file.name}] ${ev.excerpt}`);
+        });
+      }catch(e){
+        console.warn('Doc error:',file.name,e);
+        // Surface the failure in the UI so users notice when a doc was dropped.
+        S.docSummaries.push({catId:cat.id,requestId:req.id,name:file.name,summary:`⚠️ Analysis failed: ${e.message||e}`,mappings:{},error:true});
+      }finally{
+        done++;
+        setLoading(`Analyzing ${done} / ${total} documents…`,'Files run in parallel (concurrency cap honors API rate limits).');
+      }
+    }));
+    SC_RAW.filter(([id])=>_inScopeId(id)).forEach(([id])=>{if(!S.evidenceMap[id])S.evidenceMap[id]={quality:'missing',excerpts:[]};});
     S.drlValidationErrors=[];
     S.step='analysis';saveState();
   }finally{clearLoading();render();}
@@ -1878,25 +2380,64 @@ async function generateQuestionnaire(){
   try{
     const GAP_CAP=12000;
     const CONF_CAP=6000;
-    let gaps=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&['missing','weak'].includes(S.evidenceMap[id]?.quality)).map(([id,text])=>`${id}: ${text}`).join('\n');
+    // Honor subcategory-level scope exclusions (the function-level filter alone wasn't enough —
+    // excluded subs like GV.RM-07 fell into the "missing" bucket and the model asked about them).
+    const _excl=new Set(S.excludedSubcategories||[]);
+    const _inScope=([id])=>S.includedFns.includes(id.split('.')[0])&&!_excl.has(id);
+    let gaps=SC_RAW.filter(_inScope).filter(([id])=>['missing','weak'].includes(S.evidenceMap[id]?.quality)).map(([id,text])=>`${id}: ${text}`).join('\n');
     if(gaps.length>GAP_CAP)gaps=gaps.slice(0,GAP_CAP)+'\n\n(... gap list truncated for length; prioritize the highest-risk gaps implied above.)';
-    let confirmed=SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])&&['strong','adequate'].includes(S.evidenceMap[id]?.quality)).map(([id])=>id).join(', ');
+    let confirmed=SC_RAW.filter(_inScope).filter(([id])=>['strong','adequate'].includes(S.evidenceMap[id]?.quality)).map(([id])=>id).join(', ');
     if(confirmed.length>CONF_CAP)confirmed=confirmed.slice(0,CONF_CAP)+' ...';
     // Industry-specific common gaps to sharpen question targeting
     const indGaps=(INDUSTRY_COMMON_GAPS[S.org.industry]||[]).map(c=>`${c} (${CAT_NAMES[c]||c})`).join(', ');
     const sys=`You are a senior NIST CSF 2.0 assessor conducting a ${S.org.industry} sector assessment. You produce questionnaires that reveal the difference between paper compliance and actual operational practice. Output a single JSON object only (no markdown, no commentary). Question text under 200 characters; guidance one short sentence only.`;
     const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry} | Size: ${S.org.orgSize||'Unknown'} employees\nIT team: ${S.org.itOrgSize||'Unknown'} | Cybersecurity team: ${S.org.cyberOrgSize||'Unknown'}\nScope: ${S.org.scope||'Enterprise-wide'}\n\nEvidence GAPS — subcategories with missing or weak document coverage (focus questions here):\n${gaps}\n\nAlready confirmed via documents (do NOT re-ask these): ${confirmed}\n\n${indGaps?`Historically weak areas in ${S.org.industry} sector (pay particular attention): ${indGaps}\n\n`:''}Generate a questionnaire with 18-28 questions total. Methodology:\n- Group by role: CISO/Security Lead, IT Lead, Risk Manager, HR Lead, Business Continuity Lead\n- PRIORITIZE scenario-based and behavioral questions over self-rating (e.g. "Walk me through what happens when X…" or "When did you last do Y?")\n- Reveal paper vs. practice gaps — what policies say vs. what staff actually do day to day\n- Incorporate ${S.org.industry}-specific context (regulatory requirements, supply chain risk, operational dependencies)\n- Each question maps to 1–3 specific subcategory IDs\n- Do NOT re-ask what documents already confirm\n- Use freetext for governance/process questions where nuance matters; likert5 for consistency/frequency; yesno/multichoice only when the answer is genuinely categorical\n- Keep options arrays short (max 5 options)\n\nReturn this JSON shape:\n{"roles":[{"role":"CISO / Security Lead","description":"short context sentence","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence on why we ask this"}]}]}`;
     const raw=await callAI(sys,msg,true,{outputTokens:16384,jsonMime:providerSupportsJsonMime()});
-    S.questionnaire=parseJSON(raw);S.activeRole=0;S.step='questionnaire';saveState();
+    const parsed=parseJSON(raw);
+    // Defensive: drop any question whose subcategories are all excluded or out-of-function-scope.
+    if(parsed&&Array.isArray(parsed.roles)){
+      parsed.roles.forEach(r=>{
+        r.questions=(r.questions||[]).filter(q=>{
+          const subs=q.subcategories||[];
+          if(!subs.length)return true;
+          return subs.some(s=>!_excl.has(s)&&S.includedFns.includes(String(s).split('.')[0]));
+        });
+      });
+      parsed.roles=parsed.roles.filter(r=>(r.questions||[]).length>0);
+    }
+    S.questionnaire=parsed;S.activeRole=0;S.step='questionnaire';saveState();
   }catch(e){
     clearLoading();render();
-    alert('Error generating questionnaire: '+e.message);
+    await uiAlert('Error generating questionnaire: '+e.message);
   }finally{clearLoading();render();}
 }
 
 async function fetchFindingsForFunction(fn,answersStructured){
   const _excl=new Set(S.excludedSubcategories||[]);
   const scs=(SC_BY_FN[fn.id]||[]).filter(id=>!_excl.has(id));
+  if(!scs.length)return{};
+  // Group by category (e.g. GV.OC, GV.RM, ...). Each chunk has 2-7 subs which
+  // bounds output to ~3-8KB per call — well within any model's token budget,
+  // and lets one bad chunk fail without taking the whole function down.
+  const byCat={};
+  scs.forEach(id=>{const c=id.split('-')[0];(byCat[c]=byCat[c]||[]).push(id);});
+  const chunks=Object.values(byCat);
+  const results=await Promise.allSettled(chunks.map(chunk=>
+    fetchFindingsForChunk(fn,chunk,answersStructured)
+  ));
+  const merged={};
+  const errs=[];
+  results.forEach((r,i)=>{
+    if(r.status==='fulfilled'&&r.value){Object.assign(merged,r.value);}
+    else{errs.push({chunk:chunks[i].join(','),err:r.reason?.message||String(r.reason)});}
+  });
+  // Always return both findings AND error info so the caller can mark partial
+  // failures. (Throwing only on total failure left subs from individual failed
+  // chunks invisible — they showed up as "Not analyzed" with no reason.)
+  return {findings:merged,errors:errs};
+}
+
+async function fetchFindingsForChunk(fn,scs,answersStructured){
   if(!scs.length)return{};
   const fnScSet=new Set(scs);
   const scDetails=scs.map(id=>{
@@ -1913,14 +2454,14 @@ async function fetchFindingsForFunction(fn,answersStructured){
 Scope: ${S.org.scope||'Enterprise-wide'}
 FUNCTION: ${fn.id} — ${fn.name}
 
-═══ EVIDENCE PER SUBCATEGORY ═══
+═══ EVIDENCE PER SUBCATEGORY (this batch) ═══
 ${scDetails}
 
 ═══ RELEVANT QUESTIONNAIRE RESPONSES ═══
-${relevantQA||'(No questionnaire responses captured for this function)'}
+${relevantQA||'(No questionnaire responses captured for this batch)'}
 
 ═══ INSTRUCTIONS ═══
-Generate findings for ALL subcategories in ${fn.id}.
+Generate findings for the ${scs.length} subcategories listed above (${scs.join(', ')}).
 
 RATIONALE FORMAT (critical): Your rationale MUST cite specific sources. Name documents by their exact filename from excerpts (e.g. "The [Network Architecture v2.pdf] shows..."). Reference questionnaire responses by ID (e.g. "When asked [Q4], the respondent stated..."). Then explain WHY the evidence does or does not support a higher score.
 
@@ -1932,9 +2473,11 @@ LIKELIHOOD (1–5): probability that this gap is exploited or causes harm in the
 IMPACT (1–5): severity of harm to the organization if the gap materializes.
 LOE: "low" = days-to-weeks, "medium" = 1-3 months, "high" = 3+ months.
 
-Return JSON — every subcategory in ${fn.id} must appear:
+Return JSON — every subcategory in this batch must appear:
 {"${scs[0]}":{"current_state":"...","gaps":"...","cmmi_score":2.25,"tier_score":2,"rationale":"Cite [DocumentName] and [Qx]: ...","recommendation":"...","priority":"high|medium|low","likelihood":3,"impact":4,"loe":"medium","loe_detail":"Estimated time/effort description","remediation_summary":"Brief: what needs to be done"}}`;
-  const raw=await callAI(sys,msg,true,{outputTokens:10000,jsonMime:providerSupportsJsonMime()});
+  // Use the short pool — chunks are smaller so we can fan out widely.
+  // 4096 tokens is enough for ~7 subcategories worth of findings.
+  const raw=await callAI(sys,msg,true,{outputTokens:4096,jsonMime:providerSupportsJsonMime(),bandwidth:'short'});
   return parseJSON(raw);
 }
 
@@ -2031,38 +2574,11 @@ Return JSON keyed by subcategory ID:
   return enriched;
 }
 
-function applyDemoFindingsSkipAi(){
-  const prios=['high','medium','low'];
-  const inScope=inScopeSubs();
-  S.findings={};
-  S.demoFindings=true;
-  inScope.forEach(([id,text],i)=>{
-    const ev=S.evidenceMap[id];
-    const q=ev?.quality||'missing';
-    const base=2+(i%4);
-    const tier=Math.min(4,Math.max(1,(i%4)+1));
-    S.findings[id]={
-      current_state:`[Demo] Illustrative current-state narrative for ${id}. Evidence in this session is rated "${q}" (synthetic / local only).`,
-      gaps:i%7===0?'[Demo] Example gap: formalize evidence collection and ownership.':null,
-      cmmi_score:Math.min(5,Math.max(1,base)),
-      tier_score:tier,
-      rationale:`[Demo] Scores reflect placeholder logic for UI testing, not a real assessment. Subcategory: ${text.slice(0,120)}${text.length>120?'…':''}`,
-      recommendation:`[Demo] Strengthen documentation, monitoring, and accountability for ${id}.`,
-      priority:prios[i%3],
-      status:'pending'
-    };
-  });
-  S.activeReviewFn=S.includedFns[0]||'GV';
-  S.step='findings_review';
-  saveState();
-  render();
-}
-
 async function generateFindings(){
   const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
   const n=fns.length;
   setLoading(`Step 1/3 — Generating findings (${n} parallel requests)…`,`Each CSF function runs in parallel. Plan on 2–5 minutes. Keep this tab open.`);
-  S.findings={};S.functionNarratives={};S.demoFindings=false;
+  S.findings={};S.functionNarratives={};
   try{
     const allQuestions=S.questionnaire?.roles?.flatMap(r=>r.questions)||[];
     const answersStructured=Object.entries(S.answers).map(([qid,val])=>{
@@ -2071,18 +2587,44 @@ async function generateFindings(){
       return{qid,text:q.text,answer:String(val),subcategories:q.subcategories||[]};
     }).filter(Boolean);
 
-    // ── Phase 1: initial findings (parallel per function) ──
+    // ── Phase 1: initial findings (parallel per function, chunked by category) ──
     const settled=await Promise.allSettled(fns.map(fn=>fetchFindingsForFunction(fn,answersStructured)));
     let ok=0;
+    const _exclF=new Set(S.excludedSubcategories||[]);
+    const friendlyReason=(reason)=>{
+      const msg=reason?.message?reason.message:String(reason||'unknown error');
+      const truncated=/truncated|max_tokens|JSON|position \d/i.test(msg);
+      return truncated
+        ? `Model output was truncated before this batch's findings could be parsed. Click "Retry findings" to try again — chunking will retry just the missing categories.`
+        : msg;
+    };
     settled.forEach((res,i)=>{
-      if(res.status==='fulfilled'){
-        const parsed=res.value;
+      const fnId=fns[i]?.id;
+      const inScopeForFn=(SC_BY_FN[fnId]||[]).filter(id=>!_exclF.has(id));
+      if(res.status==='fulfilled'&&res.value&&typeof res.value==='object'){
+        // New return shape: {findings, errors}. Fall back to old shape (plain map) too.
+        const parsed=res.value.findings||res.value;
+        const errs=res.value.errors||[];
         if(parsed&&typeof parsed==='object'){
           Object.assign(S.findings,parsed);
           Object.keys(parsed).forEach(id=>{if(S.findings[id]&&!S.findings[id].status)S.findings[id].status='pending';});
-          ok++;
+          if(Object.keys(parsed).length>0)ok++;
         }
-      }else{console.warn('Findings error:',fns[i]?.id,res.reason);}
+        // Cover any in-scope sub that didn't get a finding (chunk failure).
+        const firstErr=errs.length?errs[0].err:'this batch failed silently';
+        inScopeForFn.forEach(id=>{
+          if(S.findings[id])return;
+          S.findings[id]={status:'not_analyzed',not_analyzed_reason:friendlyReason({message:firstErr}),not_analyzed_function:fnId};
+        });
+      }else{
+        // Whole-function rejection: every sub gets the failure reason.
+        console.warn('Findings error:',fnId,res.reason);
+        const reason=friendlyReason(res.reason);
+        inScopeForFn.forEach(id=>{
+          if(S.findings[id])return;
+          S.findings[id]={status:'not_analyzed',not_analyzed_reason:reason,not_analyzed_function:fnId};
+        });
+      }
     });
     if(ok===0)throw new Error('No findings were returned. Check your API key, model, and network; open the browser console (F12) for details.');
 
@@ -2099,13 +2641,13 @@ async function generateFindings(){
     S.activeReviewFn=S.includedFns[0]||'GV';S.step='findings_review';saveState();
   }catch(e){
     clearLoading();render();
-    alert('Error generating findings: '+e.message);
+    await uiAlert('Error generating findings: '+e.message);
   }finally{clearLoading();render();}
 }
 
 async function reanalyzeFinding(scId){
   const f=S.findings[scId];const sc=SC_MAP[scId];
-  if(!(f.dispute_note||'').trim()){alert('Please describe your dispute or provide additional context first.');return;}
+  if(!(f.dispute_note||'').trim()){await uiAlert('Please describe your dispute or provide additional context first.');return;}
   setLoading(`Re-analyzing ${scId}...`);
   try{
     const sys=`You are a NIST CSF 2.0 assessor revising a finding based on new organizational context. Write in business risk terms. Return ONLY valid JSON.`;
@@ -2115,7 +2657,7 @@ async function reanalyzeFinding(scId){
     S.findings[scId]={...f,...parsed,status:'approved',dispute_note:f.dispute_note};saveState();
   }catch(e){
     clearLoading();render();
-    alert('Re-analysis error: '+e.message);
+    await uiAlert('Re-analysis error: '+e.message);
   }finally{clearLoading();render();}
 }
 
@@ -2174,7 +2716,7 @@ Every subcategory ID must appear exactly once. Use only: "include", "optional", 
   }catch(e){
     clearLoading();
     // Graceful fallback: go to scope page without AI recs
-    alert('Scope analysis failed: '+e.message+'\n\nContinuing without AI recommendations — all subcategories included by default.');
+    await uiAlert('Scope analysis failed: '+e.message+'\n\nContinuing without AI recommendations — all subcategories included by default.');
     S.aiScopeRec={};
     S.excludedSubcategories=[];
     S.includedFns=FUNCTIONS.map(f=>f.id);
@@ -2219,7 +2761,7 @@ function updateScopePageCounts(){
 // ════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const t=e.target instanceof Element?e.target:e.target?.parentElement;
   const el=t?.closest?.('[data-action]');
   if(!el)return;
@@ -2230,26 +2772,88 @@ document.addEventListener('click',e=>{
     if(box){const shown=box.style.display==='none';box.style.display=shown?'block':'none';el.textContent=shown?'Hide':'How do I get this?';}
   }
   else if(action==='welcome-start'){
-    S.provider='anthropic';
-    S.apiKey=document.getElementById('inp-apikey').value.trim();
-    S.model=document.getElementById('inp-model').value;
-    if(!S.apiKey){alert('Please enter your API key.');return;}
-    localStorage.setItem('csf_apiKey',S.apiKey);
+    const tier=S.selectedTier||'byo';
+    if(tier==='sample'){
+      // Sample tier supports both providers; assessmentMode is locked to sample.
+      S.assessmentMode='sample';
+      if(S.provider==='gemini'){
+        const k=document.getElementById('inp-gemini-key');
+        S.geminiApiKey=k?k.value.trim():'';
+        if(!S.geminiApiKey){await uiAlert('Please enter your Gemini API key. Get a free one at aistudio.google.com/apikey.');return;}
+        S.model=document.getElementById('inp-model').value||'gemini-2.5-flash';
+        localStorage.setItem('csf_geminiApiKey',S.geminiApiKey);
+      }else{
+        const k=document.getElementById('inp-apikey');
+        S.apiKey=k?k.value.trim():'';
+        if(!S.apiKey){await uiAlert('Please enter your Anthropic API key.');return;}
+        S.model=document.getElementById('inp-model').value||'claude-haiku-4-5-20251001';
+        localStorage.setItem('csf_apiKey',S.apiKey);
+      }
+    }else{
+      // BYO key tier — Anthropic, full or optionally sample.
+      S.provider='anthropic';
+      const k=document.getElementById('inp-apikey');
+      S.apiKey=k?k.value.trim():'';
+      if(!S.apiKey){await uiAlert('Please enter your Anthropic API key.');return;}
+      S.model=document.getElementById('inp-model').value||'claude-sonnet-4-6';
+      const sampleChk=document.getElementById('inp-anthropic-sample');
+      S.assessmentMode=sampleChk&&sampleChk.checked?'sample':'full';
+      localStorage.setItem('csf_apiKey',S.apiKey);
+    }
+    enforceSampleMode();
     persistAIPrefs();
-    S.demoEvidence=false;
     S.step='setup';saveState();render();
   }
+  else if(action==='set-tier'){
+    const t=el.dataset.tier;
+    if(!t)return;
+    // Coming-soon tiers can be highlighted but won't progress.
+    S.selectedTier=t;
+    if(t==='sample'){
+      // Default sample tier to Gemini if no provider explicitly chosen, or keep current if anthropic
+      if(S.provider!=='anthropic'&&S.provider!=='gemini')S.provider='gemini';
+      if(S.provider==='gemini'&&(!S.model||!/^gemini-/.test(S.model)))S.model='gemini-2.5-flash';
+      if(S.provider==='anthropic'&&(!S.model||!/^claude-/.test(S.model)))S.model='claude-haiku-4-5-20251001';
+    }else if(t==='byo'){
+      S.provider='anthropic';
+      if(!S.model||!/^claude-/.test(S.model))S.model='claude-sonnet-4-6';
+    }
+    saveState();render();
+  }
+  else if(action==='set-provider'){
+    const p=el.dataset.provider==='gemini'?'gemini':'anthropic';
+    if(p===S.provider)return;
+    S.provider=p;
+    if(p==='gemini'){
+      if(!S.model||!/^gemini-/.test(S.model))S.model='gemini-2.5-flash';
+      S.assessmentMode='sample';
+    }else{
+      if(!S.model||!/^claude-/.test(S.model))S.model='claude-haiku-4-5-20251001';
+    }
+    persistAIPrefs();saveState();render();
+  }
+  else if(action==='toggle-api-help-gemini'){
+    const box=document.getElementById('api-help-gemini');
+    if(box){const shown=box.style.display==='none';box.style.display=shown?'block':'none';el.textContent=shown?'Hide':'How do I get this?';}
+  }
   else if(action==='welcome-reset'){
-    if(!confirm('Clear all saved assessment data and start fresh?\n\nThis cannot be undone.'))return;
+    if(!await uiConfirm('Clear all saved assessment data and start fresh?\n\nThis cannot be undone.',{danger:true,okText:'Clear & start fresh'}))return;
     localStorage.removeItem('csf_state');
-    S=Object.assign(S,{step:'welcome',org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},scoringMethod:'both',includedFns:['GV','ID','PR','DE','RS','RC'],excludedSubcategories:[],aiScopeRec:{},benchmarkSent:false,drlViewFns:null,demoEvidence:false,demoFindings:false,drl:{},drlValidationErrors:[],evidenceMap:{},docSummaries:[],questionnaire:null,answers:{},activeRole:0,findings:{},functionNarratives:{},activeReviewFn:'GV',reportPage:0,targetFnScores:{},execSummary:''});
+    S=Object.assign(S,{step:'welcome',assessmentMode:'full',selectedTier:'byo',org:{name:'',industry:'',scope:'',date:'',assessorName:'',email:'',emailVerified:false,verificationCode:'',verificationSent:false,orgSize:'',itOrgSize:'',cyberOrgSize:'',dataConsentAcknowledged:false},scoringMethod:'both',includedFns:['GV','ID','PR','DE','RS','RC'],excludedSubcategories:[],aiScopeRec:{},benchmarkSent:false,drlViewFns:null,drl:{},drlValidationErrors:[],evidenceMap:{},docSummaries:[],questionnaire:null,answers:{},activeRole:0,findings:{},functionNarratives:{},activeReviewFn:'GV',reportPage:0,targetFnScores:{},execSummary:'',topGapsAnalysis:null,consultationLead:{shown:false,path:'',topic:'',duration:'',name:'',company:'',email:'',phone:'',preferredContact:'',notes:'',sent:false}});
     render();
   }
   else if(action==='welcome-resume'){
     loadState();
-    const keyInput=document.getElementById('inp-apikey');
-    if(keyInput?.value.trim())S.apiKey=keyInput.value.trim();
-    if(!S.apiKey){alert('Please enter your API key.');return;}
+    if(S.provider==='gemini'){
+      const k=document.getElementById('inp-gemini-key');
+      if(k?.value.trim())S.geminiApiKey=k.value.trim();
+      if(!S.geminiApiKey){await uiAlert('Please enter your Gemini API key.');return;}
+    }else{
+      const k=document.getElementById('inp-apikey');
+      if(k?.value.trim())S.apiKey=k.value.trim();
+      if(!S.apiKey){await uiAlert('Please enter your API key.');return;}
+    }
+    enforceSampleMode();
     persistAIPrefs();
     saveState();
     render();
@@ -2274,11 +2878,11 @@ document.addEventListener('click',e=>{
   }
   else if(action==='setup-next'){
     const name=(document.getElementById('inp-org-name')?.value||'').trim();
-    if(!name){alert('Organization name is required.');return;}
+    if(!name){await uiAlert('Organization name is required.');return;}
     const orgSize=S.org.orgSize;
     const itSize=S.org.itOrgSize;
     const cyberSize=S.org.cyberOrgSize;
-    if(!orgSize||!itSize||!cyberSize){alert('Please select organization, IT, and cybersecurity team sizes before continuing.');return;}
+    if(!orgSize||!itSize||!cyberSize){await uiAlert('Please select organization, IT, and cybersecurity team sizes before continuing.');return;}
     S.org.name=name;
     S.org.industry=document.getElementById('inp-org-industry')?.value||S.org.industry;
     S.org.assessorName=(document.getElementById('inp-org-assessor')?.value||'').trim();
@@ -2329,7 +2933,7 @@ document.addEventListener('click',e=>{
   else if(action==='scope-next'){
     const excl=new Set(S.excludedSubcategories||[]);
     const inScopeIds=SC_RAW.map(([id])=>id).filter(id=>!excl.has(id));
-    if(!inScopeIds.length){alert('At least one subcategory must be in scope.');return;}
+    if(!inScopeIds.length){await uiAlert('At least one subcategory must be in scope.');return;}
     // Derive includedFns from whichever functions have at least one in-scope subcategory
     S.includedFns=FUNCTIONS.map(f=>f.id).filter(fid=>(SC_BY_FN[fid]||[]).some(id=>!excl.has(id)));
     // Capture target state scores
@@ -2398,12 +3002,9 @@ document.addEventListener('click',e=>{
       },70);
     }
   }
-  else if(action==='drl-demo-skip'){applyDemoEvidenceSkip();}
   else if(action==='drl-analyze'){analyzeDocuments();}
   else if(action==='gen-questionnaire'){generateQuestionnaire();}
-  else if(action==='gen-findings'){generateFindings();}
-  else if(action==='questionnaire-demo-fill'){applyDemoQuestionnaireAnswers();}
-  else if(action==='questionnaire-demo-findings'){applyDemoFindingsSkipAi();}
+  else if(action==='gen-findings'||action==='retry-findings'){generateFindings();}
   else if(action==='set-role'){S.activeRole=parseInt(el.dataset.idx);render();}
   else if(action==='answer-q'){S.answers[el.dataset.qid]=el.dataset.val;saveState();render();}
   else if(action==='set-review-fn'){S.activeReviewFn=el.dataset.fn;render();}
@@ -2415,106 +3016,4 @@ document.addEventListener('click',e=>{
   else if(action==='dispute-finding'){
     const sid=findingScidFromEl(el);
     if(!sid||!S.findings[sid]){console.warn('dispute-finding: missing finding for',sid);return;}
-    S.findings[sid].status='disputed';saveState();render();
-  }
-  else if(action==='reanalyze-finding'){
-    const sid=findingScidFromEl(el);
-    if(!sid||!S.findings[sid]){console.warn('reanalyze-finding: missing finding for',sid);return;}
-    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
-    if(ta)S.findings[sid].dispute_note=ta.value;
-    reanalyzeFinding(sid);
-  }
-  else if(action==='accept-dispute'){
-    const sid=findingScidFromEl(el);
-    if(!sid||!S.findings[sid]){console.warn('accept-dispute: missing finding for',sid);return;}
-    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
-    if(ta)S.findings[sid].dispute_note=ta.value;
-    S.findings[sid].status='approved';saveState();render();
-  }
-  else if(action==='approve-all-pending'){
-    const msg='This will mark every PENDING in-scope finding as Approved.\n\nOnly continue after you have reviewed each finding. Use Dispute on any row that is wrong before proceeding — rows already marked Disputed will not be changed.\n\nContinue?';
-    if(!confirm(msg))return;
-    SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id])=>{
-      const f=S.findings[id];
-      if(!f)return;
-      const st=f.status;
-      if(!st||st==='pending')f.status='approved';
-    });
-    saveState();render();
-  }
-  else if(action==='gen-report'){
-    S.step='report';S.reportPage=0;saveState();render();
-  }
-  else if(action==='report-page-prev'){S.reportPage=Math.max(0,(S.reportPage||0)-1);saveState();render();window.scrollTo(0,0);}
-  else if(action==='report-page-next'){
-    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
-    S.reportPage=Math.min(fns.length,(S.reportPage||0)+1);
-    saveState();render();window.scrollTo(0,0);
-  }
-  else if(action==='report-goto-page'){
-    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
-    const p=parseInt(el.dataset.page,10);
-    if(Number.isNaN(p)||p<0||p>fns.length)return;
-    S.reportPage=p;
-    saveState();render();window.scrollTo(0,0);
-  }
-  else if(action==='export-json'){
-    const exportS=JSON.parse(JSON.stringify(S));
-    delete exportS.apiKey;
-    const blob=new Blob([JSON.stringify(exportS,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=`csf-assessment-${(S.org.name||'org').replace(/\s+/g,'-')}-${S.org.date||new Date().toISOString().slice(0,10)}.json`;a.click();
-  }
-});
-
-document.addEventListener('input',e=>{
-  const el=e.target;
-  if(!(el instanceof Element))return;
-  const action=el.dataset.action;
-  if(action==='answer-text'){S.answers[el.dataset.qid]=el.value;clearTimeout(el._t);el._t=setTimeout(()=>saveState(),800);}
-  else if(action==='dispute-text'){
-    const sid=findingScidFromEl(el);
-    if(sid&&S.findings[sid])S.findings[sid].dispute_note=el.value;
-  }
-  else if(action==='set-file-context'){
-    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
-    const idx=parseInt(el.dataset.idx);
-    if(entry.files[idx])entry.files[idx].context=el.value;
-    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
-  }
-  else if(action==='set-not-provided-reason'){
-    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
-    entry.notProvidedReason=el.value;
-    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
-  }
-});
-
-document.addEventListener('change',e=>{
-  const t=e.target;
-  if(t&&t.id==='inp-model'){
-    S.model=t.value;
-    persistAIPrefs();
-  }
-});
-
-// ════════════════════════════════════════════════════════════
-// MAIN RENDER
-// ════════════════════════════════════════════════════════════
-function render(){
-  const app=document.getElementById('app');
-  switch(S.step){
-    case 'welcome':         app.innerHTML=renderWelcome();break;
-    case 'setup':           app.innerHTML=renderSetup();break;
-    case 'scope':           app.innerHTML=renderScope();break;
-    case 'drl':             app.innerHTML=renderDRL();break;
-    case 'analysis':        app.innerHTML=renderAnalysis();break;
-    case 'questionnaire':   app.innerHTML=renderQuestionnaire();break;
-    case 'findings_review': app.innerHTML=renderFindingsReview();break;
-    case 'report':          app.innerHTML=renderReport();break;
-    default:                app.innerHTML=renderWelcome();
-  }
-}
-render();
-</script>
-</body>
-</html>
+    S.findings[sid].st

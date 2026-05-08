@@ -109,4 +109,5 @@ Variance outside these bounds indicates either (a) a flaw in the evidence corpus
 |---|---|
 | Document ID | MAT-PROFILE-MCT-2026 |
 | Version | 1.0 |
-| Author | Test corpus d
+| Author | Test corpus design (synthetic) |
+| Status | Calibration target |
