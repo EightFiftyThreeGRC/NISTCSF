@@ -652,6 +652,21 @@ function loadState(){
       if(!S.aiScopeRec)S.aiScopeRec={};
       if(S.benchmarkSent==null)S.benchmarkSent=false;
       if(S.topGapsAnalysis===undefined)S.topGapsAnalysis=null;
+      // Migrate older role-grouped questionnaires (CISO/IT/Risk/HR/BC) to the new
+      // function-grouped shape (GV/ID/PR/DE/RS/RC). Detected by absence of `fn` on entries.
+      if(S.questionnaire&&Array.isArray(S.questionnaire.roles)&&S.questionnaire.roles.length&&!S.questionnaire.roles[0].fn){
+        const orderedFns=FUNCTIONS.filter(f=>(S.includedFns||[]).includes(f.id));
+        const buckets=Object.fromEntries(orderedFns.map(f=>[f.id,{role:`${f.id} — ${f.name}`,fn:f.id,description:'',questions:[]}]));
+        S.questionnaire.roles.forEach(r=>{
+          (r.questions||[]).forEach(q=>{
+            const subs=q.subcategories||[];
+            const fn=subs.length?String(subs[0]).split('.')[0]:null;
+            if(fn&&buckets[fn])buckets[fn].questions.push(q);
+          });
+        });
+        S.questionnaire.roles=orderedFns.map(f=>buckets[f.id]).filter(r=>r.questions.length>0);
+        S.activeRole=0;
+      }
       if(!S.consultationLead||typeof S.consultationLead!=='object')S.consultationLead={shown:false,path:'',topic:'',duration:'',name:'',company:'',email:'',phone:'',preferredContact:'',notes:'',sent:false};
       // Migrate older consultation leads that didn't have path/topic/duration fields.
       if(S.consultationLead.path===undefined)S.consultationLead.path='';
@@ -1568,15 +1583,18 @@ ${topBar(4)}
 function renderQuestionnaire(){
   const q=S.questionnaire;
   if(!q||!q.roles||!q.roles.length)return`<div class="container"><div class="card"><p>No questionnaire loaded.</p></div></div>`;
-  const role=q.roles[S.activeRole]||q.roles[0];
+  const active=q.roles[S.activeRole]||q.roles[0];
   const totalQ=q.roles.reduce((a,r)=>a+r.questions.length,0);
   const totalA=q.roles.reduce((a,r)=>a+r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length,0);
+  // Resolve the function color for the active group so the tab underline + heading match the rest of the wizard
+  const activeFn=FUNCTIONS.find(f=>f.id===active.fn);
+  const activeColor=activeFn?activeFn.color:'#1e88e5';
   return`
 ${topBar(5)}
 <div class="container">
   <div class="card">
     <h2>Assessment Questionnaire</h2>
-    <p class="sub">These questions were generated based on your evidence gaps to reveal "paper vs. practice" differences. All roles can be answered by the same person if appropriate.</p>
+    <p class="sub">These questions were generated from your evidence gaps to reveal "paper vs. practice" differences. Questions are grouped by NIST CSF function — the same way scope, evidence, findings, and your final report are organized.</p>
     <div class="progress-ring">
       <div style="font-size:.83rem;font-weight:600;color:#2c4a6a;white-space:nowrap">${totalA} / ${totalQ} answered</div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${totalQ?Math.round(totalA/totalQ*100):0}%"></div></div>
@@ -1585,11 +1603,18 @@ ${topBar(5)}
 
   <div class="card" style="padding:0;overflow:hidden">
     <div class="role-tabs" style="padding:0 20px;background:#f8fafc">
-      ${q.roles.map((r,i)=>{const ra=r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length;return`<div class="role-tab ${i===S.activeRole?'active':''}" data-action="set-role" data-idx="${i}">${r.role} <span style="font-size:.7rem;color:${ra===r.questions.length?'#66bb6a':'#aaa'}">(${ra}/${r.questions.length})</span></div>`;}).join('')}
+      ${q.roles.map((r,i)=>{
+        const ra=r.questions.filter(qu=>S.answers[qu.id]!=null&&S.answers[qu.id]!=='').length;
+        const fn=FUNCTIONS.find(f=>f.id===r.fn);
+        const isActive=i===S.activeRole;
+        const tabColor=fn?fn.color:'#1e88e5';
+        const styles=isActive?`color:${tabColor};border-bottom-color:${tabColor}`:'';
+        return`<div class="role-tab ${isActive?'active':''}" data-action="set-role" data-idx="${i}" style="${styles}">${escHtml(r.role)} <span style="font-size:.7rem;color:${ra===r.questions.length?'#66bb6a':'#aaa'}">(${ra}/${r.questions.length})</span></div>`;
+      }).join('')}
     </div>
     <div style="padding:20px">
-      <div style="font-size:.82rem;color:#5a7a96;margin-bottom:16px;font-style:italic">${role.description}</div>
-      ${role.questions.map((qu,qi)=>renderQuestion(qu,qi)).join('')}
+      <div style="font-size:.82rem;color:#5a7a96;margin-bottom:16px;font-style:italic;border-left:3px solid ${activeColor};padding-left:10px">${escHtml(active.description||'')}</div>
+      ${active.questions.map((qu,qi)=>renderQuestion(qu,qi)).join('')}
     </div>
   </div>
 
@@ -2391,19 +2416,37 @@ async function generateQuestionnaire(){
     // Industry-specific common gaps to sharpen question targeting
     const indGaps=(INDUSTRY_COMMON_GAPS[S.org.industry]||[]).map(c=>`${c} (${CAT_NAMES[c]||c})`).join(', ');
     const sys=`You are a senior NIST CSF 2.0 assessor conducting a ${S.org.industry} sector assessment. You produce questionnaires that reveal the difference between paper compliance and actual operational practice. Output a single JSON object only (no markdown, no commentary). Question text under 200 characters; guidance one short sentence only.`;
-    const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry} | Size: ${S.org.orgSize||'Unknown'} employees\nIT team: ${S.org.itOrgSize||'Unknown'} | Cybersecurity team: ${S.org.cyberOrgSize||'Unknown'}\nScope: ${S.org.scope||'Enterprise-wide'}\n\nEvidence GAPS — subcategories with missing or weak document coverage (focus questions here):\n${gaps}\n\nAlready confirmed via documents (do NOT re-ask these): ${confirmed}\n\n${indGaps?`Historically weak areas in ${S.org.industry} sector (pay particular attention): ${indGaps}\n\n`:''}Generate a questionnaire with 18-28 questions total. Methodology:\n- Group by role: CISO/Security Lead, IT Lead, Risk Manager, HR Lead, Business Continuity Lead\n- PRIORITIZE scenario-based and behavioral questions over self-rating (e.g. "Walk me through what happens when X…" or "When did you last do Y?")\n- Reveal paper vs. practice gaps — what policies say vs. what staff actually do day to day\n- Incorporate ${S.org.industry}-specific context (regulatory requirements, supply chain risk, operational dependencies)\n- Each question maps to 1–3 specific subcategory IDs\n- Do NOT re-ask what documents already confirm\n- Use freetext for governance/process questions where nuance matters; likert5 for consistency/frequency; yesno/multichoice only when the answer is genuinely categorical\n- Keep options arrays short (max 5 options)\n\nReturn this JSON shape:\n{"roles":[{"role":"CISO / Security Lead","description":"short context sentence","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence on why we ask this"}]}]}`;
+    // Function-grouped questionnaire mirrors how the rest of the wizard is organized
+    // (scope, DRL, analysis, findings, report all use CSF functions). Each in-scope function
+    // gets its own group of questions. The data shape keeps `roles` as the field name for
+    // backward compatibility with older saves; semantically each entry now represents a
+    // CSF function.
+    const inScopeFnList = (S.includedFns||[]).map(fid=>{const fn=FUNCTIONS.find(f=>f.id===fid); return fn?`${fid} — ${fn.name}`:fid;}).join(', ');
+    const msg=`Organization: ${S.org.name} | Industry: ${S.org.industry} | Size: ${S.org.orgSize||'Unknown'} employees\nIT team: ${S.org.itOrgSize||'Unknown'} | Cybersecurity team: ${S.org.cyberOrgSize||'Unknown'}\nScope: ${S.org.scope||'Enterprise-wide'}\n\nEvidence GAPS — subcategories with missing or weak document coverage (focus questions here):\n${gaps}\n\nAlready confirmed via documents (do NOT re-ask these): ${confirmed}\n\n${indGaps?`Historically weak areas in ${S.org.industry} sector (pay particular attention): ${indGaps}\n\n`:''}Generate a questionnaire with 18-28 questions total. Methodology:\n- Group by NIST CSF function. The functions in scope for this assessment are: ${inScopeFnList}. Create exactly one group per in-scope function — no fewer, no more.\n- Each group's "role" field MUST be exactly the function label (e.g. "GV — Govern", "ID — Identify"). Each group's "fn" field MUST be the two-letter function ID (GV, ID, PR, DE, RS, RC).\n- Each question MUST be placed in the group matching its primary subcategory's function (e.g. a question about GV.OC-01 goes in the GV group).\n- PRIORITIZE scenario-based and behavioral questions over self-rating (e.g. "Walk me through what happens when X…" or "When did you last do Y?")\n- Reveal paper vs. practice gaps — what policies say vs. what staff actually do day to day\n- Incorporate ${S.org.industry}-specific context (regulatory requirements, supply chain risk, operational dependencies)\n- Each question maps to 1–3 specific subcategory IDs that fall under the group's function\n- Do NOT re-ask what documents already confirm\n- Use freetext for governance/process questions where nuance matters; likert5 for consistency/frequency; yesno/multichoice only when the answer is genuinely categorical\n- Keep options arrays short (max 5 options)\n\nReturn this JSON shape:\n{"roles":[{"role":"GV — Govern","fn":"GV","description":"one-sentence framing of what this function covers","questions":[{"id":"Q1","text":"max ~200 chars","type":"likert5|likert3|yesno|multichoice|freetext","options":["opt1"],"subcategories":["GV.OC-01"],"guidance":"one sentence on why we ask this"}]}]}`;
     const raw=await callAI(sys,msg,true,{outputTokens:16384,jsonMime:providerSupportsJsonMime()});
     const parsed=parseJSON(raw);
-    // Defensive: drop any question whose subcategories are all excluded or out-of-function-scope.
+    // Defensive normalization: re-bucket every question into its function group based on
+    // the first subcategory's function ID, dropping anything out of scope. This protects
+    // against the model occasionally placing a question in the wrong group or returning the
+    // legacy role-based shape we used to ask for.
     if(parsed&&Array.isArray(parsed.roles)){
+      const orderedFns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+      const buckets=Object.fromEntries(orderedFns.map(f=>[f.id,{role:`${f.id} — ${f.name}`,fn:f.id,description:'',questions:[]}]));
+      // Carry over the AI-written description if the model already produced a function-shaped group
+      parsed.roles.forEach(r=>{if(r&&r.fn&&buckets[r.fn]&&r.description)buckets[r.fn].description=r.description;});
+      // Re-route every question to the bucket matching its primary subcategory's function
       parsed.roles.forEach(r=>{
-        r.questions=(r.questions||[]).filter(q=>{
-          const subs=q.subcategories||[];
-          if(!subs.length)return true;
-          return subs.some(s=>!_excl.has(s)&&S.includedFns.includes(String(s).split('.')[0]));
+        (r.questions||[]).forEach(q=>{
+          const subs=(q.subcategories||[]).filter(s=>!_excl.has(s)&&S.includedFns.includes(String(s).split('.')[0]));
+          if(!subs.length)return; // no in-scope subs → drop
+          const targetFn=String(subs[0]).split('.')[0];
+          if(buckets[targetFn]){
+            q.subcategories=subs;
+            buckets[targetFn].questions.push(q);
+          }
         });
       });
-      parsed.roles=parsed.roles.filter(r=>(r.questions||[]).length>0);
+      parsed.roles=orderedFns.map(f=>buckets[f.id]).filter(r=>r.questions.length>0);
     }
     S.questionnaire=parsed;S.activeRole=0;S.step='questionnaire';saveState();
   }catch(e){
@@ -3016,4 +3059,176 @@ document.addEventListener('click',async e=>{
   else if(action==='dispute-finding'){
     const sid=findingScidFromEl(el);
     if(!sid||!S.findings[sid]){console.warn('dispute-finding: missing finding for',sid);return;}
-    S.findings[sid].st
+    S.findings[sid].status='disputed';saveState();render();
+  }
+  else if(action==='reanalyze-finding'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('reanalyze-finding: missing finding for',sid);return;}
+    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
+    if(ta)S.findings[sid].dispute_note=ta.value;
+    reanalyzeFinding(sid);
+  }
+  else if(action==='accept-dispute'){
+    const sid=findingScidFromEl(el);
+    if(!sid||!S.findings[sid]){console.warn('accept-dispute: missing finding for',sid);return;}
+    const ta=document.querySelector(`[data-action="dispute-text"][data-scid="${sid}"]`);
+    if(ta)S.findings[sid].dispute_note=ta.value;
+    S.findings[sid].status='approved';saveState();render();
+  }
+  else if(action==='approve-all-pending'){
+    const msg='This will mark every PENDING in-scope finding as Approved.\n\nOnly continue after you have reviewed each finding. Use Dispute on any row that is wrong before proceeding — rows already marked Disputed will not be changed.\n\nContinue?';
+    if(!await uiConfirm(msg,{okText:'Mark pending as approved'}))return;
+    SC_RAW.filter(([id])=>S.includedFns.includes(id.split('.')[0])).forEach(([id])=>{
+      const f=S.findings[id];
+      if(!f)return;
+      const st=f.status;
+      if(!st||st==='pending')f.status='approved';
+    });
+    saveState();render();
+  }
+  else if(action==='gen-report'){
+    S.step='gap_summary';saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='goto-gap-summary'){S.step='gap_summary';saveState();render();window.scrollTo(0,0);}
+  else if(action==='goto-report-from-gap'){
+    S.step='report';S.reportPage=0;saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='gen-gap-narratives'){
+    await generateTopGapNarratives();
+  }
+  else if(action==='request-consultation-topic'){
+    const topic=el.dataset.topic||'';
+    S.consultationLead.path='topic';
+    S.consultationLead.topic=topic;
+    S.consultationLead.duration='30';
+    S.consultationLead.shown=true;
+    saveState();render();
+    setTimeout(()=>{const f=document.getElementById('consult-name');if(f)f.focus();},50);
+  }
+  else if(action==='request-consultation-comprehensive'){
+    const duration=el.dataset.duration==='60'?'60':'30';
+    S.consultationLead.path='comprehensive';
+    S.consultationLead.topic='';
+    S.consultationLead.duration=duration;
+    S.consultationLead.shown=true;
+    saveState();render();
+    setTimeout(()=>{const f=document.getElementById('consult-name');if(f)f.focus();},50);
+  }
+  else if(action==='request-consultation-full-assessment'){
+    S.consultationLead.path='full_assessment_scoping';
+    S.consultationLead.topic='';
+    S.consultationLead.duration='30';
+    S.consultationLead.shown=true;
+    saveState();render();
+    setTimeout(()=>{const f=document.getElementById('consult-name');if(f)f.focus();},50);
+  }
+  else if(action==='cancel-consultation'){
+    S.consultationLead.shown=false;
+    S.consultationLead.path='';S.consultationLead.topic='';S.consultationLead.duration='';
+    saveState();render();
+  }
+  else if(action==='submit-consultation'){
+    submitConsultationLead();
+  }
+  else if(action==='report-page-prev'){S.reportPage=Math.max(0,(S.reportPage||0)-1);saveState();render();window.scrollTo(0,0);}
+  else if(action==='report-page-next'){
+    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+    S.reportPage=Math.min(fns.length,(S.reportPage||0)+1);
+    saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='report-goto-page'){
+    const fns=FUNCTIONS.filter(f=>S.includedFns.includes(f.id));
+    const p=parseInt(el.dataset.page,10);
+    if(Number.isNaN(p)||p<0||p>fns.length)return;
+    S.reportPage=p;
+    saveState();render();window.scrollTo(0,0);
+  }
+  else if(action==='export-json'){
+    const exportS=JSON.parse(JSON.stringify(S));
+    delete exportS.apiKey;
+    delete exportS.geminiApiKey;
+    const blob=new Blob([JSON.stringify(exportS,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`csf-assessment-${(S.org.name||'org').replace(/\s+/g,'-')}-${S.org.date||new Date().toISOString().slice(0,10)}.json`;a.click();
+  }
+});
+
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(!(el instanceof Element))return;
+  const action=el.dataset.action;
+  if(action==='answer-text'){S.answers[el.dataset.qid]=el.value;clearTimeout(el._t);el._t=setTimeout(()=>saveState(),800);}
+  else if(action==='dispute-text'){
+    const sid=findingScidFromEl(el);
+    if(sid&&S.findings[sid])S.findings[sid].dispute_note=el.value;
+  }
+  else if(action==='set-file-context'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    const idx=parseInt(el.dataset.idx);
+    if(entry.files[idx])entry.files[idx].context=el.value;
+    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
+  }
+  else if(action==='set-not-provided-reason'){
+    const entry=getDrlEntry(el.dataset.cat,el.dataset.req);
+    entry.notProvidedReason=el.value;
+    clearTimeout(el._t);el._t=setTimeout(()=>saveState(),500);
+  }
+  else if(action==='consult-field'){
+    const f=el.dataset.field;
+    if(f&&S.consultationLead&&S.consultationLead.hasOwnProperty(f)){
+      S.consultationLead[f]=el.value;
+      clearTimeout(el._t);el._t=setTimeout(()=>saveState(),400);
+    }
+  }
+});
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t&&t.id==='inp-model'){
+    S.model=t.value;
+    persistAIPrefs();
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ════════════════════════════════════════════════════════════
+function render(){
+  const app=document.getElementById('app');
+  enforceSampleMode();
+  switch(S.step){
+    case 'welcome':         app.innerHTML=renderWelcome();break;
+    case 'setup':           app.innerHTML=renderSetup();break;
+    case 'scope':           app.innerHTML=renderScope();break;
+    case 'drl':             app.innerHTML=renderDRL();break;
+    case 'analysis':        app.innerHTML=renderAnalysis();break;
+    case 'questionnaire':   app.innerHTML=renderQuestionnaire();break;
+    case 'findings_review': app.innerHTML=renderFindingsReview();break;
+    case 'gap_summary':     app.innerHTML=renderGapSummary();break;
+    case 'report':          app.innerHTML=renderReport();break;
+    default:                app.innerHTML=renderWelcome();
+  }
+}
+// Auto-resume on page load when there's a real assessment in progress. Without this,
+// reloading mid-assessment dumps the user back on the welcome page and forces them to
+// click "Resume Saved Assessment" — clunky if they were just refreshing. We only auto-load
+// when the saved step is past welcome, so a fresh user still lands on the welcome screen.
+(function autoResumeIfMidAssessment(){
+  try{
+    const raw=localStorage.getItem('csf_state');
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    if(!saved||!saved.step||saved.step==='welcome')return;
+    // Only auto-load when there's an API key for the relevant provider — otherwise
+    // silently restoring would send the user into a step that immediately fails.
+    const provider=saved.provider==='gemini'?'gemini':'anthropic';
+    const hasKey=provider==='gemini'?!!(saved.geminiApiKey||localStorage.getItem('csf_geminiApiKey')):!!(saved.apiKey||localStorage.getItem('csf_apiKey'));
+    if(!hasKey)return;
+    loadState();
+    enforceSampleMode();
+  }catch(e){console.warn('[auto-resume]',e);}
+})();
+render();
+</script>
+</body>
+</html>
